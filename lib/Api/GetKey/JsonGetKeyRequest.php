@@ -8,7 +8,7 @@ use JsonSerializable;
 use OCA\Olvid\Api\Constants;
 
 class JsonGetKeyRequest implements JsonSerializable {
-	public string $userId;
+	public ?string $userId;
 
 	public function __construct(array $data) {
 		$this->userId = $data[Constants::GET_KEY_REQUEST_USER_ID];

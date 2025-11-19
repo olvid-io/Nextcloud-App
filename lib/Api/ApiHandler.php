@@ -46,13 +46,13 @@ abstract class ApiHandler {
 
     public function handle(?IUser $user, IRequest $rawRequest): Response {
 		// parse json payload
-		$jsonParameters = json_decode(file_get_contents('php://input'), true);
+		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
 
 		try {
 			return $this->handler($user, $rawRequest, $jsonParameters);
 		}
 		catch (Exception $e) {
-			$this->logger->error(get_class($this) . ": unexpected exception in handler: " .$e->getMessage());
+			$this->logger->error(get_class($this) . ": unexpected exception in handler: " . $e);
 			return $this->internalErrorDevice();
 		}
     }
