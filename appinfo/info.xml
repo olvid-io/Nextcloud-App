@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>olvid</id>
+	<name>Olvid</name>
+	<summary>Olvid integration</summary>
+	<description>Olvid integration</description>
+	<version>1.0.0</version>
+	<licence>agpl</licence>
+	<author mail="bot@olvid.io" homepage="">Olvid</author>
+	<namespace>Olvid</namespace>
+	<category>social</category>
+	<bugs>https://olvid.io/faq</bugs>
+	<dependencies>
+		<nextcloud min-version="30" max-version="32"/>
+	</dependencies>
+	<navigations>
+		<navigation>
+			<id>olvid</id>
+			<name>Olvid</name>
+			<route>olvid.page.index</route>
+			<icon>app.svg</icon>
+			<type>link</type>
+		</navigation>
+	</navigations>
+	<repair-steps>
+		<install><step>OCA\Olvid\Migration\SetupOlvidStep</step></install>
+<!--		TODO re-enable-->
+<!--		<pre-migration><step>OCA\Olvid\Migration\SetupOidcStep</step></pre-migration>-->
+<!--		<post-migration><step>OCA\Olvid\Migration\SetupOidcStep</step></post-migration>-->
+<!--		<post-migration><step>OCA\Olvid\Migration\SetupOidcStep</step></post-migration>-->
+	</repair-steps>
+</info>
