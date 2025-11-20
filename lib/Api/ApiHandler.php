@@ -46,7 +46,12 @@ abstract class ApiHandler {
 
     public function handle(?IUser $user, IRequest $rawRequest): Response {
 		// parse json payload
-		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
+		try {
+			$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
+		} catch (Exception $exception) {
+			$this->logger->error(get_class($this) . ": cannot parse request: " . $exception);
+			return $this->internalErrorDevice();
+		}
 
 		try {
 			return $this->handler($user, $rawRequest, $jsonParameters);

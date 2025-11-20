@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\AppInfo;
 
-use OCA\Olvid\Http\WellKnown\OlvidJwksHandler;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;

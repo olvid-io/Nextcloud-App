@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Controller;
 
+use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\GetKey\GetKey;
 use OCA\Olvid\Api\Me\Me;
@@ -11,6 +12,7 @@ use OCA\Olvid\Api\PutKey\PutKey;
 use OCA\Olvid\Api\Search\Search;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Utils\AppConfigManager;
+use OCA\Olvid\Utils\ServerConfigurationUtils;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -33,7 +35,6 @@ use OCP\PreConditionNotMetException;
 use Psr\Log\LoggerInterface;
 
 // oidc dependencies
-use OCA\OIDCIdentityProvider\Exceptions\ClientNotFoundException;
 use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
 use OCA\OIDCIdentityProvider\Db\ClientMapper as OidcClientMapper;
 use OCA\OIDCIdentityProvider\Event\TokenValidationRequestEvent as OidcTokenValidationRequestEvent;
@@ -223,37 +224,13 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/olvid-rest/configuration')]
 	public function configuration(): Response {
-		// get client identifier
-		$clientIdentifier = AppConfigManager::getOidcClientId($this->appConfig);
-		if (!$clientIdentifier) {
-			$this->logger->warning("No OpenId Client provided"); // TODO improve log
-			return new Response(500);
-		}
-
-		// get client
 		try {
-			$client = $this->oidcClientMapper->getByIdentifier($clientIdentifier);
-		} catch (ClientNotFoundException $e) {
-			$this->logger->warning("Olvid client not found: " . $e->getMessage());
+			$response = ServerConfigurationUtils::getServerConfigurationLink($this->appConfig, $this->oidcClientMapper, $this->request);
+			return new TextPlainResponse($response);
+		} catch (Exception $e) {
+			$this->logger->error("Cannot generate configuration link: ". $e);
 			return new Response(500);
 		}
-
-		# TODO change (and check associated redirect URI)
-		$serverUrl = AppConfigManager::getOlvidServerUrl($this->appConfig);
-		$apiUrl = substr($this->request->getRequestUri(), 0, strlen($this->request->getRequestUri()) - strlen("/olvid-rest/configuration"));
-		$keycloakUrl = "{$this->request->getServerProtocol()}://{$this->request->getServerHost()}$apiUrl";
-		$clientId = $client->getClientIdentifier();
-		$clientSecret = $client->getSecret();
-
-		$encodedConf = base64_encode(json_encode([
-			"server" => $serverUrl,
-			"keycloak" => [
-				"server" => $keycloakUrl,
-				"cid" => $clientId,
-				"secret" => $clientSecret,
-			]
-		]));
-		return new TextPlainResponse("https://configuration.olvid.io/#$encodedConf");
 	}
 
 	/*

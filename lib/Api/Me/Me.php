@@ -36,7 +36,7 @@ class Me extends ApiHandler {
 
 		$response->apiKey = "";
 
-		$response->server = AppConfigManager::getOlvidServerUrl($this->appConfig);
+		$response->server = AppConfigManager::getOlvidServerUrl($this->appConfig) ?? "";
 		$response->revocationAllowed = true;
 		$response->transferRestricted = false;
 
