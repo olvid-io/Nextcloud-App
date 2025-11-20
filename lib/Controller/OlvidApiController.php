@@ -10,6 +10,7 @@ use OCA\Olvid\Api\Me\Me;
 use OCA\Olvid\Api\PutKey\PutKey;
 use OCA\Olvid\Api\Search\Search;
 use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Utils\AppConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -154,18 +155,15 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/.well-known/jwks')]
 	public function jwks(): Response {
-		$keyId = $this->appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_KEY_ID);
-		$publicKeyX = $this->appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PUBLIC_KEY_X);
-		$publicKeyY = $this->appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PUBLIC_KEY_Y);
 		$jwks = [
 			'keys' => [
 				[
 					'kty' => 'EC',
 					'crv' => 'P-256',
-					'x'   => $publicKeyX,
-					'y'   => $publicKeyY,
+					'x'   => AppConfigManager::getJwkKeyPublicKeyX($this->appConfig),
+					'y'   => AppConfigManager::getJwkKeyPublicKeyY($this->appConfig),
 					'use' => 'sig',
-					'kid' => $keyId,
+					'kid' => AppConfigManager::getJwkKeyId($this->appConfig),
 					'alg' => 'ES256'
 				]
 			]
@@ -226,7 +224,7 @@ class OlvidApiController extends IApiController {
 	#[ApiRoute(verb: 'GET', url: '/olvid-rest/configuration')]
 	public function configuration(): Response {
 		// get client identifier
-		$clientIdentifier = $this->appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_CLIENT_ID_KEY);
+		$clientIdentifier = AppConfigManager::getOidcClientId($this->appConfig);
 		if (!$clientIdentifier) {
 			$this->logger->warning("No OpenId Client provided"); // TODO improve log
 			return new Response(500);
@@ -241,7 +239,7 @@ class OlvidApiController extends IApiController {
 		}
 
 		# TODO change (and check associated redirect URI)
-		$serverUrl = "https://server.dev.olvid.io";
+		$serverUrl = AppConfigManager::getOlvidServerUrl($this->appConfig);
 		$apiUrl = substr($this->request->getRequestUri(), 0, strlen($this->request->getRequestUri()) - strlen("/olvid-rest/configuration"));
 		$keycloakUrl = "{$this->request->getServerProtocol()}://{$this->request->getServerHost()}$apiUrl";
 		$clientId = $client->getClientIdentifier();

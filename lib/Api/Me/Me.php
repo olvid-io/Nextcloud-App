@@ -8,6 +8,7 @@ use OCA\Olvid\Api\ApiHandler;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Utils\AppConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
@@ -35,7 +36,7 @@ class Me extends ApiHandler {
 
 		$response->apiKey = "";
 
-		$response->server = "https://server.dev.olvid.io";
+		$response->server = AppConfigManager::getOlvidServerUrl($this->appConfig);
 		$response->revocationAllowed = true;
 		$response->transferRestricted = false;
 

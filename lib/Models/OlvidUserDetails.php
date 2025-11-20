@@ -6,6 +6,7 @@ use Firebase\JWT\JWT;
 use JsonSerializable;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Utils\AppConfigManager;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -75,9 +76,9 @@ class OlvidUserDetails implements JsonSerializable {
 		$olvidUserDetails = new OlvidUserDetails($id, $firstname, "", "", "", $identity, time());
 
 		// get signature key
-		$keyId = $appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_KEY_ID);
-		$privateKey = $appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PRIVATE_KEY);
-		$keyType = $appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_KEY_TYPE);
+		$keyId = AppConfigManager::getJwkKeyId($appConfig);
+		$keyType = AppConfigManager::getJwkKeyType($appConfig);
+		$privateKey = AppConfigManager::getJwkKeyPrivateKey($appConfig);
 
 		$signedDetails = JWT::encode($olvidUserDetails->jsonSerialize(), $privateKey, $keyType, $keyId);
         $config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, $signedDetails);

@@ -15,18 +15,6 @@ class Constants {
 	public const OIDC_ALLOWED_SCOPES = "";
 	public const OIDC_EMAIL_REGEXP = "";
 
-	public const APP_CONFIG_CLIENT_ID_KEY = "oidc-client-id";
-
-	/*
-	 * AppConfig attributes keys in Config
-	 */
-	public const APP_CONFIG_JWK_KEY_ID = "olvid-jwk-key-id";
-	public const APP_CONFIG_JWK_KEY_TYPE = "olvid-jwk-key-type";
-	public const APP_CONFIG_JWK_PRIVATE_KEY = "olvid-jwk-private-key";
-	public const APP_CONFIG_JWK_PUBLIC_KEY = "olvid-jwk-public-key";
-	public const APP_CONFIG_JWK_PUBLIC_KEY_X = "olvid-jwk-public-key-x";
-	public const APP_CONFIG_JWK_PUBLIC_KEY_Y = "olvid-jwk-public-key-y";
-
 	/*
 	 * OlvidUserDetailsKey
 	 */

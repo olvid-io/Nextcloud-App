@@ -4,7 +4,7 @@ namespace OCA\Olvid\Migration;
 
 use OCA\OIDCIdentityProvider\Exceptions\ClientNotFoundException;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Utils\AppConfigManager;
 use OCP\DB\Exception;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -52,6 +52,12 @@ class SetupOlvidStep implements IRepairStep {
 		// this allows to authenticate using oidc bearer tokens (used to access olvid api from olvid devices)
 		$this->config->setSystemValue("oidc_provider_bearer_validation", true);
 
+		// TODO do not hardcode
+		/*
+		 ** Olvid server
+		 */
+		AppConfigManager::setOlvidServerUrl($this->appConfig, "https://server.dev.olvid.io");
+
 		/*
 		 ** JWKS
 		 */
@@ -61,7 +67,7 @@ class SetupOlvidStep implements IRepairStep {
 		 * OpenId connect client
 		 */
 		// check if we already created an oidc client for olvid
-		$clientId = $this->appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_CLIENT_ID_KEY);
+		$clientId = AppConfigManager::getOidcClientId($this->appConfig);
 		if ($clientId) {
 			try {
 				$olvidClient = $this->oidcClientMapper->getByIdentifier($clientId);
@@ -96,14 +102,14 @@ class SetupOlvidStep implements IRepairStep {
 		}
 
 		// store olvid client in app configuration
-		$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_CLIENT_ID_KEY, $olvidClient->getClientIdentifier());
+		AppConfigManager::setOidcClientId($this->appConfig, $olvidClient->getClientIdentifier());
 
 		$this->logger->info("SetupOidcStep: setup a new OIDC client: " . $olvidClient->getClientIdentifier());
 	}
 
 	public function createJwksKey(IOutput $output): void {
 		$output->info("Check for jwks key material.");
-		$keyId = $this->appConfig->getValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_KEY_ID);
+		$keyId = AppConfigManager::getJwkKeyId($this->appConfig);
 		if (!$keyId) {
 			$keyId = uuid_create();
 
@@ -117,15 +123,17 @@ class SetupOlvidStep implements IRepairStep {
 			openssl_pkey_export($res, $privateKey);
 			$details = openssl_pkey_get_details($res);
 
-			// store keys
-			$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_KEY_TYPE, "ES256");
-			$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PRIVATE_KEY, $privateKey);
-			$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PUBLIC_KEY, $details["key"]);
+			// compute public key coordinates to display in jwks format
 			$x = rtrim(strtr(base64_encode($details['ec']['x']), '+/', '-_'), '='); // base64 url encode
 			$y = rtrim(strtr(base64_encode($details['ec']['y']), '+/', '-_'), '='); // base64 url encode
-			$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PUBLIC_KEY_X, $x);
-			$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_PUBLIC_KEY_Y, $y);
-			$this->appConfig->setValueString(Application::APP_ID, Constants::APP_CONFIG_JWK_KEY_ID, $keyId);
+
+			// store key in app config
+			AppConfigManager::setJwkKeyType($this->appConfig, "ES256");
+			AppConfigManager::setJwkKeyPrivateKey($this->appConfig, $privateKey);
+			AppConfigManager::setJwkKeyPublicKey($this->appConfig, $details["key"]);
+			AppConfigManager::setJwkKeyPublicKeyX($this->appConfig, $x);
+			AppConfigManager::setJwkKeyPublicKeyY($this->appConfig, $y);
+			AppConfigManager::setJwkKeyId($this->appConfig, $keyId);
 		}
 	}
 }
