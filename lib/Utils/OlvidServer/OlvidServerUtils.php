@@ -61,7 +61,7 @@ class OlvidServerUtils {
 		curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($jsonRequest));
 		$server_output = curl_exec($session);
 		curl_close($session);
-		$jsonResponse = json_decode($server_output);
+		$jsonResponse = json_decode($server_output, associative: true);
 
 		if ($jsonResponse["error"]) {
 			switch ($jsonResponse["error"]) {

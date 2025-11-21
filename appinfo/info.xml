@@ -30,4 +30,7 @@
 <!--		<post-migration><step>OCA\Olvid\Migration\SetupOidcStep</step></post-migration>-->
 <!--		<post-migration><step>OCA\Olvid\Migration\SetupOidcStep</step></post-migration>-->
 	</repair-steps>
+	<settings>
+		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
+	</settings>
 </info>

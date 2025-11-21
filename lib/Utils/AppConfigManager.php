@@ -8,7 +8,8 @@ use OCP\IAppConfig;
 class AppConfigManager {
 	// Olvid Server
 	private const APP_CONFIG_OLVID_SERVER_URL = "olvid-server-url";
-	private const APP_CONFIG_OLVID_SERVER_API_KEY = "olvid-server-api-key";
+	// TODO how to associate those values to settings ?
+	public const APP_CONFIG_OLVID_SERVER_API_KEY = "olvid-server-api-key";
 	// Open Id Connect
 	public const APP_CONFIG_OIDC_CLIENT_ID = "olvid-oidc-client-id";
 	// json web key

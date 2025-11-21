@@ -9,6 +9,7 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCA\Olvid\Utils\AppConfigManager;
+use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
@@ -34,7 +35,15 @@ class Me extends ApiHandler {
 		}
 		$response->signature = $signature;
 
-		$response->apiKey = "";
+		// get current api key, create a new one if there is an identity and no associated api key (fallback)
+		$apiKey = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY);
+		$identity = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
+		if ($identity && !$apiKey) {
+			// TODO handle server errors
+			$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
+			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+		}
+		$response->apiKey = $apiKey;
 
 		$response->server = AppConfigManager::getOlvidServerUrl($this->appConfig) ?? "";
 		$response->revocationAllowed = true;

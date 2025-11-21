@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\AppInfo;
 
+use OCA\Olvid\DeclarativeSettings\Admin;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -16,7 +17,9 @@ class Application extends App implements IBootstrap {
 		parent::__construct(self::APP_ID);
 	}
 
-	public function register(IRegistrationContext $context): void {}
+	public function register(IRegistrationContext $context): void {
+		$context->registerDeclarativeSettings(Admin::class);
+	}
 
 	public function boot(IBootContext $context): void {}
 }
