@@ -9,6 +9,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\IAppManager;
 
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'olvid';
@@ -21,5 +22,13 @@ class Application extends App implements IBootstrap {
 		$context->registerDeclarativeSettings(Admin::class);
 	}
 
-	public function boot(IBootContext $context): void {}
+	public function boot(IBootContext $context): void {
+		$appManager = $context->getServerContainer()->get(IAppManager::class);
+		if (!$appManager->isEnabledForUser('oidc')) {
+			throw new \RuntimeException(
+				'The Olvid app requires the "oidc" (OIDC Identity Provider) app to be installed and enabled. ' .
+				'Please install it via the Nextcloud App Store.'
+			);
+		}
+	}
 }
