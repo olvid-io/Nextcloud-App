@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Api\Me;
 
+use Exception;
 use OCA\Olvid\Api\ApiHandler;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
@@ -39,9 +40,13 @@ class Me extends ApiHandler {
 		$apiKey = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY);
 		$identity = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
 		if ($identity && !$apiKey) {
-			// TODO handle server errors
-			$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+			// this might fail if an olvid server api have not been set
+			try {
+				$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
+				$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+			} catch (Exception $e) {
+				$this->logger->error("Me: cannot create user api key: " . $e);
+			}
 		}
 		$response->apiKey = $apiKey;
 

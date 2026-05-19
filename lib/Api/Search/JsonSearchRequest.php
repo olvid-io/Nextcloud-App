@@ -11,6 +11,6 @@ class JsonSearchRequest {
 	public ?array $filter;
 
 	public function __construct(array $data) {
-		$this->filter = $data[Constants::SEARCH_REQUEST_FILTER];
+		$this->filter = isset($data[Constants::SEARCH_REQUEST_FILTER]) ? (string)$data[Constants::SEARCH_REQUEST_FILTER] : null;
 	}
 }

@@ -12,6 +12,6 @@ class JsonMeRequest {
 
 	public function __construct(array $data) {
 		$this->timestamp = (int)($data[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
-		$this->deviceUid = $data[Constants::ME_REQUEST_DEVICE_UID];
+		$this->deviceUid = isset($data[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$data[Constants::ME_REQUEST_DEVICE_UID] : null;
 	}
 }

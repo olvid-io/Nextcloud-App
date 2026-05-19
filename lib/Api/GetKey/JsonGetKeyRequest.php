@@ -11,7 +11,7 @@ class JsonGetKeyRequest implements JsonSerializable {
 	public ?string $userId;
 
 	public function __construct(array $data) {
-		$this->userId = $data[Constants::GET_KEY_REQUEST_USER_ID];
+		$this->userId = isset($data[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$data[Constants::GET_KEY_REQUEST_USER_ID] : null;
 	}
 
 	public function jsonSerialize(): array {

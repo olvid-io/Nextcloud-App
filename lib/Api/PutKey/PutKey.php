@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Api\PutKey;
 
+use Exception;
 use OCA\Olvid\Api\ApiHandler;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
@@ -33,14 +34,21 @@ class PutKey extends ApiHandler {
 		// revoke previous api key if any
 		$previousApiKey = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY);
 		if ($previousApiKey) {
-			// TODO handle errors
-			OlvidServerUtils::revokeApiKey($this->appConfig, $previousApiKey);
+			try {
+				OlvidServerUtils::revokeApiKey($this->appConfig, $previousApiKey);
+			} catch (Exception $e) {
+				$this->logger->error("/putKey: cannot revoke previous api key: " . $e->getMessage());
+			}
 		}
 
 		// create and set new api key
-		// TODO handle errors
-		$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
-		$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+		// this might fail if an olvid server api have not been set
+		try {
+			$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
+			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+		} catch (Exception $e) {
+			$this->logger->warning("/putKey: cannot create new api key: " . $e->getMessage());
+		}
 
 		return $this->success();
     }

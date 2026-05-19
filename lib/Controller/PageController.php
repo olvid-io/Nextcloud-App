@@ -16,6 +16,7 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCA\OIDCIdentityProvider\Db\ClientMapper as OidcClientMapper;
+use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -25,6 +26,7 @@ class PageController extends Controller {
 	private IAppConfig $appConfig;
 	private OidcClientMapper $oidcClientMapper;
 	private LoggerInterface $logger;
+	private IURLGenerator $urlGenerator;
 
 	public function __construct(
 		string $appName,
@@ -32,11 +34,14 @@ class PageController extends Controller {
 		IAppConfig $appConfig,
 		OidcClientMapper $clientMapper,
 		LoggerInterface $logger,
+		IURLGenerator $urlGenerator
 	) {
 		parent::__construct($appName, $request);
 		$this->appConfig = $appConfig;
 		$this->oidcClientMapper = $clientMapper;
 		$this->logger = $logger;
+		$this->urlGenerator = $urlGenerator;
+
 	}
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
@@ -44,7 +49,7 @@ class PageController extends Controller {
 	#[FrontpageRoute(verb: 'GET', url: '/')]
 	public function index(): TemplateResponse {
 		try {
-			$configurationLink = ServerConfigurationUtils::getServerConfigurationLink($this->appConfig, $this->oidcClientMapper, $this->request);
+			$configurationLink = ServerConfigurationUtils::getServerConfigurationLink($this->appConfig, $this->oidcClientMapper, $this->urlGenerator);
 		} catch (Exception $e) {
 			$this->logger->error(get_class($this) . ": cannot generate configuration link: " . $e);
 			// TODO handle error (show error in window ?)

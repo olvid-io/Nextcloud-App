@@ -4,16 +4,16 @@ namespace OCA\Olvid\Utils;
 
 use Exception;
 use OCP\IAppConfig;
-use OCP\IRequest;
 
 use OCA\OIDCIdentityProvider\Exceptions\ClientNotFoundException;
 use OCA\OIDCIdentityProvider\Db\ClientMapper as OidcClientMapper;
+use OCP\IURLGenerator;
 
 class ServerConfigurationUtils {
 	/**
 	 * @throws Exception
 	 */
-	public static function getServerConfigurationLink(IAppConfig $appConfig, OidcClientMapper $oidcClientMapper, IRequest $request) : string {
+	public static function getServerConfigurationLink(IAppConfig $appConfig, OidcClientMapper $oidcClientMapper, IURLGenerator $urlGenerator) : string {
 		// get client identifier
 		$clientIdentifier = AppConfigManager::getOidcClientId($appConfig);
 		if (!$clientIdentifier) {
@@ -27,10 +27,10 @@ class ServerConfigurationUtils {
 			throw new Exception("Olvid client not found: {$e->getMessage()}");
 		}
 
-		# TODO change (and check associated redirect URI)
+		# TODO change server url used (and check associated redirect URI)
 		$serverUrl = AppConfigManager::getOlvidServerUrl($appConfig) ?? "";
-		$apiUrl = substr($request->getRequestUri(), 0, strlen($request->getRequestUri()) - strlen("/olvid-rest/configuration"));
-		$keycloakUrl = "{$request->getServerProtocol()}://{$request->getServerHost()}$apiUrl";
+		# TODO improve link computation ...
+		$keycloakUrl = $urlGenerator->linkToOCSRouteAbsolute("") . "/apps/olvid";
 		$clientId = $client->getClientIdentifier();
 		$clientSecret = $client->getSecret();
 

@@ -10,6 +10,6 @@ class JsonPutKeyRequest {
 	public ?string $identity;
 
 	public function __construct(array $data) {
-		$this->identity = (string)$data[Constants::PUT_KEY_REQUEST_IDENTITY];
+		$this->identity = isset($data[Constants::PUT_KEY_REQUEST_IDENTITY]) ? (string)$data[Constants::PUT_KEY_REQUEST_IDENTITY] : null;
 	}
 }
