@@ -56,17 +56,6 @@ class OlvidApiController extends IApiController {
 		private readonly ICacheFactory $cacheFactory,
     ) {
         parent::__construct($appName, $request);
-		$this->config = $config;
-		$this->appConfig = $appConfig;
-        $this->userManager = $userManager;
-        $this->accountManager = $accountManager;
-        $this->userSession = $userSession;
-        $this->groupManager = $groupManager;
-		$this->eventDispatcher = $eventDispatcher;
-		$this->logger = $logger;
-		$this->oidcClientMapper = $clientMapper;
-		$this->discoveryGenerator = $discoveryGenerator;
-		$this->urlGenerator = $urlGenerator;
     }
 
     #[PublicPage]
@@ -81,7 +70,8 @@ class OlvidApiController extends IApiController {
 	 * Proxy to oidc application openid-configuration file content
 	 * We override jwks url to use our own key to sign user details
 	 */
-    #[PublicPage]
+	// TODO todel, but how ? ... (app check for it as first step of )
+	#[PublicPage]
     #[NoCSRFRequired]
     #[NoAdminRequired]
     #[ApiRoute(verb: 'GET', url: '/.well-known/openid-configuration')]
@@ -137,8 +127,9 @@ class OlvidApiController extends IApiController {
 	#[PublicPage]
     #[NoCSRFRequired]
     #[NoAdminRequired]
-    #[ApiRoute(verb: 'POST', url: '/olvid-rest/me')]
-    public function mePost(): Response {
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/me')]
+	#[ApiRoute(verb: 'GET', url: '/olvid-rest/me')]
+    public function me(): Response {
 		// TODO check  user authentication !!
 
         return (new Me($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
