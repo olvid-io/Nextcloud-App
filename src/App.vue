@@ -1,11 +1,13 @@
 <template>
 	<NcAppContent>
 		<div id="olvid">
-			<NcButton v-if="!magicLink" :disabled="loading" @click="fetchMagicLink" >
+			<NcButton v-if="!magicLink" :disabled="loading" @click="fetchMagicLink">
 				Get my Olvid magic link
 			</NcButton>
 
-			<p v-if="error" style="color: red;">{{ error }}</p>
+			<p v-if="error" style="color: red;">
+				{{ error }}
+			</p>
 
 			<NcButton v-if="magicLink" @click="openMagicLink">
 				See magic link
@@ -13,6 +15,10 @@
 
 			<NcButton v-if="magicLink" @click="openMagicLinkWithOlvid">
 				Open magic link with Olvid
+			</NcButton>
+
+			<NcButton v-if="olvidIdentityUploaded" @click="revokeIdentity">
+				Revoke current Olvid Identity
 			</NcButton>
 		</div>
 	</NcAppContent>
@@ -29,9 +35,20 @@ export default {
 	components: { NcAppContent, NcButton },
 	data() {
 		return {
-			loading: false,
+			loading: true,
 			magicLink: null,
 			error: null,
+			olvidIdentityUploaded: false,
+		}
+	},
+	async mounted() {
+		try {
+			const res = await axios.get(generateOcsUrl('/apps/olvid/app/status'))
+			this.olvidIdentityUploaded = res.data.olvidIdentityUploaded
+		} catch (e) {
+			console.error('Could not fetch Olvid status', e)
+		} finally {
+			this.loading = false
 		}
 	},
 	methods: {
@@ -40,7 +57,7 @@ export default {
 			this.error = null
 			this.magicLink = null
 			try {
-				const url = generateOcsUrl('/apps/olvid/olvid-rest/magicLink')
+				const url = generateOcsUrl('/apps/olvid/app/getMagicLink')
 				const response = await axios.get(url)
 				this.magicLink = response.data.configurationUrl
 			} catch (e) {
@@ -51,13 +68,17 @@ export default {
 		},
 		async openMagicLink() {
 			if (this.magicLink) {
-				window.open(this.magicLink, '_blank');
+				window.open(this.magicLink, '_blank')
 			}
 		},
 		async openMagicLinkWithOlvid() {
 			if (this.magicLink) {
-				window.open(this.magicLink.replace('http://', 'olvid://').replace('https://', 'olvid://'));
+				window.open(this.magicLink.replace('http://', 'olvid://').replace('https://', 'olvid://'))
 			}
+		},
+		async revokeIdentity() {
+			const url = generateOcsUrl('/apps/olvid/app/revokeIdentity')
+			await axios.get(url)
 		},
 	},
 }
