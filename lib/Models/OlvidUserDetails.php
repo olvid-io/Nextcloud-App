@@ -71,8 +71,11 @@ class OlvidUserDetails implements JsonSerializable {
 		// prepare details
 		$id = $user->getUID();
 		$firstname = $user->getDisplayName();
-		$identity = trim($config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY)) ?? null;
-		// TODO handle details attributes
+		$identity = trim($config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY));
+		// set identity to null and not to an empty string, else android think we already have an identity on server ...
+		if (!$identity) {
+			$identity = null;
+		}
 		$olvidUserDetails = new OlvidUserDetails($id, $firstname, "", "", "", $identity, time());
 
 		// get signature key
