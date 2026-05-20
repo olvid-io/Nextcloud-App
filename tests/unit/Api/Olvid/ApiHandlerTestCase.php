@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Tests\Unit\Api;
+namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
-use OCA\Olvid\Api\BaseJsonResponse;
+use OCA\Olvid\Api\Olvid\BaseJsonResponse;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;

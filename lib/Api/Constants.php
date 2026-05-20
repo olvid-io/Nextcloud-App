@@ -3,17 +3,24 @@
 namespace OCA\Olvid\Api;
 
 class Constants {
+	public const DEFAULT_OLVID_SERVER = "https://server.olvid.io";
+
+	// Minimum build numbers supporting this version of the keycloak plugin API
+	public const MIN_BUILD_ANDROID = 200;
+	public const MIN_BUILD_IOS = 650;
+    public const MIN_BUILD_DAEMON = 200000;
+    public const MIN_BUILD_DESKTOP = 20000;
+	public const OLVID_DIRECTORY_API_VERSION = 1;
+
 	/*
-	 * OIDC client configuration
+	 * Engine API (binary Encoded protocol — requestChallenge / getSession)
 	 */
-	public const OIDC_CLIENT_NAME = "olvid";
-	public const OIDC_REDIRECT_URIS = ["https://openid-redirect.olvid.io/","https://openid-redirect.dev.olvid.io/"];
-	public const OIDC_ALGORITHM = "RS256";
-	public const OIDC_TYPE = "confidential";
-	public const OIDC_FLOW_TYPE = "code";
-	public const OIDC_TOKEN_TYPE = "opaque";
-	public const OIDC_ALLOWED_SCOPES = "";
-	public const OIDC_EMAIL_REGEXP = "";
+	public const ENGINE_NONCE_LENGTH            = 32;
+	public const ENGINE_CHALLENGE_LENGTH        = 32;
+	public const ENGINE_RESPONSE_LENGTH         = 80;   // 16 prefix + 32 SHA-256 hash + 32 y scalar
+	public const ENGINE_RESPONSE_LENGTH_SHA512  = 112;  // 16 prefix + 64 SHA-512 hash + 32 y scalar
+	// Prefix prepended to the challenge before signing: "keycloakChallenge"
+	public const ENGINE_TOKEN_SIGNATURE_PREFIX  = "keycloakChallenge";
 
 	/*
 	 * OlvidUserDetailsKey
@@ -38,6 +45,7 @@ class Constants {
 	public const USER_ATTRIBUTE_OLVID_ROLE = "olvid-role";
 	public const USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD = "olvid-search";
 	public const USER_ATTRIBUTE_OLVID_IS_BOT = "olvid-is-bot";
+	public const USER_ATTRIBUTE_OLVID_MAGIC_TOKEN = "olvid-magic-token";
 
 	/*
 	 * Api request and response field names
@@ -94,6 +102,10 @@ class Constants {
 	public const MAGIC_REQUEST_USERNAME = "username";
 	public const MAGIC_REQUEST_NONCE = "nonce";
 	public const MAGIC_RESPONSE_TOKEN = "token";
+
+	// /getMagicSession constants
+	public const GET_MAGIC_SESSION_REQUEST_USERNAME = "username";
+	public const GET_MAGIC_SESSION_REQUEST_TOKEN = "token";
 
    // /groups constants
 	public const GROUPS_REQUEST_TIMESTAMP = "timestamp";

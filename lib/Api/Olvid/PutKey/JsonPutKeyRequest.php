@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\PutKey;
+namespace OCA\Olvid\Api\Olvid\PutKey;
 
 use OCA\Olvid\Api\Constants;
 

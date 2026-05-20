@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Tests\Unit\Api;
+namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Search\Search;
+use OCA\Olvid\Api\Olvid\Search\Search;
 
 class SearchHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsEmptyResultsWhenNoUsersHaveIdentity(): void {

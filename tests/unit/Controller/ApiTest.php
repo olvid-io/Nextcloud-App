@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Tests\Unit\Controller;
 
-use OCA\OIDCIdentityProvider\Db\ClientMapper as OidcClientMapper;
 use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Controller\OlvidApiController;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -50,11 +49,10 @@ class ApiTest extends TestCase {
 			$this->createMock(IAccountManager::class),
 			$this->createMock(IUserSession::class),
 			$this->createMock(IGroupManager::class),
-			$this->createMock(IEventDispatcher::class),
 			$this->createMock(LoggerInterface::class),
-			$this->createMock(OidcClientMapper::class),
 			$this->createMock(DiscoveryGenerator::class),
 			$urlGenerator,
+			$this->createMock(ICacheFactory::class),
 		);
 	}
 

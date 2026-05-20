@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Search;
+namespace OCA\Olvid\Api\Olvid\Search;
 
 use JsonSerializable;
 use OCA\Olvid\Api\Constants;

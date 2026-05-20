@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Tests\Unit\Api;
+namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
-use OCA\Olvid\Api\BaseJsonResponse;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\PutKey\PutKey;
+use OCA\Olvid\Api\Olvid\BaseJsonResponse;
+use OCA\Olvid\Api\Olvid\PutKey\PutKey;
 
 class PutKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenIdentityMissing(): void {

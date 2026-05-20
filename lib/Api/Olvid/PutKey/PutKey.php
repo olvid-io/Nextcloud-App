@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\PutKey;
+namespace OCA\Olvid\Api\Olvid\PutKey;
 
 use Exception;
-use OCA\Olvid\Api\ApiHandler;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\Api\Olvid\ApiHandler;
+use OCA\Olvid\Api\Olvid\PutKey\JsonPutKeyRequest;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
-
 use OCP\IUser;
 use OCP\PreConditionNotMetException;
 

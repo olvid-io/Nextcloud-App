@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Tests\Unit\Api;
+namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
-use OCA\Olvid\Api\BaseJsonResponse;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Me\Me;
-use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Api\Olvid\BaseJsonResponse;
+use OCA\Olvid\Api\Olvid\Me;
 
 class MeHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenUserIsNull(): void {

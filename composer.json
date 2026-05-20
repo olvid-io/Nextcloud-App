@@ -15,6 +15,11 @@
 			"OCA\\Olvid\\": "lib/"
 		}
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCA\\Olvid\\Tests\\Unit\\": "tests/unit/"
+		}
+	},
 	"scripts": {
 		"post-install-cmd": [
 			"@composer bin all install --ansi"

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api;
+namespace OCA\Olvid\Api\Olvid;
 
 use Exception;
 use OCP\Accounts\IAccountManager;

@@ -7,25 +7,26 @@ namespace OCA\Olvid\Controller;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\GetKey\GetKey;
-use OCA\Olvid\Api\GetMagicSession\GetMagicSession;
-use OCA\Olvid\Api\GetSession\GetSession;
-use OCA\Olvid\Api\Me\Me;
-use OCA\Olvid\Api\PutKey\PutKey;
-use OCA\Olvid\Api\RequestChallenge\RequestChallenge;
-use OCA\Olvid\Api\Search\Search;
-use OCA\Olvid\Api\Verify\Verify;
+use OCA\Olvid\Api\Olvid\GetKey;
+use OCA\Olvid\Api\Olvid\GetMagicSession\GetMagicSession;
+use OCA\Olvid\Api\Olvid\GetSession\GetSession;
+use OCA\Olvid\Api\Olvid\Me;
+use OCA\Olvid\Api\Olvid\PutKey\PutKey;
+use OCA\Olvid\Api\Olvid\RequestChallenge\RequestChallenge;
+use OCA\Olvid\Api\Olvid\Search\Search;
+use OCA\Olvid\Api\Olvid\Verify\Verify;
 use OCA\Olvid\Utils\AppConfigManager;
 use OCP\Accounts\IAccountManager;
-use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\ApiController as IApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TextPlainResponse;
-use OCP\AppFramework\ApiController as IApiController;
 use OCP\IAppConfig;
 use OCP\ICacheFactory;
 use OCP\IConfig;
@@ -38,7 +39,6 @@ use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 // oidc dependencies
-use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
 
 class OlvidApiController extends IApiController {
 	public function __construct(
@@ -76,9 +76,16 @@ class OlvidApiController extends IApiController {
     #[NoAdminRequired]
     #[ApiRoute(verb: 'GET', url: '/.well-known/openid-configuration')]
     public function openid(): Response {
+		// alternative try 1: get well known and returns it, fail in that configuration because certificate are not correct
+//		$wellKnownUrl = $this->urlGenerator->getAbsoluteURL("/.well-known/openid-configuration");
+//		$wellKnownContent = json_decode(file_get_contents($wellKnownUrl));
+//		return new JSONResponse($wellKnownContent);
+		// alternative try 2: forge a minimalist well known (miss a lot of fields)
+//		$response["issuer"] = $this->urlGenerator->getBaseUrl();
+//		$response["jwks_uri"] = $this->urlGenerator->linkToOCSRouteAbsolute("") . "/apps/olvid/.well-known/jwks";
+//		return new JsonResponse($response);
 		$discoveryResponse = $this->discoveryGenerator->generateDiscovery($this->request);
 		$patchedData = $discoveryResponse->getData();
-		// TODO how to properly generate url
 		$patchedData["jwks_uri"] = $this->urlGenerator->linkToOCSRouteAbsolute("") . "/apps/olvid/.well-known/jwks";
 		$discoveryResponse->setData($patchedData);
         return $discoveryResponse;
@@ -164,43 +171,61 @@ class OlvidApiController extends IApiController {
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/configuration')]
-	public function configuration(): Response {
-		try {
-			$response = ServerConfigurationUtils::getServerConfigurationLink($this->appConfig, $this->oidcClientMapper, $this->request);
-			return new TextPlainResponse($response);
-		} catch (Exception $e) {
-			$this->logger->error("Cannot generate configuration link: ". $e);
-			return new Response(500);
-		}
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/verify')]
+	public function verify(): Response {
+		return (new Verify($this->config, $this->appConfig, $this->userManager, $this->cacheFactory, $this->logger))->handle();
+	}
+
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/requestChallenge')]
+	public function requestChallenge(): Response {
+		return (new RequestChallenge($this->config, $this->appConfig, $this->userManager, $this->cacheFactory, $this->logger))->handle();
+	}
+
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getSession')]
+	public function getSession(): Response {
+		return (new GetSession($this->config, $this->appConfig, $this->userManager, $this->cacheFactory, $this->logger))->handle();
+	}
+
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getMagicSession')]
+	public function getMagicSession(): Response {
+		return (new GetMagicSession($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
 	}
 
 	/*
 	 * Get user that made request (if authenticated)
 	 * This handle oidc token and session cookie authentication
 	 */
+	// TODO not sure this is the right way to do
 	private function getUser(): ?IUser {
-		$user = null;
-		if ($this->userSession->isLoggedIn()) {
-			$user = $this->userSession->getUser();
-		}
-		else if (class_exists(OidcTokenValidationRequestEvent::class)) {
-			$token = $this->request->getHeader("Authorization");
-			if (str_starts_with(strtolower($token), "bearer ")) {
-				$token = trim(substr($token, 7));
-			}
-			$event = new OidcTokenValidationRequestEvent($token);
-			$this->eventDispatcher->dispatchTyped($event);
-			if ($event->getIsValid()) {
-				$userId = $event-> getUserId();
-				$user = $this->userManager->get($userId);
-				$this->logger->debug('The provided token is valid and was issued for user ' . $userId);
-			} else {
-				$this->logger->debug('The provided token is invalid');
+		if ($this->request->getHeader("Authorization")) {
+			// Try validating as our own app-issued JWT
+			$rawHeader = $this->request->getHeader("Authorization");
+			$token = str_starts_with(strtolower($rawHeader), "bearer ") ? trim(substr($rawHeader, 7)) : $rawHeader;
+
+			try {
+				$publicKey = AppConfigManager::getJwkKeyPublicKey($this->appConfig);
+				$decoded = JWT::decode($token, new Key($publicKey, 'ES256'));
+				if ($decoded->type !== "session") {
+					throw new Exception("Invalid JWK key type: " . $decoded->type);
+				}
+				$user = $this->userManager->get($decoded->sub);
+				$this->logger->debug($decoded->sub . ' logged in using bearer token');
+				return $user;
+			} catch (Exception $e) {
+				$this->logger->error('Bearer token is not a valid app-issued JWT: ' . $e->getMessage());
 			}
 		} else {
-			$this->logger->debug('The oidc app is not installed/available');
+			$this->logger->error('Missing authorization header');
 		}
-		return $user;
+		return null;
 	}
 }

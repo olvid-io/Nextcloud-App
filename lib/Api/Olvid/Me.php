@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Me;
+namespace OCA\Olvid\Api\Olvid;
 
 use Exception;
-use OCA\Olvid\Api\ApiHandler;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
@@ -15,26 +14,29 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use OCP\IUser;
-use OCP\PreConditionNotMetException;
 
 class Me extends ApiHandler {
-	/**
-	 * @throws PreConditionNotMetException
-	 */
 	public function handler(?IUser $user, IRequest $request, array $jsonParameters): Response {
-		$meRequest = new JsonMeRequest($jsonParameters);
+		// Parse request
+		try {
+			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
+			$timestamp = (int)($jsonParameters[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
+		} catch (Exception $e) {
+			$this->logger->warning('Me: parse error: ' . $e->getMessage());
+			return $this->invalidRequestDevice();
+		}
 
-		$response = new JsonMeResponse();
-
+		// check request content
 		if (!$user) {
 			return $this->invalidRequestDevice();
 		}
 
+		// sign details if necessary and set in response
 		$signature = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);
 		if (!$signature) {
 			$signature = OlvidUserDetails::signUserDetails($user, $this->config, $this->appConfig);
 		}
-		$response->signature = $signature;
+		$response[Constants::ME_RESPONSE_SIGNATURE] = $signature;
 
 		// get current api key, create a new one if there is an identity and no associated api key (fallback)
 		$apiKey = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY);
@@ -48,24 +50,24 @@ class Me extends ApiHandler {
 				$this->logger->error("Me: cannot create user api key: " . $e);
 			}
 		}
-		$response->apiKey = $apiKey;
+		$response[Constants::ME_RESPONSE_API_KEY] = $apiKey;
 
-		$response->server = AppConfigManager::getOlvidServerUrl($this->appConfig) ?? "";
-		$response->revocationAllowed = true;
-		$response->transferRestricted = false;
+		$response[Constants::ME_RESPONSE_SERVER] = AppConfigManager::getOlvidServerUrl($this->appConfig) ?? "";
+		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = true;
+		$response[Constants::ME_RESPONSE_TRANSFER_RESTRICTED] = false;
 
-		// TODO
-		$response->minimumBuildVersions = [
+		// TODO is this really necessary ?
+		$response[Constants::ME_RESPONSE_MINIMUM_BUILD_VERSIONS] = [
 			Constants::ME_RESPONSE_MINIMUM_BUILD_VERSION_ANDROID_LABEL => 0,
 			Constants::ME_RESPONSE_MINIMUM_BUILD_VERSION_IOS_LABEL => 0,
 		];
 
-		$response->pushTopicNames = [];
+		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = [];
 
-		$response->nonce = uuid_create();
+		$response[Constants::ME_RESPONSE_NONCE] = uuid_create();
 
-		$response->signedRevocations = [];
-		$response->currentTimestamp = time();
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = [];
+		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = time();
 
         return new JSONResponse($response, 200);
     }

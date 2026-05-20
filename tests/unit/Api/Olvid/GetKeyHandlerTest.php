@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Tests\Unit\Api;
+namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
-use OCA\Olvid\Api\BaseJsonResponse;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\GetKey\GetKey;
+use OCA\Olvid\Api\Olvid\BaseJsonResponse;
+use OCA\Olvid\Api\Olvid\GetKey;
 use OCA\Olvid\AppInfo\Application;
 
 class GetKeyHandlerTest extends ApiHandlerTestCase {

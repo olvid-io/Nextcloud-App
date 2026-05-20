@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Controller;
 
+use OCA\Olvid\Api\App\MagicLink\MagicLink;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\MagicLink\MagicLink;
 use OCA\Olvid\AppInfo\Application;
+use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\ApiController;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IRequest;
