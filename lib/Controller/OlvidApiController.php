@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use Exception;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\GetKey\GetKey;
+use OCA\Olvid\Api\GetMagicSession\GetMagicSession;
+use OCA\Olvid\Api\GetSession\GetSession;
 use OCA\Olvid\Api\Me\Me;
 use OCA\Olvid\Api\PutKey\PutKey;
+use OCA\Olvid\Api\RequestChallenge\RequestChallenge;
 use OCA\Olvid\Api\Search\Search;
-use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Api\Verify\Verify;
 use OCA\Olvid\Utils\AppConfigManager;
-use OCA\Olvid\Utils\ServerConfigurationUtils;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -22,8 +26,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\ApiController as IApiController;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -31,42 +35,25 @@ use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
-use OCP\PreConditionNotMetException;
 use Psr\Log\LoggerInterface;
 
 // oidc dependencies
 use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
-use OCA\OIDCIdentityProvider\Db\ClientMapper as OidcClientMapper;
-use OCA\OIDCIdentityProvider\Event\TokenValidationRequestEvent as OidcTokenValidationRequestEvent;
 
 class OlvidApiController extends IApiController {
-    private IConfig $config;
-	private IAppConfig $appConfig;
-    private IUserManager $userManager;
-    private IAccountManager $accountManager;
-    private IUserSession $userSession;
-    private IGroupManager $groupManager;
-	private IEventDispatcher $eventDispatcher;
-	private LoggerInterface $logger;
-	private OidcClientMapper $oidcClientMapper;
-	private DiscoveryGenerator $discoveryGenerator;
-	private IURLGenerator $urlGenerator;
-
 	public function __construct(
         string $appName,
         IRequest $request,
-		IConfig $config,
-		IAppConfig $appConfig,
-        IUserManager $userManager,
-        IAccountManager $accountManager,
-        IUserSession $userSession,
-        IGroupManager $groupManager,
-		IEventDispatcher $eventDispatcher,
-		LoggerInterface $logger,
-		OidcClientMapper $clientMapper,
-		DiscoveryGenerator $discoveryGenerator,
-		IURLGenerator $urlGenerator,
-
+		private readonly IConfig $config,
+		private readonly IAppConfig $appConfig,
+        private readonly IUserManager $userManager,
+        private readonly IAccountManager $accountManager,
+        private readonly IUserSession $userSession,
+        private readonly IGroupManager $groupManager,
+		private readonly LoggerInterface $logger,
+		private readonly DiscoveryGenerator $discoveryGenerator,
+		private readonly IURLGenerator $urlGenerator,
+		private readonly ICacheFactory $cacheFactory,
     ) {
         parent::__construct($appName, $request);
 		$this->config = $config;
@@ -90,47 +77,6 @@ class OlvidApiController extends IApiController {
 		return new TextPlainResponse("pong");
     }
 
-	#[PublicPage]
-	#[NoCSRFRequired]
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/reset')]
-	public function reset(): TextPlainResponse {
-		$user = $this->getUser();
-		if ($user) {
-			$this->resetUser($user);
-			return new TextPlainResponse("reset " . $user->getDisplayName());
-		}
-		else {
-			return new TextPlainResponse("not logged in");
-		}
-	}
-
-	#[PublicPage]
-	#[NoCSRFRequired]
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/resetAll')]
-	public function resetAll(): TextPlainResponse {
-		$users = $this->userManager->search("");
-		foreach ($users as $user) {
-			$this->resetUser($user);
-		}
-		return new TextPlainResponse("reset " . count($users) . " users");
-	}
-
-	private function resetUser(Iuser $user): void {
-		try {
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_COMPANY, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_POSITION, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_NONCE, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_ROLE, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IS_BOT, "");
-		} catch (PreConditionNotMetException) {}
-	}
-
 	/*
 	 * Proxy to oidc application openid-configuration file content
 	 * We override jwks url to use our own key to sign user details
@@ -147,6 +93,22 @@ class OlvidApiController extends IApiController {
 		$discoveryResponse->setData($patchedData);
         return $discoveryResponse;
     }
+
+	// directory well known
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/.well-known/olvid')]
+	public function olvid(): Response {
+		$response["supportIdentityAuthentication"] = true;
+		$response["apiVersion"] = Constants::OLVID_DIRECTORY_API_VERSION;
+		$minBuildVersions["android"] = Constants::MIN_BUILD_ANDROID;
+		$minBuildVersions["ios"] = Constants::MIN_BUILD_IOS;
+		$minBuildVersions["desktop"] = Constants::MIN_BUILD_DESKTOP;
+		$minBuildVersions["daemon"] = Constants::MIN_BUILD_DAEMON;
+		$response["minBuildVersions"] = $minBuildVersions;
+		return new JSONResponse($response);
+	}
 
 	/*
 	 * Expose our public key to allow clients to verify plugin signature
@@ -170,17 +132,6 @@ class OlvidApiController extends IApiController {
 			]
 		];
 		return new JSONResponse($jwks);
-	}
-
-
-	#[PublicPage]
-	#[NoCSRFRequired]
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/me')]
-	public function meGet(): Response {
-		// TODO check  user authentication !!
-
-		return (new Me($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
 	}
 
 	#[PublicPage]
