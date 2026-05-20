@@ -62,7 +62,7 @@ class Me extends ApiHandler {
 
 		$response->pushTopicNames = [];
 
-		$response->nonce = "nonce";
+		$response->nonce = uuid_create();
 
 		$response->signedRevocations = [];
 		$response->currentTimestamp = time();
