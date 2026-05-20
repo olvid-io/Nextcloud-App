@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpMultipleClassesDeclarationsInOneFile */
+<?php
 
 namespace OCA\Olvid\Utils\OlvidServer;
 

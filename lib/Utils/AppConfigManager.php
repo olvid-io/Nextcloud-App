@@ -2,16 +2,14 @@
 
 namespace OCA\Olvid\Utils;
 
+use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\IAppConfig;
 
 class AppConfigManager {
 	// Olvid Server
-	private const APP_CONFIG_OLVID_SERVER_URL = "olvid-server-url";
-	// TODO how to associate those values to settings ?
+	public const APP_CONFIG_OLVID_SERVER_URL = "olvid-server-url";
 	public const APP_CONFIG_OLVID_SERVER_API_KEY = "olvid-server-api-key";
-	// Open Id Connect
-	public const APP_CONFIG_OIDC_CLIENT_ID = "olvid-oidc-client-id";
 	// json web key
 	private const APP_CONFIG_JWK_KEY_ID = "olvid-jwk-key-id";
 	private const APP_CONFIG_JWK_KEY_TYPE = "olvid-jwk-key-type";
@@ -32,31 +30,15 @@ class AppConfigManager {
 	}
 
 	/*
-	 * Olvid Server
+	 * Get fields set up in settings
 	 */
-	// url
+	// olvid server url
 	public static function getOlvidServerUrl(IAppConfig $appConfig): ?string {
-		return AppConfigManager::getValue($appConfig, self::APP_CONFIG_OLVID_SERVER_URL);
-	}
-	public static function setOlvidServerUrl(IAppConfig $appConfig, ?string $value): void {
-		AppConfigManager::setValue($appConfig, self::APP_CONFIG_OLVID_SERVER_URL, $value);
+		return AppConfigManager::getValue($appConfig, self::APP_CONFIG_OLVID_SERVER_URL) ?? Constants::DEFAULT_OLVID_SERVER;
 	}
 	// api key
 	public static function getOlvidServerApiKey(IAppConfig $appConfig): ?string {
 		return AppConfigManager::getValue($appConfig, self::APP_CONFIG_OLVID_SERVER_API_KEY);
-	}
-	public static function setOlvidServerApiKey(IAppConfig $appConfig, ?string $value): void {
-		AppConfigManager::setValue($appConfig, self::APP_CONFIG_OLVID_SERVER_API_KEY, $value);
-	}
-
-	/*
-	 * Open Id Connect (oidc)
-	 */
-	public static function getOidcClientId(IAppConfig $appConfig): ?string {
-		return AppConfigManager::getValue($appConfig, self::APP_CONFIG_OIDC_CLIENT_ID);
-	}
-	public static function setOidcClientId(IAppConfig $appConfig, ?string $value): void {
-		AppConfigManager::setValue($appConfig, self::APP_CONFIG_OIDC_CLIENT_ID, $value);
 	}
 
 	/*
