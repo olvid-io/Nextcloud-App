@@ -8,7 +8,8 @@ class Constants {
 	/*
 	 ** Session and authentication
 	 */
-	public const MAGIC_SESSION_DURATION_S = 3600 * 24; // 1 day
+	public const IDENTITY_SESSION_DURATION_S = 3600 * 24; // 1 day
+	public const MAGIC_SESSION_DURATION_S = 3600; // 1 hour
 	public const MAGIC_LINK_DURATION_S = 300; // 5 min
 
 	// Minimum build numbers supporting this version of the keycloak plugin API

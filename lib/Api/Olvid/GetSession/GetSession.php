@@ -85,7 +85,11 @@ class GetSession extends EngineApiHandler {
         }
 
         // --- 5. Get user Olvid identity -----------------------------------------
-        $identityB64 = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
+        $identityB64 = $this->config->getUserValue(
+			$user->getUID(),
+			Application::APP_ID,
+			Constants::USER_ATTRIBUTE_OLVID_IDENTITY
+		);
         if ($identityB64 === '') {
             $this->logger->warning('getSession: user has no Olvid identity');
             return $this->permissionDenied();
@@ -113,7 +117,7 @@ class GetSession extends EngineApiHandler {
             return $this->permissionDenied();
         }
 
-        // --- 7. Generate OIDC tokens --------------------------------------------
+        // --- 7. Generate bearer token --------------------------------------------
 		$privateKeyPem = AppConfigManager::getJwkKeyPrivateKey($this->appConfig);
 		$keyId         = AppConfigManager::getJwkKeyId($this->appConfig);
 		if ($privateKeyPem === null) {
@@ -126,8 +130,7 @@ class GetSession extends EngineApiHandler {
 			return $this->generalError();
 		}
 		$now        = time();
-		// TODO set in constants ?
-		$expiresIn  = 3600 * 24;
+		$expiresIn  = Constants::IDENTITY_SESSION_DURATION_S;
 
 		$accessToken = JWT::encode([
 			'iss' => 'olvid-nextcloud',

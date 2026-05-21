@@ -7,7 +7,7 @@
 	<description>Olvid integration</description>
 	<version>1.0.0</version>
 	<licence>agpl</licence>
-	<author mail="bot@olvid.io" homepage="">Olvid</author>
+	<author mail="bot@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<namespace>Olvid</namespace>
 	<category>social</category>
 	<bugs>https://olvid.io/faq</bugs>
