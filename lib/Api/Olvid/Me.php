@@ -15,8 +15,8 @@ use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use OCP\IUser;
 
-class Me extends ApiHandler {
-	public function handler(?IUser $user, IRequest $request, array $jsonParameters): Response {
+class Me extends OlvidAppHandler {
+	public function handler(IUser $user, array $jsonParameters): Response {
 		// Parse request
 		try {
 			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;

@@ -53,7 +53,8 @@ class Constants {
 	public const USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD = "olvid-search";
 	public const USER_ATTRIBUTE_OLVID_IS_BOT = "olvid-is-bot";
 	public const USER_ATTRIBUTE_OLVID_MAGIC_TOKEN = "olvid-magic-token";
-
+	// when set, any token issued before this date is considered as invalid
+	public const USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE = 'olvid-session-revoked-before';
 	/*
 	 * Api request and response field names
 	 */

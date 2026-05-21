@@ -9,15 +9,14 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\IRequest;
 use OCP\IUser;
 
-class GetKey extends ApiHandler {
-	public function handler(?IUser $user, IRequest $request, array $jsonParameters): Response {
+class GetKey extends OlvidAppHandler {
+	public function handler(IUser $user, array $jsonParameters): Response {
 		// Parse request
 		try {
-			$userId = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
-			if (!$userId) {
+			$user = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
+			if (!$user) {
 				return $this->invalidRequestDevice();
 			}
 		} catch (Exception $e) {
@@ -26,7 +25,7 @@ class GetKey extends ApiHandler {
 		}
 
 		// get user in database
-		$otherUser = $this->userManager->get($userId);
+		$otherUser = $this->userManager->get($user);
 		if (!$otherUser) {
 			return $this->invalidRequestDevice();
 		}

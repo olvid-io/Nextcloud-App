@@ -96,7 +96,7 @@ class OlvidUserDetails implements JsonSerializable {
 	public function jsonSerialize(): array {
 		return [
 			Constants::DETAILS_KEY_ID => $this->id,
-			Constants::DETAILS_KEY_IDENTITY => $this->identity,
+			Constants::DETAILS_KEY_IDENTITY => trim($this->identity) ? $this->identity : null, // set identity to null and not to an empty string
 			Constants::DETAILS_KEY_FIRST_NAME => $this->firstname,
 			Constants::DETAILS_KEY_LAST_NAME => $this->lastname,
 			Constants::DETAILS_KEY_POSITION => $this->position,

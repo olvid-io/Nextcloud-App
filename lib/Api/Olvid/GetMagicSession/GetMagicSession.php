@@ -7,7 +7,7 @@ namespace OCA\Olvid\Api\Olvid\GetMagicSession;
 use Exception;
 use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\ApiHandler;
+use OCA\Olvid\Api\Olvid\OlvidAppHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Utils\AppConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -27,13 +27,14 @@ use Psr\Log\LoggerInterface;
  * Request body: {"username": "...", "token": "..."}
  * Response: JSON token on success, error JSON on failure.
  */
-class GetMagicSession extends ApiHandler {
-	public function handler(?IUser $user, IRequest $request, array $jsonParameters): JSONResponse {
+class GetMagicSession extends OlvidAppHandler {
+	// unauthenticated entrypoint, argument $user is null
+	public function handler(?IUser $user, array $jsonParameters): JSONResponse {
         // --- 1. Parse request ---
         try {
-            $userId = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
+            $user = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
             $token    = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_TOKEN]    ?? null;
-            if ($userId === null || $token === null) {
+            if ($user === null || $token === null) {
                 throw new Exception('Missing username or token');
             }
         } catch (Exception $e) {
@@ -42,9 +43,9 @@ class GetMagicSession extends ApiHandler {
         }
 
         // --- 2. Look up user (always return same error to avoid leaking whether user exists) ---
-        $targetUser = $this->userManager->get($userId);
+        $targetUser = $this->userManager->get($user);
         if ($targetUser === null) {
-            $this->logger->warning('getMagicSession: user not found: ' . $userId);
+            $this->logger->warning('getMagicSession: user not found: ' . $user);
             return $this->invalidRequestDevice();
         }
 

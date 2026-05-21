@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\Olvid\ListUsers;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\ApiHandler;
+use OCA\Olvid\Api\Olvid\OlvidAppHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCP\AppFramework\Http\JSONResponse;
@@ -13,8 +13,8 @@ use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use OCP\IUser;
 
-class ListUsers extends ApiHandler {
-	public function handler(?IUser $user, IRequest $request, array $jsonParameters): Response {
+class ListUsers extends OlvidAppHandler {
+	public function handler(IUser $user, array $jsonParameters): Response {
 		$listUsersRequest = new JsonListUsersRequest($jsonParameters);
 
 		// TODO: handle request: add a user attribute with the registration timestamp
