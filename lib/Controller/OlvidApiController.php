@@ -18,7 +18,6 @@ use OCA\Olvid\Api\Olvid\RequestChallenge\RequestChallenge;
 use OCA\Olvid\Api\Olvid\Search\Search;
 use OCA\Olvid\Api\Olvid\Verify\Verify;
 use OCA\Olvid\Utils\AppConfigManager;
-use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\ApiController as IApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -28,32 +27,36 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IAppConfig;
-use OCP\ICacheFactory;
-use OCP\IConfig;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
-use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 // oidc dependencies
 
 class OlvidApiController extends IApiController {
+	// PROPOSAL: if this controller grows, consider splitting into:
+	//   OlvidApiController       → ping, openid, olvid, jwks (no handlers)
+	//   OlvidIdentityController  → me, putKey, getKey, search, getMagicSession
+	//   OlvidSessionController   → verify, requestChallenge, getSession
+	// Each controller would only inject the handlers it actually uses.
 	public function __construct(
         string $appName,
         IRequest $request,
-		private readonly IConfig $config,
 		private readonly IAppConfig $appConfig,
         private readonly IUserManager $userManager,
-        private readonly IAccountManager $accountManager,
-        private readonly IUserSession $userSession,
-        private readonly IGroupManager $groupManager,
 		private readonly LoggerInterface $logger,
 		private readonly DiscoveryGenerator $discoveryGenerator,
 		private readonly IURLGenerator $urlGenerator,
-		private readonly ICacheFactory $cacheFactory,
+		private readonly Me $meHandler,
+		private readonly PutKey $putKeyHandler,
+		private readonly GetKey $getKeyHandler,
+		private readonly Search $searchHandler,
+		private readonly Verify $verifyHandler,
+		private readonly RequestChallenge $requestChallengeHandler,
+		private readonly GetSession $getSessionHandler,
+		private readonly GetMagicSession $getMagicSessionHandler,
     ) {
         parent::__construct($appName, $request);
     }
@@ -139,7 +142,7 @@ class OlvidApiController extends IApiController {
     public function me(): Response {
 		// TODO check  user authentication !!
 
-        return (new Me($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
+        return $this->meHandler->handle($this->getUser(), $this->request);
     }
 
 	#[PublicPage]
@@ -148,7 +151,7 @@ class OlvidApiController extends IApiController {
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/putKey')]
 	public function putKey(): Response {
 		// TODO check  user authentication !!
-		return (new PutKey($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
+		return $this->putKeyHandler->handle($this->getUser(), $this->request);
 	}
 
 	#[PublicPage]
@@ -157,7 +160,7 @@ class OlvidApiController extends IApiController {
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getKey')]
 	public function getKey(): Response {
 		// TODO check  user authentication ??!!
-		return (new GetKey($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
+		return $this->getKeyHandler->handle($this->getUser(), $this->request);
 	}
 
 	#[PublicPage]
@@ -165,7 +168,7 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/search')]
 	public function listUsers(): Response {
-		return (new Search($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
+		return $this->searchHandler->handle($this->getUser(), $this->request);
 	}
 
 	#[PublicPage]
@@ -173,7 +176,7 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/verify')]
 	public function verify(): Response {
-		return (new Verify($this->config, $this->appConfig, $this->userManager, $this->cacheFactory, $this->logger))->handle();
+		return $this->verifyHandler->handle();
 	}
 
 	#[PublicPage]
@@ -181,7 +184,7 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/requestChallenge')]
 	public function requestChallenge(): Response {
-		return (new RequestChallenge($this->config, $this->appConfig, $this->userManager, $this->cacheFactory, $this->logger))->handle();
+		return $this->requestChallengeHandler->handle();
 	}
 
 	#[PublicPage]
@@ -189,7 +192,7 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getSession')]
 	public function getSession(): Response {
-		return (new GetSession($this->config, $this->appConfig, $this->userManager, $this->cacheFactory, $this->logger))->handle();
+		return $this->getSessionHandler->handle();
 	}
 
 	#[PublicPage]
@@ -197,7 +200,7 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getMagicSession')]
 	public function getMagicSession(): Response {
-		return (new GetMagicSession($this->config, $this->appConfig, $this->userManager, $this->accountManager, $this->userSession, $this->groupManager, $this->logger))->handle($this->getUser(), $this->request);
+		return $this->getMagicSessionHandler->handle($this->getUser(), $this->request);
 	}
 
 	/*

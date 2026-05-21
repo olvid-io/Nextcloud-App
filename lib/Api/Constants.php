@@ -5,6 +5,12 @@ namespace OCA\Olvid\Api;
 class Constants {
 	public const DEFAULT_OLVID_SERVER = "https://server.olvid.io";
 
+	/*
+	 ** Session and authentication
+	 */
+	public const MAGIC_SESSION_DURATION_S = 3600 * 24; // 1 day
+	public const MAGIC_LINK_DURATION_S = 300; // 5 min
+
 	// Minimum build numbers supporting this version of the keycloak plugin API
 	public const MIN_BUILD_ANDROID = 200;
 	public const MIN_BUILD_IOS = 650;

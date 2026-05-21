@@ -67,36 +67,36 @@ abstract class ApiHandler {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// standard responses
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	protected function success(): Response {
+	protected function success(): JSONResponse {
 		return new JSONResponse(["status"=> BaseJsonResponse::STATUS_SUCCESS], 200);
     }
 
     // error responses for devices
-    protected function permissionDeniedDevice(): Response {
+    protected function permissionDeniedDevice(): JSONResponse {
         return $this->createDeviceErrorResponse(BaseJsonResponse::ERROR_CODE_PERMISSION_DENIED, "permission denied");
     }
 
-    protected function invalidRequestDevice(): Response {
+    protected function invalidRequestDevice(): JSONResponse {
         return $this->createDeviceErrorResponse(BaseJsonResponse::ERROR_CODE_INVALID_REQUEST, "invalid request");
     }
 
-    protected function identityAlreadyUploaded(): Response {
+    protected function identityAlreadyUploaded(): JSONResponse {
         return $this->createDeviceErrorResponse(BaseJsonResponse::ERROR_CODE_IDENTITY_ALREADY_UPLOADED, "identity already uploaded, use override option");
     }
 
-    protected function identityWasRevoked(): Response {
+    protected function identityWasRevoked(): JSONResponse {
         return $this->createDeviceErrorResponse(BaseJsonResponse::ERROR_CODE_IDENTITY_WAS_REVOKED, "Identity has been revoked");
     }
 
-    protected function identityNotUploadedYet(): Response {
+    protected function identityNotUploadedYet(): JSONResponse {
         return $this->createDeviceErrorResponse(BaseJsonResponse::ERROR_CODE_IDENTITY_NOT_UPLOADED_YET, "Identity was not uploaded yet");
     }
 
-    protected function internalErrorDevice(): Response {
+    protected function internalErrorDevice(): JSONResponse {
         return $this->createDeviceErrorResponse(BaseJsonResponse::ERROR_CODE_INTERNAL_ERROR, "internal error");
     }
 
-	protected function createDeviceErrorResponse(int $errorCode, string $message): Response {
+	protected function createDeviceErrorResponse(int $errorCode, string $message): JSONResponse {
 		$response = new BaseJsonResponse($message, $errorCode, BaseJsonResponse::STATUS_ERROR);
 		$response->message = $message;
 		$response->error = $errorCode;

@@ -22,7 +22,7 @@ use Psr\Log\LoggerInterface;
 /**
  * POST /olvid-rest/getMagicSession
  *
- * JSON endpoint. Validates a per-user magic token and returns a bearer tokens.
+ * JSON endpoint. Validates a per-user magic token and returns a bearer token.
  *
  * Request body: {"username": "...", "token": "..."}
  * Response: JSON token on success, error JSON on failure.
@@ -31,9 +31,9 @@ class GetMagicSession extends ApiHandler {
 	public function handler(?IUser $user, IRequest $request, array $jsonParameters): JSONResponse {
         // --- 1. Parse request ---
         try {
-            $username = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
+            $userId = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
             $token    = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_TOKEN]    ?? null;
-            if ($username === null || $token === null) {
+            if ($userId === null || $token === null) {
                 throw new Exception('Missing username or token');
             }
         } catch (Exception $e) {
@@ -42,28 +42,32 @@ class GetMagicSession extends ApiHandler {
         }
 
         // --- 2. Look up user (always return same error to avoid leaking whether user exists) ---
-        $targetUser = $this->userManager->get($username);
+        $targetUser = $this->userManager->get($userId);
         if ($targetUser === null) {
-            $this->logger->warning('getMagicSession: user not found: ' . $username);
+            $this->logger->warning('getMagicSession: user not found: ' . $userId);
             return $this->invalidRequestDevice();
         }
 
         // --- 3. Validate magic token ---
-        $storedJson = $this->config->getUserValue($targetUser->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN);
+        $storedJson = $this->config->getUserValue(
+			$targetUser->getUID(),
+			Application::APP_ID,
+			Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN);
         if ($storedJson === '') {
             $this->logger->warning('getMagicSession: no magic token stored for user');
             return $this->invalidRequestDevice();
         }
 
+		// Decode magic token
         $stored = json_decode($storedJson, true);
         if (!is_array($stored) || !isset($stored['token']) || $stored['token'] !== $token) {
             $this->logger->warning('getMagicSession: invalid token for user');
             return $this->invalidRequestDevice();
         }
 
-        // Check expiration (null = no expiration)
+        // Check magic token expiration (null = no expiration)
         if (isset($stored['expiration']) && $stored['expiration'] !== null) {
-            if ($stored['expiration'] < (int)(microtime(true) * 1000)) {
+            if ($stored['expiration'] < time()) {
                 $this->logger->warning('getMagicSession: expired magic token for user');
                 return $this->invalidRequestDevice();
             }
@@ -82,8 +86,7 @@ class GetMagicSession extends ApiHandler {
 			return $this->internalErrorDevice();
 		}
 		$now       = time();
-		// TODO set in constants ?
-		$expiresIn = 3600;
+		$expiresIn = Constants::MAGIC_SESSION_DURATION_S;
 
 		$accessToken = JWT::encode([
 			'iss' => 'olvid-nextcloud',
