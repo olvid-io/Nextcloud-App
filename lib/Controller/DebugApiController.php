@@ -43,7 +43,7 @@ class DebugApiController extends ApiController
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/debug')]
+	#[ApiRoute(verb: 'GET', url: '/debug/debug')]
 	public function debug(): JSONResponse
 	{
 		$userConfig = [];
@@ -77,7 +77,7 @@ class DebugApiController extends ApiController
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/reset')]
+	#[ApiRoute(verb: 'GET', url: '/debug/reset')]
 	public function reset(): TextPlainResponse {
 		$user = $this->userSession->getUser();
 		if ($user) {
@@ -92,7 +92,7 @@ class DebugApiController extends ApiController
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/resetAll')]
+	#[ApiRoute(verb: 'GET', url: '/debug/resetAll')]
 	public function resetAll(): TextPlainResponse {
 		$users = $this->userManager->search("");
 		foreach ($users as $user) {
