@@ -7,9 +7,9 @@ namespace OCA\Olvid\Api\Olvid\ListUsers;
 use OCA\Olvid\Api\Constants;
 
 class JsonListUsersRequest {
-	public ?string $identity;
+	public int $timestamp;
 
 	public function __construct(array $data) {
-		$this->identity = $data[Constants::PUT_KEY_REQUEST_IDENTITY];
+		$this->timestamp = (int)($data[Constants::LIST_USERS_REQUEST_TIMESTAMP] ?? 0);
 	}
 }

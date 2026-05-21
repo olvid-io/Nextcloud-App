@@ -17,7 +17,8 @@ class ListUsers extends ApiHandler {
 	public function handler(?IUser $user, IRequest $request, array $jsonParameters): Response {
 		$listUsersRequest = new JsonListUsersRequest($jsonParameters);
 
-		// TODO handle request
+		// TODO: handle request: add a user attribute with the registration timestamp
+		// then we can filter to return only users that registered since $listUsersRequests->timestamp
 
 		$response = new JsonListUsersResponse();
 		$users = $this->userManager->search("");
@@ -27,7 +28,8 @@ class ListUsers extends ApiHandler {
 				$response->users[] = OlvidUserDetails::getCurrentUserDetails($user, $this->config);
 			}
 		}
-		$response->timestamp = time();
+		// current timestamp in milliseconds
+		$response->timestamp = (int)(microtime(true) * 1000);
 
 		return new JSONResponse($response);
     }

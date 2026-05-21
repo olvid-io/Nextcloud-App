@@ -16,7 +16,6 @@ class JsonListUsersResponse implements JsonSerializable {
 		return [
 			Constants::LIST_USERS_RESPONSE_USERS => $this->users,
 			Constants::LIST_USERS_RESPONSE_TIMESTAMP => $this->timestamp
-
 		];
 	}
 }
