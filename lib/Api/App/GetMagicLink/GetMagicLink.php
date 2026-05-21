@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\App\MagicLink;
+namespace OCA\Olvid\Api\App\GetMagicLink;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
@@ -16,7 +16,7 @@ use OCP\PreConditionNotMetException;
 use Psr\Log\LoggerInterface;
 
 /**
- * GET /olvid-rest/magicLink
+ * GET /app/getMagicLink
  *
  * Authenticated endpoint. Returns a magic configuration link that the user can
  * scan with their Olvid app to authenticate without the full challenge/response flow.
@@ -26,7 +26,7 @@ use Psr\Log\LoggerInterface;
  *
  * Response: {"configurationUrl": "https://configuration.olvid.io/#<base64>"}
  */
-class MagicLink {
+class GetMagicLink {
     public function __construct(
         private readonly IConfig          $config,
         private readonly IAppConfig       $appConfig,
@@ -34,13 +34,9 @@ class MagicLink {
         private readonly LoggerInterface  $logger,
     ) {}
 
-    public function handle(?string $userId): JSONResponse {
-        if ($userId === null) {
-            return new JSONResponse(['status' => 'error', 'error' => 'permission denied'], 403);
-        }
-
+    public function handle(string $userId): JSONResponse {
         try {
-            $token            = $this->getOrCreateToken($userId);
+            $token            = $this->createToken($userId);
             $configurationUrl = $this->buildLink($userId, $token);
             return new JSONResponse(['configurationUrl' => $configurationUrl]);
         } catch (Exception $e) {
@@ -50,28 +46,17 @@ class MagicLink {
     }
 
     /**
-     * Return the stored magic token if it exists and is still valid; otherwise generate a new one.
+     * Generate a new token, overriding any existing one.
      *
      * @throws PreConditionNotMetException
      */
-    private function getOrCreateToken(string $userId): string {
-        $stored = $this->config->getUserValue($userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN);
-        if ($stored !== '') {
-            $data = json_decode($stored, true);
-            if (is_array($data) && isset($data['token']) && $data['token'] !== '') {
-                $expiration = $data['expiration'] ?? null;
-                if ($expiration === null || $expiration > (int)(microtime(true) * 1000)) {
-                    return $data['token'];
-                }
-            }
-        }
-
+    private function createToken(string $userId): string {
         $token = uuid_create();
         $this->config->setUserValue(
             $userId,
             Application::APP_ID,
             Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN,
-            (string) json_encode(['token' => $token, 'expiration' => microtime(true) * 1000 * 60 * 5]), // 5 min expiration
+            (string) json_encode(['token' => $token, 'expiration' => time() + 300]), // 5 min expiration
         );
         return $token;
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Controller;
 
-use OCA\Olvid\Api\App\MagicLink\MagicLink;
+use OCA\Olvid\Api\App\GetMagicLink\GetMagicLink;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\AppFramework\ApiController;
@@ -12,13 +12,8 @@ use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IRequest;
-use OCP\IURLGenerator;
-use OCP\IUser;
-use OCP\IUserSession;
-use Psr\Log\LoggerInterface;
 
 /*
  ** This Api is the backend for the Nextcloud application
@@ -29,10 +24,7 @@ class AppApiController extends ApiController {
 		IRequest $request,
 		private readonly IConfig  $config,
 		private readonly ?string  $userId,
-		private readonly IUserSession $userSession,
-		private readonly IAppConfig $appConfig,
-		private readonly IURLGenerator $urlGenerator,
-		private readonly LoggerInterface $logger,
+		private readonly GetMagicLink $getMagicLinkHandler,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -41,14 +33,14 @@ class AppApiController extends ApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/status')]
 	public function status(): JSONResponse {
-		if ($this->userId === null) {
-			return new JSONResponse(['error' => 'unauthenticated'], 401);
-		}
+		if ($err = $this->requireAuth()) return $err;
+
 		$identity = $this->config->getUserValue(
 			$this->userId,
 			Application::APP_ID,
 			Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
 		);
+
 		return new JSONResponse(['olvidIdentityUploaded' => $identity !== '']);
 	}
 
@@ -56,29 +48,29 @@ class AppApiController extends ApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/getMagicLink')]
 	public function getMagicLink(): JSONResponse {
-		if ($this->userId === null) {
-			return new JSONResponse(['error' => 'unauthenticated'], 401);
-		}
-		return (new MagicLink($this->config, $this->appConfig, $this->urlGenerator, $this->logger))->handle($this->userId);
+      if ($err = $this->requireAuth()) return $err;
+	  return $this->getMagicLinkHandler->handle($this->userId);
 	}
 
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/revokeIdentity')]
 	public function revokeIdentity(): JSONResponse {
-		if ($this->userId === null) {
-			return new JSONResponse(['error' => 'unauthenticated'], 401);
-		}
-		$this->config->deleteUserValue(
+      if ($err = $this->requireAuth()) return $err;
+
+	  $this->config->deleteUserValue(
 			$this->userId,
 			Application::APP_ID,
 			Constants::USER_ATTRIBUTE_OLVID_IDENTITY
 		);
+
 		return new JSONResponse();
 	}
 
-	// TODO is this necessary ?
-	private function getUser(): ?IUser {
-		return $this->userSession->getUser();
+	private function requireAuth(): ?JSONResponse {
+		if ($this->userId === null) {
+			return new JSONResponse(['error' => 'unauthenticated'], 401);
+		}
+		return null;
 	}
 }
