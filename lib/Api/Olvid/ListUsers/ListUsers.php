@@ -10,11 +10,10 @@ use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\IRequest;
 use OCP\IUser;
 
 class ListUsers extends OlvidAppHandler {
-	public function handler(IUser $user, array $jsonParameters): Response {
+	public function handler(?IUser $user, array $jsonParameters): Response {
 		$listUsersRequest = new JsonListUsersRequest($jsonParameters);
 
 		// TODO: handle request: add a user attribute with the registration timestamp

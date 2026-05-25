@@ -12,7 +12,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class GetKey extends OlvidAppHandler {
-	public function handler(IUser $user, array $jsonParameters): Response {
+	public function handler(?IUser $user, array $jsonParameters): Response {
 		// Parse request
 		try {
 			$user = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;

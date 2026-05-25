@@ -13,7 +13,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Search extends OlvidAppHandler {
-	public function handler(IUser $user, array $jsonParameters): Response {
+	public function handler(?IUser $user, array $jsonParameters): Response {
 		$searchRequest = new JsonSearchRequest($jsonParameters);
 		$response = new JsonSearchResponse();
 

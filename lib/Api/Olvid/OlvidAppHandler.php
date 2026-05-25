@@ -29,7 +29,7 @@ abstract class OlvidAppHandler {
 		protected readonly LoggerInterface $logger,
     ) {}
 
-    public function handle(IUser $user): Response {
+    public function handle(?IUser $user): Response {
 		// parse json payload
 		try {
 			$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -47,7 +47,7 @@ abstract class OlvidAppHandler {
 		}
     }
 
-	abstract public function handler(IUser $user, array $jsonParameters);
+	abstract public function handler(?IUser $user, array $jsonParameters);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// standard responses

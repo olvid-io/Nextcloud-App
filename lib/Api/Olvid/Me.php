@@ -15,7 +15,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Me extends OlvidAppHandler {
-	public function handler(IUser $user, array $jsonParameters): Response {
+	public function handler(?IUser $user, array $jsonParameters): Response {
 		// parse request (don't fail on parse error)
 		try {
 			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
@@ -77,7 +77,7 @@ class Me extends OlvidAppHandler {
 				$globalPushTopic = OlvidServerUtils::requestNewPushTopic($this->appConfig);
 				AppConfigManager::setGlobalPushTopic($this->appConfig, $globalPushTopic);
 			} catch (Exception $e) {
-				$this->logger->error("Me: cannot create user api key: " . $e);
+				$this->logger->error("Me: cannot create global push topic: " . $e);
 			}
 		}
 		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : [];

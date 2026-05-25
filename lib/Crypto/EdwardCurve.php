@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Crypto;
 
 use Exception;
+use GMP;
 
 /**
  * Twisted Edwards curve arithmetic used by Olvid EC-SDSA signature verification.
@@ -19,17 +20,17 @@ use Exception;
  * result when the modulus is positive, which we rely on throughout.
  */
 abstract class EdwardCurve {
-    public readonly \GMP $p;         // field prime
-    public readonly \GMP $q;         // subgroup order
-    public readonly \GMP $d;         // curve constant
-    public readonly \GMP $gx;        // generator X
-    public readonly \GMP $gy;        // generator Y
-    public readonly int  $byteLength; // 32 for both MDC and Curve25519
+    public GMP $p;         // field prime
+    public GMP $q;         // subgroup order
+    public GMP $d;         // curve constant
+    public GMP $gx;        // generator X
+    public GMP $gy;        // generator Y
+    public int  $byteLength; // 32 for both MDC and Curve25519
 
     // Tonelli–Shanks parameters for modular square root
-    protected readonly \GMP $tsNonQR;
-    protected readonly \GMP $tsT;
-    protected readonly int  $tsS;
+    protected GMP $tsNonQR;
+    protected GMP $tsT;
+    protected int  $tsS;
 
     // -------------------------------------------------------------------------
     // Factory
@@ -48,10 +49,10 @@ abstract class EdwardCurve {
      *   X₃  = (x₁y₂ + y₁x₂) / (1 + t)   mod p
      *   Y₃  = (y₁y₂ - x₁x₂) / (1 − t)   mod p
      *
-     * @return array{0:\GMP,1:\GMP}
+     * @return array{0:GMP,1:GMP}
      * @throws Exception if a denominator has no modular inverse (degenerate input)
      */
-    public function pointAdd(\GMP $x1, \GMP $y1, \GMP $x2, \GMP $y2): array {
+    public function pointAdd(GMP $x1, GMP $y1, GMP $x2, GMP $y2): array {
         $p = $this->p;
         $t = gmp_mod(gmp_mul(gmp_mul(gmp_mul(gmp_mul($this->d, $x1), $x2), $y1), $y2), $p);
 
@@ -69,9 +70,9 @@ abstract class EdwardCurve {
     /**
      * Scalar multiplication n·P using the Montgomery ladder with full (X,Y) tracking.
      *
-     * @return array{0:\GMP,1:\GMP}
+     * @return array{0:GMP,1:GMP}
      */
-    public function scalarMulXY(\GMP $n, \GMP $px, \GMP $py): array {
+    public function scalarMulXY(GMP $n, GMP $px, GMP $py): array {
         $ONE   = gmp_init(1);
         $ZERO  = gmp_init(0);
         $pMin1 = gmp_sub($this->p, $ONE);
@@ -104,7 +105,7 @@ abstract class EdwardCurve {
      *
      * Uses projective coordinates (u, w) with y = (u−w)/(u+w).
      */
-    public function scalarMulY(\GMP $n, \GMP $y): \GMP {
+    public function scalarMulY(GMP $n, GMP $y): GMP {
         $p    = $this->p;
         $ONE  = gmp_init(1);
         $ZERO = gmp_init(0);
@@ -167,7 +168,7 @@ abstract class EdwardCurve {
      * Recover the X coordinate from Y.  Returns null when Y is not on the curve
      * (no valid square root exists).
      */
-    public function xFromY(\GMP $y): ?\GMP {
+    public function xFromY(GMP $y): ?GMP {
         $p  = $this->p;
         $y2 = gmp_mod(gmp_mul($y, $y), $p);
         $num = gmp_mod(gmp_sub(1, $y2), $p);
@@ -183,9 +184,9 @@ abstract class EdwardCurve {
      * Compute a·G + e·A where A is known only by its Y coordinate (compact key).
      * Returns 0, 1, or 2 candidate points.
      *
-     * @return array<array{0:\GMP,1:\GMP}>
+     * @return array<array{0:GMP,1:GMP}>
      */
-    public function mulAdd(\GMP $a, \GMP $e, \GMP $ay): array {
+    public function mulAdd(GMP $a, GMP $e, GMP $ay): array {
         [$p3x, $p3y] = $this->scalarMulXY($a, $this->gx, $this->gy);
 
         $y4 = $this->scalarMulY($e, $ay);
@@ -204,7 +205,7 @@ abstract class EdwardCurve {
     /**
      * Encode a GMP integer as a big-endian byte string of exactly $this->byteLength bytes.
      */
-    public function gmpToBytes(\GMP $n): string {
+    public function gmpToBytes(GMP $n): string {
         return hex2bin(str_pad(gmp_strval($n, 16), $this->byteLength * 2, '0', STR_PAD_LEFT));
     }
 
@@ -212,7 +213,7 @@ abstract class EdwardCurve {
     // Modular square root (Tonelli–Shanks)
     // -------------------------------------------------------------------------
 
-    private function modSqrt(\GMP $x): ?\GMP {
+    private function modSqrt(GMP $x): ?GMP {
         $p = $this->p;
 
         // Legendre symbol must be 1 for a square root to exist
@@ -249,7 +250,7 @@ final class MdcCurve extends EdwardCurve {
     private static ?self $instance = null;
 
     private function __construct() {
-        $h = fn(string $hex): \GMP => gmp_init($hex, 16);
+        $h = fn(string $hex): GMP => gmp_init($hex, 16);
         $this->byteLength = 32;
         $this->p  = $h('f13b68b9d456afb4532f92fdd7a5fd4f086a9037ef07af9ec13710405779ec13');
         $this->q  = $h('3c4eda2e7515abed14cbe4bf75e97f534fb38975faf974bb588552f421b0f7fb');
@@ -275,7 +276,7 @@ final class Curve25519Curve extends EdwardCurve {
     private static ?self $instance = null;
 
     private function __construct() {
-        $h = fn(string $hex): \GMP => gmp_init($hex, 16);
+        $h = fn(string $hex): GMP => gmp_init($hex, 16);
         $this->byteLength = 32;
         $this->p  = $h('7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed');
         $this->q  = $h('1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed');

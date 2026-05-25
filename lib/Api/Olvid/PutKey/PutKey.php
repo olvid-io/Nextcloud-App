@@ -14,14 +14,9 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
-use OCP\PreConditionNotMetException;
 
 class PutKey extends OlvidAppHandler {
-	/**
-	 * @param IUser $user
-	 * @throws PreConditionNotMetException
-	 */
-	public function handler(IUser $user, array $jsonParameters): Response {
+	public function handler(?IUser $user, array $jsonParameters): Response {
 		$putKeyRequest = new JsonPutKeyRequest($jsonParameters);
 
 		if (!$putKeyRequest->identity) {

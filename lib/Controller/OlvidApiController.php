@@ -167,7 +167,6 @@ class OlvidApiController extends IApiController {
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getMagicSession')]
 	public function getMagicSession(): Response {
 		// unauthenticated entrypoint
-		/** @noinspection PhpParamsInspection */
 		return $this->getMagicSessionHandler->handle(null);
 	}
 
@@ -178,7 +177,6 @@ class OlvidApiController extends IApiController {
     #[NoCSRFRequired]
     #[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/me')]
-	#[ApiRoute(verb: 'GET', url: '/olvid-rest/me')]
     public function me(): Response {
 		$user = $this->requiresAuth();
 		if ($user === null) {
@@ -250,7 +248,7 @@ class OlvidApiController extends IApiController {
 			$publicKey = AppConfigManager::getJwkKeyPublicKey($this->appConfig);
 			$decoded = JWT::decode($token, new Key($publicKey, 'ES256'));
 		} catch (Exception $e) {
-			$this->logger->error('Bearer token is not a valid app-issued JWT: ' . $e->getMessage());
+			$this->logger->error('Bearer token is invalid: ' . $e->getMessage());
 			return null;
 		}
 

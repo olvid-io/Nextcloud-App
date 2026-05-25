@@ -7,6 +7,7 @@ namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\Olvid\BaseJsonResponse;
 use OCA\Olvid\Api\Olvid\PutKey\PutKey;
+use OCA\Olvid\Models\OlvidUserDetails;
 
 class PutKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenIdentityMissing(): void {
@@ -38,11 +39,16 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 			Constants::PUT_KEY_REQUEST_IDENTITY => 'new-olvid-identity',
 		]);
 
+		// check response
 		$this->assertSuccessResponse($response);
+
+		// check store
 		$this->assertSame('new-olvid-identity', $store[Constants::USER_ATTRIBUTE_OLVID_IDENTITY]);
 		// Signed details must have been cached as a valid three-part JWT
 		$this->assertArrayHasKey(Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, $store);
 		$this->assertCount(3, explode('.', $store[Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS]));
+		$this->assertNotNull(OlvidUserDetails::parseSignedDetails($user, $this->config));
+
 		// No session revocation on first upload
 		$this->assertArrayNotHasKey(Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE, $store);
 	}
