@@ -1,28 +1,52 @@
 <template>
 	<NcAppContent>
 		<div id="olvid">
-			<div class="olvid-actions">
-				<NcButton v-if="!magicLink" :disabled="loading" @click="fetchMagicLink">
-					Get my Olvid magic link
-				</NcButton>
 
-				<p v-if="error" class="olvid-error">
-					{{ error }}
-				</p>
+			<!-- ── Enrollment section ─────────────────────────────────── -->
+			<div class="olvid-enrollment">
 
-				<NcButton v-if="magicLink" @click="openMagicLink">
-					See magic link
-				</NcButton>
+				<!-- View 1: identity enrolled, no pending re-enrolment -->
+				<template v-if="olvidIdentityUploaded && !magicLink">
+					<div class="olvid-enrolled-state">
+						<span class="olvid-enrolled-badge">✓ Olvid identity enrolled</span>
+						<NcButton :disabled="loading" @click="revokeIdentity">
+							Revoke my identity
+						</NcButton>
+					</div>
+				</template>
 
-				<NcButton v-if="magicLink" @click="openMagicLinkWithOlvid">
-					Open magic link with Olvid
-				</NcButton>
+				<!-- View 2: no identity yet, link not generated -->
+				<template v-else-if="!magicLink">
+					<NcButton :disabled="loading" @click="fetchMagicLink">
+						Enroll with Olvid
+					</NcButton>
+				</template>
 
-				<NcButton v-if="olvidIdentityUploaded" @click="revokeIdentity">
-					Revoke current Olvid Identity
-				</NcButton>
+				<!-- View 3: magic link ready → show QR code -->
+				<template v-else>
+					<div class="olvid-qr-card">
+						<img
+							v-if="qrDataUrl"
+							:src="qrDataUrl"
+							class="olvid-qr-image"
+							alt="Olvid configuration QR code"
+						/>
+						<p class="olvid-qr-hint">Scan with Olvid to enroll</p>
+						<div class="olvid-qr-actions">
+							<NcButton @click="openWithOlvid">
+								Open with Olvid
+							</NcButton>
+							<NcButton @click="copyLink">
+								{{ copied ? 'Copied!' : 'Copy link' }}
+							</NcButton>
+						</div>
+					</div>
+				</template>
+
+				<p v-if="error" class="olvid-error">{{ error }}</p>
 			</div>
 
+			<!-- ── Profile form ───────────────────────────────────────── -->
 			<div class="olvid-profile">
 				<h2>My Olvid profile</h2>
 				<NcTextField :value.sync="form.firstname" label="First name" />
@@ -35,6 +59,7 @@
 					Save
 				</NcButton>
 			</div>
+
 		</div>
 	</NcAppContent>
 </template>
@@ -45,6 +70,7 @@ import { generateOcsUrl } from '@nextcloud/router'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import QRCode from 'qrcode'
 
 export default {
 	name: 'App',
@@ -53,6 +79,8 @@ export default {
 		return {
 			loading: true,
 			magicLink: null,
+			qrDataUrl: null,
+			copied: false,
 			error: null,
 			olvidIdentityUploaded: false,
 			form: {
@@ -65,6 +93,24 @@ export default {
 			saveError: null,
 			saveSuccess: false,
 		}
+	},
+	watch: {
+		async magicLink(url) {
+			if (!url) {
+				this.qrDataUrl = null
+				return
+			}
+			try {
+				this.qrDataUrl = await QRCode.toDataURL(url, {
+					width: 244,
+					margin: 2,
+					errorCorrectionLevel: 'M',
+					color: { dark: '#000000', light: '#ffffff' },
+				})
+			} catch (e) {
+				console.error('QR generation failed', e)
+			}
+		},
 	},
 	async mounted() {
 		try {
@@ -91,8 +137,7 @@ export default {
 			this.error = null
 			this.magicLink = null
 			try {
-				const url = generateOcsUrl('/apps/olvid/app/getMagicLink')
-				const response = await axios.get(url)
+				const response = await axios.get(generateOcsUrl('/apps/olvid/app/getMagicLink'))
 				this.magicLink = response.data.configurationUrl
 			} catch (e) {
 				this.error = 'Could not generate magic link: ' + (e.response?.data?.error ?? e.message)
@@ -100,14 +145,32 @@ export default {
 				this.loading = false
 			}
 		},
-		async openMagicLink() {
-			if (this.magicLink) {
-				window.open(this.magicLink, '_blank')
+		async revokeIdentity() {
+			this.loading = true
+			this.error = null
+			try {
+				await axios.get(generateOcsUrl('/apps/olvid/app/revokeIdentity'))
+				this.olvidIdentityUploaded = false
+				// Go directly to QR view for re-enrollment
+				await this.fetchMagicLink()
+			} catch (e) {
+				this.error = 'Could not revoke identity: ' + (e.response?.data?.error ?? e.message)
+				this.loading = false
 			}
 		},
-		async openMagicLinkWithOlvid() {
+		openWithOlvid() {
 			if (this.magicLink) {
-				window.open(this.magicLink.replace('http://', 'olvid://').replace('https://', 'olvid://'))
+				window.open(this.magicLink.replace(/^https?:\/\//, 'olvid://'))
+			}
+		},
+		async copyLink() {
+			if (!this.magicLink) return
+			try {
+				await navigator.clipboard.writeText(this.magicLink)
+				this.copied = true
+				setTimeout(() => { this.copied = false }, 2000)
+			} catch (e) {
+				this.error = 'Could not copy to clipboard'
 			}
 		},
 		async revokeIdentity() {
@@ -135,18 +198,59 @@ export default {
 #olvid {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: 32px;
 	max-width: 480px;
-	margin: 24px auto;
+	margin: 32px auto;
+	padding: 0 16px;
 }
 
-.olvid-actions {
+/* ── Enrolled state ──────────────────────────────────────────── */
+.olvid-enrolled-state {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	align-items: center;
+	flex-direction: column;
+	gap: 12px;
+	align-items: flex-start;
 }
 
+.olvid-enrolled-badge {
+	font-weight: 600;
+	color: var(--color-success);
+	font-size: 1rem;
+}
+
+/* ── QR card ─────────────────────────────────────────────────── */
+.olvid-qr-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 24px;
+	background: var(--color-main-background);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.olvid-qr-image {
+	width: 244px;
+	height: 244px;
+	border-radius: 4px;
+}
+
+.olvid-qr-hint {
+	margin: 0;
+	color: var(--color-text-maxcontrast);
+	font-size: 0.9rem;
+}
+
+.olvid-qr-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+/* ── Profile form ────────────────────────────────────────────── */
 .olvid-profile {
 	display: flex;
 	flex-direction: column;
@@ -157,6 +261,7 @@ export default {
 	}
 }
 
+/* ── Feedback ────────────────────────────────────────────────── */
 .olvid-error {
 	color: var(--color-error);
 	margin: 0;

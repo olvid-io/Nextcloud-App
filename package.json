@@ -19,6 +19,7 @@
   ],
   "dependencies": {
     "@nextcloud/vue": "^8.29.2",
+    "qrcode": "^1.5.4",
     "vue": "^2.7.16"
   },
   "devDependencies": {
