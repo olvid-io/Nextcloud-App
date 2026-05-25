@@ -30,13 +30,7 @@ class Me extends OlvidAppHandler {
 		$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
 
 		// set or update full search string attributes
-		$fullSearchString = $userDetails->computeFullSearchString();
-		if ($fullSearchString !== $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD)) {
-			$this->config->setUserValue($user->getUID(),
-				Application::APP_ID,
-				Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS,
-				$fullSearchString);
-		}
+		$userDetails->updateFullSearchString($user->getUID(), $this->config);
 
 		// set signature (compute if necessary)
 		$signature = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);

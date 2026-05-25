@@ -123,6 +123,18 @@ class OlvidUserDetails implements JsonSerializable {
 			($this->company == null ? "": $this->company);
     }
 
+ 	public function updateFullSearchString(string $userId, IConfig $config): string {
+		// set or update full search string attributes
+		$fullSearchString = $this->computeFullSearchString();
+		if ($fullSearchString !== $config->getUserValue($userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD)) {
+			$config->setUserValue($userId,
+				Application::APP_ID,
+				Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD,
+				$fullSearchString);
+		}
+		return $fullSearchString;
+	}
+
 	# taken from https://gist.github.com/lohic/d01c458e69be636c2365
 	private static function unAccent(string $str): string {
 		// transform accent to html entities
