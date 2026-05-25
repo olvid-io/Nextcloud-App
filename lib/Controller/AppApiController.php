@@ -7,15 +7,12 @@ namespace OCA\Olvid\Controller;
 use OCA\Olvid\Api\App\GetMagicLink;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Http\SseEvent;
-use OCA\Olvid\Http\SseResponse;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IRequest;
@@ -139,19 +136,6 @@ class AppApiController extends ApiController {
 		}
 
 		return new JSONResponse();
-	}
-
-	#[NoCSRFRequired]
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/app/enrollmentStatus')]
-	public function enrollmentStatus(): Response {
-		if ($err = $this->requireAuth()) return $err;
-		$config = $this->config;
-		$userId = $this->userId;
-		return new SseResponse(function () use ($config, $userId): ?SseEvent {
-			$identity = $config->getUserValue($userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
-			return $identity !== '' ? new SseEvent('enrolled') : null;
-		});
 	}
 
 	private function requireAuth(): ?JSONResponse {
