@@ -60,7 +60,12 @@ class DebugApiController extends ApiController
 				$userConfig["is-bot"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IS_BOT);
 			}
 		} catch (Exception $e) {
-			$this->logger->error("debug: Cannot compute configuration link: " . $e);
+			$this->logger->error("debug: Cannot compute userConfig: " . $e);
+		}
+		try {
+			$userFields = $this->config->getAllUserValues($user->getUID());
+		} catch (Exception $e) {
+			$this->logger->error("debug: Cannot compute user fields: " . $e);
 		}
 
 		return new JSONResponse([
@@ -70,7 +75,8 @@ class DebugApiController extends ApiController
 				"jwkKeyId" => AppConfigManager::getJwkKeyId($this->appConfig),
 				"jwkPublicKey" => AppConfigManager::getJwkKeyPublicKey($this->appConfig),
 			],
-			"user" => $userConfig
+			"user" => $userConfig,
+			"userFields" => $userFields,
 		], 200);
 	}
 

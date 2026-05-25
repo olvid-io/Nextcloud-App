@@ -9,6 +9,7 @@ use OCA\Olvid\Api\Olvid\Search\Search;
 
 class SearchHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsEmptyResultsWhenNoUsersHaveIdentity(): void {
+		$caller = $this->mockUser('caller');
 		$this->userManager->method('search')->with('')->willReturn([
 			$this->mockUser('alice'),
 			$this->mockUser('bob'),
@@ -16,13 +17,14 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		$this->config->method('getUserValue')->willReturn(''); // no identity for anyone
 
 		$handler = $this->makeHandler(Search::class);
-		$response = $handler->handler(null, $this->request, []);
+		$response = $handler->handler($caller, []);
 
 		$data = $this->getResponseData($response);
 		$this->assertCount(0, $data[Constants::SEARCH_RESPONSE_RESULTS]);
 	}
 
 	public function testHandlerReturnsOnlyUsersWithIdentitySet(): void {
+		$caller = $this->mockUser('caller');
 		$alice = $this->mockUser('alice', 'Alice Wonder');
 		$bob = $this->mockUser('bob', 'Bob Builder');
 		$this->userManager->method('search')->with('')->willReturn([$alice, $bob]);
@@ -53,7 +55,7 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		);
 
 		$handler = $this->makeHandler(Search::class);
-		$response = $handler->handler(null, $this->request, []);
+		$response = $handler->handler($caller, []);
 
 		$data = $this->getResponseData($response);
 		$this->assertCount(1, $data[Constants::SEARCH_RESPONSE_RESULTS]);

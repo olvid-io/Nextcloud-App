@@ -11,17 +11,19 @@ use OCA\Olvid\AppInfo\Application;
 
 class GetKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenUserIdMissing(): void {
+		$caller = $this->mockUser('caller');
 		$handler = $this->makeHandler(GetKey::class);
-		$response = $handler->handler(null, $this->request, []);
+		$response = $handler->handler($caller, []);
 
 		$this->assertErrorResponse($response, BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
 
 	public function testHandlerReturnsInvalidRequestWhenUserNotFound(): void {
+		$caller = $this->mockUser('caller');
 		$this->userManager->method('get')->willReturn(null);
 
 		$handler = $this->makeHandler(GetKey::class);
-		$response = $handler->handler(null, $this->request, [
+		$response = $handler->handler($caller, [
 			Constants::GET_KEY_REQUEST_USER_ID => 'unknown-user',
 		]);
 
@@ -29,6 +31,7 @@ class GetKeyHandlerTest extends ApiHandlerTestCase {
 	}
 
 	public function testHandlerReturnsStoredSignatureForKnownUser(): void {
+		$caller = $this->mockUser('caller');
 		$bob = $this->mockUser('bob', 'Bob Builder');
 		$this->userManager->method('get')->with('bob')->willReturn($bob);
 		$this->config->method('getUserValue')
@@ -36,7 +39,7 @@ class GetKeyHandlerTest extends ApiHandlerTestCase {
 			->willReturn('header.payload.sig');
 
 		$handler = $this->makeHandler(GetKey::class);
-		$response = $handler->handler(null, $this->request, [
+		$response = $handler->handler($caller, [
 			Constants::GET_KEY_REQUEST_USER_ID => 'bob',
 		]);
 

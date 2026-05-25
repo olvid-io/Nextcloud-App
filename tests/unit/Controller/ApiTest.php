@@ -5,19 +5,23 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Controller;
 
 use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
+use OCA\Olvid\Api\Olvid\GetKey;
+use OCA\Olvid\Api\Olvid\GetMagicSession\GetMagicSession;
+use OCA\Olvid\Api\Olvid\GetSession\GetSession;
+use OCA\Olvid\Api\Olvid\Me;
+use OCA\Olvid\Api\Olvid\PutKey\PutKey;
+use OCA\Olvid\Api\Olvid\RequestChallenge\RequestChallenge;
+use OCA\Olvid\Api\Olvid\Search\Search;
+use OCA\Olvid\Api\Olvid\Verify\Verify;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Controller\OlvidApiController;
-use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IAppConfig;
-use OCP\ICacheFactory;
 use OCP\IConfig;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
-use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -43,16 +47,20 @@ class ApiTest extends TestCase {
 		$this->controller = new OlvidApiController(
 			Application::APP_ID,
 			$this->createMock(IRequest::class),
-			$this->createMock(IConfig::class),
 			$appConfig,
+			$this->createMock(IConfig::class),
 			$this->createMock(IUserManager::class),
-			$this->createMock(IAccountManager::class),
-			$this->createMock(IUserSession::class),
-			$this->createMock(IGroupManager::class),
 			$this->createMock(LoggerInterface::class),
 			$this->createMock(DiscoveryGenerator::class),
 			$urlGenerator,
-			$this->createMock(ICacheFactory::class),
+			$this->createMock(Me::class),
+			$this->createMock(PutKey::class),
+			$this->createMock(GetKey::class),
+			$this->createMock(Search::class),
+			$this->createMock(Verify::class),
+			$this->createMock(RequestChallenge::class),
+			$this->createMock(GetSession::class),
+			$this->createMock(GetMagicSession::class),
 		);
 	}
 

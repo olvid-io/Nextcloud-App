@@ -65,6 +65,32 @@ class OlvidServerUtils {
 	 * // TODO
 	 * @throws Exception
 	 */
+	public static function requestNewPushTopic(IAppConfig $appConfig): string
+	{
+		$query = new JsonOlvidServerRequest();
+		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_PUSH_TOPIC;
+		$query->keycloakApiKey = AppConfigManager::getOlvidServerApiKey($appConfig) ?? "";
+		$serverUrl = AppConfigManager::getOlvidServerUrl($appConfig);
+		if ($serverUrl == null || $query->keycloakApiKey == null) {
+//			throw new InvalidApiKeyException();
+			// TODO
+			throw new Exception("InvalidApiKeyException");
+		}
+
+		$serverResponse = OlvidServerUtils::serverApiRequest($serverUrl, $query);
+
+		if ($serverResponse["error"]) {
+			throw new ("Olvid server returned an error: " . $serverResponse["error"]);
+		}
+
+		return $serverResponse["pushTopic"];
+	}
+
+	/**
+	 * @throws OlvidServerException
+	 * // TODO
+	 * @throws Exception
+	 */
 	private static function serverApiRequest(string $serverUrl, JsonSerializable $jsonRequest): array {
 		$session = curl_init($serverUrl . "/keycloakQuery");
 		curl_setopt($session, CURLOPT_RETURNTRANSFER, true);

@@ -12,11 +12,13 @@ use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCP\Lock\ILockingProvider;
 
 /**
  * Base class for handler unit tests.
@@ -44,6 +46,10 @@ abstract class ApiHandlerTestCase extends TestCase {
 	protected LoggerInterface $logger;
 	/** @var IRequest&\PHPUnit\Framework\MockObject\MockObject */
 	protected IRequest $request;
+	/** @var ILockingProvider&\PHPUnit\Framework\MockObject\MockObject */
+	protected ILockingProvider $lockingProvider;
+	/** @var IURLGenerator&\PHPUnit\Framework\MockObject\MockObject */
+	protected IURLGenerator $urlGenerator;
 
 	public static function setUpBeforeClass(): void {
 		$res = openssl_pkey_new([
@@ -66,6 +72,8 @@ abstract class ApiHandlerTestCase extends TestCase {
 		$this->groupManager = $this->createMock(IGroupManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->request = $this->createMock(IRequest::class);
+		$this->lockingProvider = $this->createMock(ILockingProvider::class);
+		$this->urlGenerator = $this->createMock(IURLGenerator::class);
 	}
 
 	/** Build a mock IUser with the given uid and display name. */
@@ -101,6 +109,7 @@ abstract class ApiHandlerTestCase extends TestCase {
 			$this->accountManager,
 			$this->userSession,
 			$this->groupManager,
+			$this->lockingProvider,
 			$this->logger,
 		);
 	}

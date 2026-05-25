@@ -30,7 +30,9 @@ class GetKey extends OlvidAppHandler {
 			return $this->invalidRequestDevice();
 		}
 
+		// set user signed details in response
 		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $this->config->getUserValue($otherUser->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);
+
 		return new JSONResponse($response);
     }
 }

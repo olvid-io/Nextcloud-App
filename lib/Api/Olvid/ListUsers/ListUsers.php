@@ -25,7 +25,7 @@ class ListUsers extends OlvidAppHandler {
 		foreach ($users as $user) {
 			// only add users with a valid identity on server
 			if ($this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY)) {
-				$response->users[] = OlvidUserDetails::getCurrentUserDetails($user, $this->config);
+				$response->users[] = OlvidUserDetails::parseSignedDetails($user, $this->config);
 			}
 		}
 		// current timestamp in milliseconds

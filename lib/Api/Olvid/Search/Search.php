@@ -10,24 +10,21 @@ use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\IRequest;
 use OCP\IUser;
 
 class Search extends OlvidAppHandler {
 	public function handler(IUser $user, array $jsonParameters): Response {
-		// TODO handle request
 		$searchRequest = new JsonSearchRequest($jsonParameters);
-
-		// TODO handle request
-
-		// TODO filter
-
 		$response = new JsonSearchResponse();
+
+		// TODO feature handle searchResultCount
+
+		// TODO handle filters
 		$users = $this->userManager->search("");
 		foreach ($users as $user) {
 			// only add users with a valid identity on server
 			if ($this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY)) {
-				$response->results[] = OlvidUserDetails::getCurrentUserDetails($user, $this->config);
+				$response->results[] = OlvidUserDetails::parseSignedDetails($user, $this->config);
 			}
 		}
 

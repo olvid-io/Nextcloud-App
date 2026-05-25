@@ -5,17 +5,9 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\BaseJsonResponse;
 use OCA\Olvid\Api\Olvid\Me;
 
 class MeHandlerTest extends ApiHandlerTestCase {
-	public function testHandlerReturnsInvalidRequestWhenUserIsNull(): void {
-		$handler = $this->makeHandler(Me::class);
-		$response = $handler->handler(null, $this->request, []);
-
-		$this->assertErrorResponse($response, BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
-	}
-
 	public function testHandlerReturnsCachedSignatureWithoutResigning(): void {
 		$user = $this->mockUser('alice');
 		$this->config->method('getUserValue')->willReturnCallback(
@@ -28,7 +20,7 @@ class MeHandlerTest extends ApiHandlerTestCase {
 		$this->appConfig->method('getValueString')->willReturn('');
 
 		$handler = $this->makeHandler(Me::class);
-		$response = $handler->handler($user, $this->request, []);
+		$response = $handler->handler($user, []);
 
 		$data = $this->getResponseData($response);
 		$this->assertSame('cached.jwt.value', $data[Constants::ME_RESPONSE_SIGNATURE]);
@@ -48,7 +40,7 @@ class MeHandlerTest extends ApiHandlerTestCase {
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(Me::class);
-		$response = $handler->handler($user, $this->request, []);
+		$response = $handler->handler($user, []);
 
 		$data = $this->getResponseData($response);
 		// A freshly generated ES256 JWT has exactly three dot-separated parts

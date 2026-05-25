@@ -43,6 +43,8 @@ class Constants {
 	/*
 	 * User attributes keys in Config
 	 */
+	public const USER_ATTRIBUTE_OLVID_FIRSTNAME = "olvid-firstname";
+	public const USER_ATTRIBUTE_OLVID_LASTNAME = "olvid-lastname";
 	public const USER_ATTRIBUTE_OLVID_COMPANY = "olvid-company";
 	public const USER_ATTRIBUTE_OLVID_POSITION = "olvid-position";
 	public const USER_ATTRIBUTE_OLVID_IDENTITY = "olvid-identity";

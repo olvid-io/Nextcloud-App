@@ -52,6 +52,7 @@ class GetMagicLink {
      */
     private function createToken(string $userId): string {
         $token = uuid_create();
+		// TODO add an expiration field in user attributes instead of serialize / deserialize tokens ...
         $this->config->setUserValue(
             $userId,
             Application::APP_ID,

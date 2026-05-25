@@ -81,8 +81,10 @@ class PutKey extends OlvidAppHandler {
 					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
 					$putKeyRequest->identity
 				);
+
 				// sign user details and store them
-				OlvidUserDetails::signUserDetails($user, $this->config, $this->appConfig);
+				$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
+				$userDetails->sign($this->config, $this->appConfig);
 			}
 			// trying to put the same identity
 			else if ($previousIdentity === $putKeyRequest->identity) {
@@ -97,8 +99,10 @@ class PutKey extends OlvidAppHandler {
 						$this->logger->warning("putKey: cannot create new api key: " . $e->getMessage());
 					}
 				}
+
 				// sign user details and store them
-				OlvidUserDetails::signUserDetails($user, $this->config, $this->appConfig);
+				$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
+				$userDetails->sign($this->config, $this->appConfig);
 			}
 			// trying to override previous identity
 			else if ($previousIdentity !== $putKeyRequest->identity) {
@@ -151,8 +155,10 @@ class PutKey extends OlvidAppHandler {
 					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
 					$putKeyRequest->identity
 				);
+
 				// sign user details and store them
-				OlvidUserDetails::signUserDetails($user, $this->config, $this->appConfig);
+				$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
+				$userDetails->sign($this->config, $this->appConfig);
 			}
 
 			return $this->success();

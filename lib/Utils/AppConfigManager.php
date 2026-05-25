@@ -10,6 +10,8 @@ class AppConfigManager {
 	// Olvid Server
 	public const APP_CONFIG_OLVID_SERVER_URL = "olvid-server-url";
 	public const APP_CONFIG_OLVID_SERVER_API_KEY = "olvid-server-api-key";
+	public const APP_CONFIG_GLOBAL_PUSH_TOPIC = "olvid-global-push-topic";
+
 	// json web key
 	private const APP_CONFIG_JWK_KEY_ID = "olvid-jwk-key-id";
 	private const APP_CONFIG_JWK_KEY_TYPE = "olvid-jwk-key-type";
@@ -25,7 +27,7 @@ class AppConfigManager {
 		$value = $appConfig->getValueString(Application::APP_ID, $key);
 		return trim($value) ? $value : null;
 	}
-	public static function setValue(IAppConfig $appConfig, string $key, ?string $value): void {
+	private static function setValue(IAppConfig $appConfig, string $key, ?string $value): void {
 		$appConfig->setValueString(Application::APP_ID, $key, $value ?? "");
 	}
 
@@ -39,6 +41,13 @@ class AppConfigManager {
 	// api key
 	public static function getOlvidServerApiKey(IAppConfig $appConfig): ?string {
 		return AppConfigManager::getValue($appConfig, self::APP_CONFIG_OLVID_SERVER_API_KEY);
+	}
+	// global push topic
+	public static function getGlobalPushTopic(IAppConfig $appConfig): ?string {
+		return AppConfigManager::getValue($appConfig, self::APP_CONFIG_GLOBAL_PUSH_TOPIC);
+	}
+	public static function setGlobalPushTopic(IAppConfig $appConfig, ?string $value): void {
+		AppConfigManager::setValue($appConfig, self::APP_CONFIG_GLOBAL_PUSH_TOPIC, $value);
 	}
 
 	/*

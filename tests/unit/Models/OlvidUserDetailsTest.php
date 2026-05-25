@@ -29,17 +29,19 @@ class OlvidUserDetailsTest extends TestCase {
 	// --- signUserDetails ---
 
 	public function testSignUserDetailsReturnsThreePartJwt(): void {
-		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', 'alice-identity');
+		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', [Constants::USER_ATTRIBUTE_OLVID_IDENTITY => "alice-identity-string"]);
 
-		$jwt = OlvidUserDetails::signUserDetails($user, $config, $appConfig);
+		$userDetails = OlvidUserDetails::computeDetails($user, $config);
+		$jwt = $userDetails->sign($config, $appConfig);
 
 		$this->assertCount(3, explode('.', $jwt), 'Expected a JWT with header.payload.signature');
 	}
 
 	public function testSignUserDetailsPayloadContainsCorrectFields(): void {
-		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', 'alice-identity');
+		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', [Constants::USER_ATTRIBUTE_OLVID_IDENTITY => 'alice-identity']);
 
-		$jwt = OlvidUserDetails::signUserDetails($user, $config, $appConfig);
+		$userDetails = OlvidUserDetails::computeDetails($user, $config);
+		$jwt = $userDetails->sign($config, $appConfig);
 
 		// Decode the payload part (index 1) — JWT uses base64url, add padding for decode
 		$b64 = str_replace(['-', '_'], ['+', '/'], explode('.', $jwt)[1]);
@@ -52,7 +54,7 @@ class OlvidUserDetailsTest extends TestCase {
 	}
 
 	public function testSignUserDetailsCachesJwtInConfig(): void {
-		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', '');
+		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', []);
 
 		$cachedKey = null;
 		$cachedValue = null;
@@ -63,7 +65,8 @@ class OlvidUserDetailsTest extends TestCase {
 			}
 		);
 
-		$jwt = OlvidUserDetails::signUserDetails($user, $config, $appConfig);
+		$userDetails = OlvidUserDetails::computeDetails($user, $config);
+		$jwt = $userDetails->sign($config, $appConfig);
 
 		$this->assertSame(Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, $cachedKey);
 		$this->assertSame($jwt, $cachedValue);
@@ -78,11 +81,11 @@ class OlvidUserDetailsTest extends TestCase {
 		$config = $this->createMock(IConfig::class);
 		$config->method('getUserValue')->willReturn('');
 
-		$this->assertNull(OlvidUserDetails::getCurrentUserDetails($user, $config));
+		$this->assertNull(OlvidUserDetails::parseSignedDetails($user, $config));
 	}
 
 	public function testGetCurrentUserDetailsParsesSignatureStoredBySignUserDetails(): void {
-		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', 'alice-identity');
+		[$user, $config, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', [Constants::USER_ATTRIBUTE_OLVID_IDENTITY => 'alice-identity']);
 
 		$stored = null;
 		$config->method('setUserValue')->willReturnCallback(
@@ -93,14 +96,16 @@ class OlvidUserDetailsTest extends TestCase {
 			}
 		);
 
-		OlvidUserDetails::signUserDetails($user, $config, $appConfig);
+		$userDetails = OlvidUserDetails::computeDetails($user, $config);
+		$userDetails->sign($config, $appConfig);
+
 		$this->assertNotNull($stored, 'Expected signUserDetails to cache a JWT');
 
 		// Read it back via getCurrentUserDetails using a fresh config mock
 		$config2 = $this->createMock(IConfig::class);
 		$config2->method('getUserValue')->willReturn($stored);
 
-		$details = OlvidUserDetails::getCurrentUserDetails($user, $config2);
+		$details = OlvidUserDetails::parseSignedDetails($user, $config2);
 
 		$this->assertNotNull($details);
 		$this->assertSame('alice', $details->id);
@@ -113,15 +118,21 @@ class OlvidUserDetailsTest extends TestCase {
 	/**
 	 * @return array{IUser, IConfig, IAppConfig}
 	 */
-	private function buildSigningMocks(string $uid, string $displayName, string $identity): array {
+	private function buildSigningMocks(string $uid, string $displayName, array $userDetails): array {
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn($uid);
 		$user->method('getDisplayName')->willReturn($displayName);
 
 		$config = $this->createMock(IConfig::class);
 		$config->method('getUserValue')
-			->with($uid, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY)
-			->willReturn($identity);
+			->willReturnCallback(fn (string $uid, string $appId, string $key) => match ($key) {
+				Constants::USER_ATTRIBUTE_OLVID_FIRSTNAME => $userDetails[Constants::USER_ATTRIBUTE_OLVID_FIRSTNAME] ?? "",
+				Constants::USER_ATTRIBUTE_OLVID_LASTNAME => $userDetails[Constants::USER_ATTRIBUTE_OLVID_LASTNAME] ?? "",
+				Constants::USER_ATTRIBUTE_OLVID_POSITION => $userDetails[Constants::USER_ATTRIBUTE_OLVID_POSITION] ?? "",
+				Constants::USER_ATTRIBUTE_OLVID_COMPANY => $userDetails[Constants::USER_ATTRIBUTE_OLVID_COMPANY] ?? "",
+				Constants::USER_ATTRIBUTE_OLVID_IDENTITY => $userDetails[Constants::USER_ATTRIBUTE_OLVID_IDENTITY] ?? "",
+				default => ''
+			});
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
