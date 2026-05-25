@@ -7,9 +7,9 @@ namespace OCA\Olvid\Tests\Unit\Flow;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use OCA\Olvid\Api\App\GetMagicLink;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\GetMagicSession\GetMagicSession;
-use OCA\Olvid\Api\App\GetMagicLink\GetMagicLink;
+use OCA\Olvid\Api\Device\GetMagicSession;
 use OCA\Olvid\Tests\Unit\Api\Olvid\ApiHandlerTestCase;
 
 /**
@@ -60,10 +60,10 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 
 		// --- Step 3: device exchanges token for a bearer JWT ---
 		$sessionHandler = $this->makeGetMagicSessionHandler();
-		$sessionResponse = $sessionHandler->handler(null, [
+		$sessionResponse = $sessionHandler->handler([
 			Constants::GET_MAGIC_SESSION_REQUEST_USERNAME => $extractedUsername,
 			Constants::GET_MAGIC_SESSION_REQUEST_TOKEN => $extractedToken,
-		]);
+		], null);
 		$sessionData = $this->getResponseData($sessionResponse);
 
 		$this->assertArrayHasKey('access_token', $sessionData);
@@ -89,25 +89,24 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$this->config->method('getUserValue')->willReturn($expiredJson);
 
 		$handler = $this->makeGetMagicSessionHandler();
-		$response = $handler->handler(null, [
+		$response = $handler->handler([
 			Constants::GET_MAGIC_SESSION_REQUEST_USERNAME => 'alice',
 			Constants::GET_MAGIC_SESSION_REQUEST_TOKEN => 'valid-token',
-		]);
+		], null);
 
 		// Expired token must be rejected with an error in the body (all handlers return HTTP 200)
-		$this->assertErrorResponse($response, \OCA\Olvid\Api\Olvid\BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
+		$this->assertErrorResponse($response, \OCA\Olvid\Api\Device\BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
 
-	// GetMagicSession has a different constructor than OlvidAppHandler handlers
+	// GetMagicSession has a different constructor than AbstractDeviceApiHandler handlers
 	private function makeGetMagicSessionHandler(): GetMagicSession
 	{
 		return new GetMagicSession(
+			$this->request,
 			$this->config,
 			$this->appConfig,
 			$this->userManager,
 			$this->accountManager,
-			$this->userSession,
-			$this->groupManager,
 			$this->lockingProvider,
 			$this->logger,
 		);

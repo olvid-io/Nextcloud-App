@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
-use OCA\Olvid\Api\Olvid\BaseJsonResponse;
+use OCA\Olvid\Api\Device\BaseJsonResponse;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -103,12 +103,11 @@ abstract class ApiHandlerTestCase extends TestCase {
 	/** Instantiate a handler with the shared mock dependencies. */
 	protected function makeHandler(string $handlerClass): object {
 		return new $handlerClass(
+			$this->request,
 			$this->config,
 			$this->appConfig,
 			$this->userManager,
 			$this->accountManager,
-			$this->userSession,
-			$this->groupManager,
 			$this->lockingProvider,
 			$this->logger,
 		);

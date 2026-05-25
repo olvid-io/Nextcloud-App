@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid\Verify;
+namespace OCA\Olvid\Api\Engine;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\EngineApiHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\AppConfigManager;
@@ -25,12 +24,10 @@ use OCA\Olvid\Utils\Encoded;
  * Response: Encoded list [STATUS_OK=0x00, boolean] on success,
  *           Encoded list [STATUS_GENERAL_ERROR=0xff] on parse/crypto error.
  */
-class Verify extends EngineApiHandler {
+class Verify extends AbstractEngineApiHandler {
     protected function handler(string $rawInput): BinaryResponse {
-
         // --- 1. Parse request ---
-        $signature = null;
-        try {
+		try {
             $json      = json_decode($rawInput, true, 512, JSON_THROW_ON_ERROR);
             $signature = $json[Constants::VERIFY_REQUEST_SIGNATURE] ?? null;
             if ($signature === null) {

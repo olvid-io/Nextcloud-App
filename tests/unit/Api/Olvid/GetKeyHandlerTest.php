@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\BaseJsonResponse;
-use OCA\Olvid\Api\Olvid\GetKey;
+use OCA\Olvid\Api\Device\BaseJsonResponse;
+use OCA\Olvid\Api\Device\GetKey;
 use OCA\Olvid\AppInfo\Application;
 
 class GetKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenUserIdMissing(): void {
 		$caller = $this->mockUser('caller');
 		$handler = $this->makeHandler(GetKey::class);
-		$response = $handler->handler($caller, []);
+		$response = $handler->handler([], $caller);
 
 		$this->assertErrorResponse($response, BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
@@ -23,9 +23,9 @@ class GetKeyHandlerTest extends ApiHandlerTestCase {
 		$this->userManager->method('get')->willReturn(null);
 
 		$handler = $this->makeHandler(GetKey::class);
-		$response = $handler->handler($caller, [
+		$response = $handler->handler([
 			Constants::GET_KEY_REQUEST_USER_ID => 'unknown-user',
-		]);
+		], $caller);
 
 		$this->assertErrorResponse($response, BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
@@ -39,9 +39,9 @@ class GetKeyHandlerTest extends ApiHandlerTestCase {
 			->willReturn('header.payload.sig');
 
 		$handler = $this->makeHandler(GetKey::class);
-		$response = $handler->handler($caller, [
+		$response = $handler->handler([
 			Constants::GET_KEY_REQUEST_USER_ID => 'bob',
-		]);
+		], $caller);
 
 		$data = $this->getResponseData($response);
 		$this->assertSame('header.payload.sig', $data[Constants::GET_KEY_RESPONSE_SIGNATURE]);

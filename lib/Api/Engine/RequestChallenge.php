@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid\RequestChallenge;
+namespace OCA\Olvid\Api\Engine;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\EngineApiHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
@@ -23,7 +22,7 @@ use OCA\Olvid\Utils\Encoded;
  * On success the challenge is cached for 60 s under key "challenge-<base64(nonce)>" so that
  * a subsequent /getSession call can verify the signed response.
  */
-class RequestChallenge extends EngineApiHandler {
+class RequestChallenge extends AbstractEngineApiHandler {
     private const CACHE_TTL = 60;
 
     protected function handler(string $rawInput): BinaryResponse {

@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid\PutKey;
+namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\OlvidAppHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
@@ -15,13 +14,18 @@ use OCP\IUser;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 
-class PutKey extends OlvidAppHandler {
-	public function handler(?IUser $user, array $jsonParameters): Response {
-		$putKeyRequest = new JsonPutKeyRequest($jsonParameters);
+class PutKey extends AbstractAuthenticatedDeviceApiHandler {
+	public function handler(array $jsonParameters, ?IUser $user): Response {
+		try {
+			$identity = isset($jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY]) ? (string)$jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY] : null;
+		} catch (Exception $e) {
+			$this->logger->warning('putKey: parse error: ' . $e->getMessage());
+			return $this->invalidRequest();
+		}
 
-		if (!$putKeyRequest->identity) {
+		if (!$identity) {
 			$this->logger->error("putKey: identity not set");
-			return $this->invalidRequestDevice();
+			return $this->invalidRequest();
 		}
 		// TODO: also check that identity is a valid Olvid identity
 
@@ -33,7 +37,7 @@ class PutKey extends OlvidAppHandler {
 		try {
 			$this->lockingProvider->acquireLock($lockKey, ILockingProvider::LOCK_EXCLUSIVE);
 		} catch (LockedException) {
-			return $this->invalidRequestDevice();
+			return $this->invalidRequest();
 		}
 
 		try {
@@ -74,7 +78,7 @@ class PutKey extends OlvidAppHandler {
 					$user->getUID(),
 					Application::APP_ID,
 					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
-					$putKeyRequest->identity
+					$identity
 				);
 
 				// sign user details and store them
@@ -82,7 +86,7 @@ class PutKey extends OlvidAppHandler {
 				$userDetails->sign($this->config, $this->appConfig);
 			}
 			// trying to put the same identity
-			else if ($previousIdentity === $putKeyRequest->identity) {
+			else if ($previousIdentity === $identity) {
 				// if user lack an api key, try to get and set one
 				if (!$previousApiKey) {
 					// this might fail if an olvid server api have not been set
@@ -100,7 +104,7 @@ class PutKey extends OlvidAppHandler {
 				$userDetails->sign($this->config, $this->appConfig);
 			}
 			// trying to override previous identity
-			else if ($previousIdentity !== $putKeyRequest->identity) {
+			else if ($previousIdentity !== $identity) {
 				// revoke current api key if there is one
 				if ($previousApiKey) {
 					try {
@@ -148,7 +152,7 @@ class PutKey extends OlvidAppHandler {
 					$user->getUID(),
 					Application::APP_ID,
 					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
-					$putKeyRequest->identity
+					$identity
 				);
 
 				// sign user details and store them

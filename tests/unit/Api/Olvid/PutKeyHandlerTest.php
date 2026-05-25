@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\BaseJsonResponse;
-use OCA\Olvid\Api\Olvid\PutKey\PutKey;
+use OCA\Olvid\Api\Device\BaseJsonResponse;
+use OCA\Olvid\Api\Device\PutKey;
 use OCA\Olvid\Models\OlvidUserDetails;
 
 class PutKeyHandlerTest extends ApiHandlerTestCase {
@@ -14,7 +14,7 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice');
 
 		$handler = $this->makeHandler(PutKey::class);
-		$response = $handler->handler($user, []);
+		$response = $handler->handler([], $user);
 
 		$this->assertErrorResponse($response, BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
@@ -35,9 +35,7 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
-		$response = $handler->handler($user, [
-			Constants::PUT_KEY_REQUEST_IDENTITY => 'new-olvid-identity',
-		]);
+		$response = $handler->handler([Constants::PUT_KEY_REQUEST_IDENTITY => 'new-olvid-identity'], $user);
 
 		// check response
 		$this->assertSuccessResponse($response);
@@ -69,9 +67,9 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
-		$response = $handler->handler($user, [
+		$response = $handler->handler([
 			Constants::PUT_KEY_REQUEST_IDENTITY => 'same-identity',
-		]);
+		], $user);
 
 		$this->assertSuccessResponse($response);
 		// No session revocation when re-uploading the same identity
@@ -94,9 +92,9 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
-		$response = $handler->handler($user, [
+		$response = $handler->handler([
 			Constants::PUT_KEY_REQUEST_IDENTITY => 'new-identity',
-		]);
+		], $user);
 
 		$this->assertSuccessResponse($response);
 		$this->assertSame('new-identity', $store[Constants::USER_ATTRIBUTE_OLVID_IDENTITY]);

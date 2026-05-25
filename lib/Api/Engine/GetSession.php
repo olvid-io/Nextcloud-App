@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid\GetSession;
+namespace OCA\Olvid\Api\Engine;
 
 use Exception;
 use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\EngineApiHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Crypto\ECSdsaVerifier;
 use OCA\Olvid\Http\BinaryResponse;
@@ -31,7 +30,7 @@ use OCA\Olvid\Utils\Encoded;
  *
  * On success the response contains a bearer token JSON payload as an Encoded byte array.
  */
-class GetSession extends EngineApiHandler {
+class GetSession extends AbstractEngineApiHandler {
     protected function handler(string $rawInput): BinaryResponse {
         // --- 1. Parse ---
         try {

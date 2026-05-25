@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Controller;
 
 use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
-use OCA\Olvid\Api\Olvid\GetKey;
-use OCA\Olvid\Api\Olvid\GetMagicSession\GetMagicSession;
-use OCA\Olvid\Api\Olvid\GetSession\GetSession;
-use OCA\Olvid\Api\Olvid\Me;
-use OCA\Olvid\Api\Olvid\PutKey\PutKey;
-use OCA\Olvid\Api\Olvid\RequestChallenge\RequestChallenge;
-use OCA\Olvid\Api\Olvid\Search\Search;
-use OCA\Olvid\Api\Olvid\Verify\Verify;
+use OCA\Olvid\Api\Device\GetKey;
+use OCA\Olvid\Api\Device\GetMagicSession;
+use OCA\Olvid\Api\Device\Groups;
+use OCA\Olvid\Api\Device\ListUsers;
+use OCA\Olvid\Api\Device\Me;
+use OCA\Olvid\Api\Device\PutKey;
+use OCA\Olvid\Api\Device\Search;
+use OCA\Olvid\Api\Engine\GetSession;
+use OCA\Olvid\Api\Engine\RequestChallenge;
+use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Controller\OlvidApiController;
+use OCA\Olvid\Controller\DirectoryApiController;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IAppConfig;
@@ -26,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 class ApiTest extends TestCase {
-	private OlvidApiController $controller;
+	private DirectoryApiController $controller;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -44,19 +46,18 @@ class ApiTest extends TestCase {
 		$urlGenerator = $this->createMock(IURLGenerator::class);
 		$urlGenerator->method('linkToOCSRouteAbsolute')->willReturn('https://cloud.example.com/ocs/v2.php');
 
-		$this->controller = new OlvidApiController(
+		$this->controller = new DirectoryApiController(
 			Application::APP_ID,
 			$this->createMock(IRequest::class),
 			$appConfig,
-			$this->createMock(IConfig::class),
-			$this->createMock(IUserManager::class),
-			$this->createMock(LoggerInterface::class),
 			$this->createMock(DiscoveryGenerator::class),
 			$urlGenerator,
 			$this->createMock(Me::class),
 			$this->createMock(PutKey::class),
 			$this->createMock(GetKey::class),
 			$this->createMock(Search::class),
+			$this->createMock(ListUsers::class),
+			$this->createMock(Groups::class),
 			$this->createMock(Verify::class),
 			$this->createMock(RequestChallenge::class),
 			$this->createMock(GetSession::class),

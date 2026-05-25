@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid;
+namespace OCA\Olvid\Api\Engine;
 
 use Exception;
 use OCA\Olvid\AppInfo\Application;
@@ -25,7 +25,7 @@ use Psr\Log\LoggerInterface;
  * protected error helpers (parsingError, permissionDenied, generalError) to return
  * standard failure responses without repeating the Encoded framing boilerplate.
  */
-abstract class EngineApiHandler {
+abstract class AbstractEngineApiHandler {
     // Status bytes shared across all engine endpoints (from AbstractEngineEntryPoint)
     protected const STATUS_OK               = "\x00";
     protected const STATUS_PERMISSION_DENIED = "\x0e";

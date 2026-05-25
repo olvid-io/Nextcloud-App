@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid;
+namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
@@ -11,23 +11,23 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
-class GetKey extends OlvidAppHandler {
-	public function handler(?IUser $user, array $jsonParameters): Response {
+class GetKey extends AbstractAuthenticatedDeviceApiHandler {
+	public function handler(array $jsonParameters, ?IUser $user): Response {
 		// Parse request
 		try {
 			$user = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
 			if (!$user) {
-				return $this->invalidRequestDevice();
+				return $this->invalidRequest();
 			}
 		} catch (Exception $e) {
-			$this->logger->warning('GetKey: parse error: ' . $e->getMessage());
-			return $this->invalidRequestDevice();
+			$this->logger->warning('getKey: parse error: ' . $e->getMessage());
+			return $this->invalidRequest();
 		}
 
 		// get user in database
 		$otherUser = $this->userManager->get($user);
 		if (!$otherUser) {
-			return $this->invalidRequestDevice();
+			return $this->invalidRequest();
 		}
 
 		// set user signed details in response

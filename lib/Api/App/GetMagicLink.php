@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\App\GetMagicLink;
+namespace OCA\Olvid\Api\App;
 
 use Exception;
 use OCA\Olvid\Api\Constants;

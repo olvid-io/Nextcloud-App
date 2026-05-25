@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid;
+namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
@@ -14,14 +14,14 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
-class Me extends OlvidAppHandler {
-	public function handler(?IUser $user, array $jsonParameters): Response {
+class Me extends AbstractAuthenticatedDeviceApiHandler {
+	public function handler(array $jsonParameters, ?IUser $user): Response {
 		// parse request (don't fail on parse error)
 		try {
 			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
 			$timestamp = (int)($jsonParameters[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
 		} catch (Exception $e) {
-			$this->logger->warning('Me: parse error: ' . $e->getMessage());
+			$this->logger->warning('me: parse error: ' . $e->getMessage());
 		}
 
 		// TODO feature revocation

@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Controller;
 
-use Exception;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\GetKey;
-use OCA\Olvid\Api\Olvid\GetMagicSession\GetMagicSession;
-use OCA\Olvid\Api\Olvid\GetSession\GetSession;
-use OCA\Olvid\Api\Olvid\Me;
-use OCA\Olvid\Api\Olvid\OlvidAppHandler;
-use OCA\Olvid\Api\Olvid\PutKey\PutKey;
-use OCA\Olvid\Api\Olvid\RequestChallenge\RequestChallenge;
-use OCA\Olvid\Api\Olvid\Search\Search;
-use OCA\Olvid\Api\Olvid\Verify\Verify;
-use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Api\Device\GetKey;
+use OCA\Olvid\Api\Device\GetMagicSession;
+use OCA\Olvid\Api\Device\Groups;
+use OCA\Olvid\Api\Device\ListUsers;
+use OCA\Olvid\Api\Device\Me;
+use OCA\Olvid\Api\Device\PutKey;
+use OCA\Olvid\Api\Device\Search;
+use OCA\Olvid\Api\Engine\GetSession;
+use OCA\Olvid\Api\Engine\RequestChallenge;
+use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\Utils\AppConfigManager;
 use OCP\AppFramework\ApiController as IApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -29,18 +26,14 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
-use OCP\IUser;
-use OCP\IUserManager;
-use Psr\Log\LoggerInterface;
 
 // oidc dependencies
 
-class OlvidApiController extends IApiController {
+class DirectoryApiController extends IApiController {
 	// PROPOSAL: if this controller grows, consider splitting into:
-	//   OlvidApiController       → ping, openid, olvid, jwks (no handlers)
+	//   DirectoryApiController       → ping, openid, olvid, jwks (no handlers)
 	//   OlvidIdentityController  → me, putKey, getKey, search, getMagicSession
 	//   OlvidSessionController   → verify, requestChallenge, getSession
 	// Each controller would only inject the handlers it actually uses.
@@ -48,15 +41,14 @@ class OlvidApiController extends IApiController {
         string $appName,
         IRequest $request,
 		private readonly IAppConfig $appConfig,
-		private readonly IConfig $config,
-        private readonly IUserManager $userManager,
-		private readonly LoggerInterface $logger,
 		private readonly DiscoveryGenerator $discoveryGenerator,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly Me $meHandler,
 		private readonly PutKey $putKeyHandler,
 		private readonly GetKey $getKeyHandler,
 		private readonly Search $searchHandler,
+		private readonly ListUsers $listUsersHandler,
+		private readonly Groups $groupsHandler,
 		private readonly Verify $verifyHandler,
 		private readonly RequestChallenge $requestChallengeHandler,
 		private readonly GetSession $getSessionHandler,
@@ -167,22 +159,27 @@ class OlvidApiController extends IApiController {
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getMagicSession')]
 	public function getMagicSession(): Response {
 		// unauthenticated entrypoint
-		return $this->getMagicSessionHandler->handle(null);
+		return $this->getMagicSessionHandler->handle();
 	}
 
 	/*
 	 ** App authenticated API
 	 */
+	// we use GET method when calling /me on identity creation
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/olvid-rest/me')]
+	public function meGet(): Response {
+		return $this->meHandler->handle();
+	}
+
 	#[PublicPage]
     #[NoCSRFRequired]
     #[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/me')]
-    public function me(): Response {
-		$user = $this->requiresAuth();
-		if ($user === null) {
-			return OlvidAppHandler::permissionDeniedDevice();
-		}
-        return $this->meHandler->handle($user);
+    public function mePost(): Response {
+        return $this->meHandler->handle();
     }
 
 	#[PublicPage]
@@ -190,11 +187,7 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/putKey')]
 	public function putKey(): Response {
-		$user = $this->requiresAuth();
-		if ($user === null) {
-			return OlvidAppHandler::permissionDeniedDevice();
-		}
-		return $this->putKeyHandler->handle($user);
+		return $this->putKeyHandler->handle();
 	}
 
 	#[PublicPage]
@@ -202,23 +195,23 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getKey')]
 	public function getKey(): Response {
-		$user = $this->requiresAuth();
-		if ($user === null) {
-			return OlvidAppHandler::permissionDeniedDevice();
-		}
-		return $this->getKeyHandler->handle($user);
+		return $this->getKeyHandler->handle();
 	}
 
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/search')]
-	public function listUsers(): Response {
-		$user = $this->requiresAuth();
-		if ($user === null) {
-			return OlvidAppHandler::permissionDeniedDevice();
-		}
-		return $this->searchHandler->handle($user);
+	public function search(): Response {
+		return $this->searchHandler->handle();
+	}
+
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/listUsers')]
+	public function list(): Response {
+		return $this->listUsersHandler->handle();
 	}
 
 	#[PublicPage]
@@ -226,54 +219,14 @@ class OlvidApiController extends IApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/verify')]
 	public function verify(): Response {
-		$user = $this->requiresAuth();
-		if ($user === null) {
-			return OlvidAppHandler::permissionDeniedDevice();
-		}
-		return $this->verifyHandler->handle($user);
+		return $this->verifyHandler->handle();
 	}
 
-	private function requiresAuth(): ?IUser {
-		if (!$this->request->getHeader("Authorization")) {
-			$this->logger->error('Missing authentication header');
-			return null;
-		}
-
-		// parse token
-		$rawHeader = $this->request->getHeader("Authorization");
-		$token = str_starts_with(strtolower($rawHeader), "bearer ") ? trim(substr($rawHeader, 7)) : $rawHeader;
-
-		// parse token
-		try {
-			$publicKey = AppConfigManager::getJwkKeyPublicKey($this->appConfig);
-			$decoded = JWT::decode($token, new Key($publicKey, 'ES256'));
-		} catch (Exception $e) {
-			$this->logger->error('Bearer token is invalid: ' . $e->getMessage());
-			return null;
-		}
-
-		if ($decoded->type !== "session") {
-			$this->logger->error("Invalid JWK key type: " . $decoded->type);
-			return null;
-		}
-
-		$user = $this->userManager->get($decoded->sub);
-		$this->logger->debug($decoded->sub . ' logged in using bearer token');
-
-		// check token was not revoked
-		$sessionsRevokedBefore = $this->config->getUserValue(
-			$user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE
-		);
-		if ($sessionsRevokedBefore !== null && $sessionsRevokedBefore != 0) {
-			// if token was issued before last revocation ignore it
-			if ($decoded->iat <= $sessionsRevokedBefore) {
-				$this->logger->debug($decoded->sub . ' token expired');
-				return null;
-			}
-		}
-
-		return $user;
+ 	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/groups')]
+	public function groups(): Response {
+		return $this->groupsHandler->handle();
 	}
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\Search\Search;
+use OCA\Olvid\Api\Device\Search;
 
 class SearchHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsEmptyResultsWhenNoUsersHaveIdentity(): void {
@@ -17,7 +17,7 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		$this->config->method('getUserValue')->willReturn(''); // no identity for anyone
 
 		$handler = $this->makeHandler(Search::class);
-		$response = $handler->handler($caller, []);
+		$response = $handler->handler([], $caller);
 
 		$data = $this->getResponseData($response);
 		$this->assertCount(0, $data[Constants::SEARCH_RESPONSE_RESULTS]);
@@ -55,7 +55,7 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		);
 
 		$handler = $this->makeHandler(Search::class);
-		$response = $handler->handler($caller, []);
+		$response = $handler->handler([], $caller);
 
 		$data = $this->getResponseData($response);
 		$this->assertCount(1, $data[Constants::SEARCH_RESPONSE_RESULTS]);

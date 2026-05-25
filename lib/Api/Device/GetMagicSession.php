@@ -2,22 +2,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Olvid\GetMagicSession;
+namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Olvid\OlvidAppHandler;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Utils\AppConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
-use OCP\IAppConfig;
-use OCP\IConfig;
-use OCP\IRequest;
 use OCP\IUser;
-use OCP\IUserManager;
-use Psr\Log\LoggerInterface;
 
 /**
  * POST /olvid-rest/getMagicSession
@@ -27,9 +20,9 @@ use Psr\Log\LoggerInterface;
  * Request body: {"username": "...", "token": "..."}
  * Response: JSON token on success, error JSON on failure.
  */
-class GetMagicSession extends OlvidAppHandler {
+class GetMagicSession extends AbstractDeviceApiHandler {
 	// unauthenticated entrypoint, argument $user is null
-	public function handler(?IUser $user, array $jsonParameters): JSONResponse {
+	public function handler(array $jsonParameters, ?IUser $user): JSONResponse {
         // --- 1. Parse request ---
         try {
             $user = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
@@ -39,14 +32,14 @@ class GetMagicSession extends OlvidAppHandler {
             }
         } catch (Exception $e) {
             $this->logger->warning('getMagicSession: parse error: ' . $e->getMessage());
-            return $this->invalidRequestDevice();
+            return $this->invalidRequest();
         }
 
         // --- 2. Look up user (always return same error to avoid leaking whether user exists) ---
         $targetUser = $this->userManager->get($user);
         if ($targetUser === null) {
             $this->logger->warning('getMagicSession: user not found: ' . $user);
-            return $this->invalidRequestDevice();
+            return $this->invalidRequest();
         }
 
         // --- 3. Validate magic token ---
@@ -56,21 +49,21 @@ class GetMagicSession extends OlvidAppHandler {
 			Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN);
         if ($storedJson === '') {
             $this->logger->warning('getMagicSession: no magic token stored for user');
-            return $this->invalidRequestDevice();
+            return $this->invalidRequest();
         }
 
 		// Decode magic token
         $stored = json_decode($storedJson, true);
         if (!is_array($stored) || !isset($stored['token']) || $stored['token'] !== $token) {
             $this->logger->warning('getMagicSession: invalid token for user');
-            return $this->invalidRequestDevice();
+            return $this->invalidRequest();
         }
 
         // Check magic token expiration (null = no expiration)
         if (isset($stored['expiration']) && $stored['expiration'] !== null) {
             if ($stored['expiration'] < time()) {
                 $this->logger->warning('getMagicSession: expired magic token for user');
-                return $this->invalidRequestDevice();
+                return $this->invalidRequest();
             }
         }
 
@@ -79,12 +72,12 @@ class GetMagicSession extends OlvidAppHandler {
 		$keyId         = AppConfigManager::getJwkKeyId($this->appConfig);
 		if ($privateKeyPem === null) {
 			$this->logger->error('getMagicSession: JWK private key not configured — run occ maintenance:repair');
-			return $this->internalErrorDevice();
+			return $this->internalError();
 		}
 		$privateKey = openssl_pkey_get_private($privateKeyPem);
 		if ($privateKey === false) {
 			$this->logger->error('getMagicSession: failed to load JWK private key from PEM');
-			return $this->internalErrorDevice();
+			return $this->internalError();
 		}
 		$now       = time();
 		$expiresIn = Constants::MAGIC_SESSION_DURATION_S;
