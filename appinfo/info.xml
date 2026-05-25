@@ -27,7 +27,6 @@
 		<install><step>OCA\Olvid\Migration\OlvidRepairStep</step></install>
 		<pre-migration><step>OCA\Olvid\Migration\OlvidRepairStep</step></pre-migration>
 		<post-migration><step>OCA\Olvid\Migration\OlvidRepairStep</step></post-migration>
-		<post-migration><step>OCA\Olvid\Migration\OlvidRepairStep</step></post-migration>
 	</repair-steps>
 	<settings>
 		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
