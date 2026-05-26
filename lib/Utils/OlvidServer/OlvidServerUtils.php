@@ -4,8 +4,7 @@ namespace OCA\Olvid\Utils\OlvidServer;
 
 use Exception;
 use JsonSerializable;
-use OCA\Olvid\Utils\AppConfigManager;
-use OCP\IAppConfig;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
 
 class OlvidServerUtils {
 	/**
@@ -13,12 +12,12 @@ class OlvidServerUtils {
 	 * // TODO
 	 * @throws Exception
 	 */
-	public static function requestNewApiKey(IAppConfig $appConfig): string
+	public static function requestNewApiKey(OlvidAppConfigManager $appConfig): string
 	{
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_API_KEY;
-		$query->keycloakApiKey = AppConfigManager::getOlvidServerApiKey($appConfig) ?? "";
-		$serverUrl = AppConfigManager::getOlvidServerUrl($appConfig);
+		$query->keycloakApiKey = $appConfig->getOlvidServerApiKey() ?? "";
+		$serverUrl = $appConfig->getOlvidServerUrl();
 		if ($serverUrl == null || $query->keycloakApiKey == null) {
 //			throw new InvalidApiKeyException();
 			// TODO
@@ -39,12 +38,12 @@ class OlvidServerUtils {
 	 * // TODO
 	 * @throws Exception
 	 */
-	public static function revokeApiKey(IAppConfig $appConfig, string $apiKeyToRevoke): bool {
+	public static function revokeApiKey(OlvidAppConfigManager $appConfig, string $apiKeyToRevoke): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REVOKE_API_KEY;
 		$query->apiKeyToRevoke = $apiKeyToRevoke;
-		$query->keycloakApiKey = AppConfigManager::getOlvidServerApiKey($appConfig);
-		$serverUrl = AppConfigManager::getOlvidServerUrl($appConfig);
+		$query->keycloakApiKey = $appConfig->getOlvidServerApiKey();
+		$serverUrl = $appConfig->getOlvidServerUrl();
 		if ($serverUrl == null || $query->keycloakApiKey == null) {
 //			throw new InvalidApiKeyException();
 			// TODO
@@ -65,12 +64,12 @@ class OlvidServerUtils {
 	 * // TODO
 	 * @throws Exception
 	 */
-	public static function requestNewPushTopic(IAppConfig $appConfig): string
+	public static function requestNewPushTopic(OlvidAppConfigManager $appConfig): string
 	{
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_PUSH_TOPIC;
-		$query->keycloakApiKey = AppConfigManager::getOlvidServerApiKey($appConfig) ?? "";
-		$serverUrl = AppConfigManager::getOlvidServerUrl($appConfig);
+		$query->keycloakApiKey = $appConfig->getOlvidServerApiKey() ?? "";
+		$serverUrl = $appConfig->getOlvidServerUrl();
 		if ($serverUrl == null || $query->keycloakApiKey == null) {
 //			throw new InvalidApiKeyException();
 			// TODO

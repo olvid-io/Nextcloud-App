@@ -6,7 +6,6 @@ namespace OCA\Olvid\Api\Engine;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
 
@@ -63,8 +62,8 @@ class RequestChallenge extends AbstractEngineApiHandler {
             return $response;
         }
 
-        $identity = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
-        if ($identity === '') {
+        $identity = $this->userConfig->getIdentity($user->getUID());
+        if ($identity === null) {
             $this->logger->warning('requestChallenge: user has no Olvid identity');
             return $response;
         }

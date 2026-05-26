@@ -6,7 +6,6 @@ namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -35,8 +34,8 @@ class Search extends AbstractDeviceApiHandler {
 		$users = $this->userManager->search("");
 		foreach ($users as $user) {
 			// only add users with a valid identity on server
-			if ($this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY)) {
-				$response[Constants::SEARCH_RESPONSE_RESULTS][] = OlvidUserDetails::parseSignedDetails($user, $this->config);
+			if ($this->olvidUserConfig->hasIdentity($user->getUID())) {
+				$response[Constants::SEARCH_RESPONSE_RESULTS][] = OlvidUserDetails::parseSignedDetails($user, $this->olvidUserConfig);
 			}
 		}
 

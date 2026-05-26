@@ -7,20 +7,9 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Utils\AppConfigManager;
-use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\IAppConfig;
-use OCP\IConfig;
-use OCP\IGroupManager;
 use OCP\IUser;
-use OCP\IUserManager;
-use OCP\IUserSession;
-use OCP\Lock\ILockingProvider;
-use Psr\Log\LoggerInterface;
 
 /*
  * Authenticated entry point
@@ -49,7 +38,7 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 
 		// parse token
 		try {
-			$publicKey = AppConfigManager::getJwkKeyPublicKey($this->appConfig);
+			$publicKey = $this->olvidAppConfig->getJwkKeyPublicKey();
 			$decoded = JWT::decode($token, new Key($publicKey, 'ES256'));
 		} catch (Exception $e) {
 			$this->logger->error('Bearer token is invalid: ' . $e->getMessage());
@@ -65,12 +54,8 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 		$this->logger->debug($decoded->sub . ' logged in using bearer token');
 
 		// check token was not revoked
-		$sessionsRevokedBefore = $this->config->getUserValue(
-			$user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE
-		);
-		if ($sessionsRevokedBefore !== null && $sessionsRevokedBefore != 0) {
+		$sessionsRevokedBefore = $this->olvidUserConfig->getSessionRevokedBefore($user->getUID());
+		if ($sessionsRevokedBefore !== null) {
 			// if token was issued before last revocation ignore it
 			if ($decoded->iat <= $sessionsRevokedBefore) {
 				$this->logger->debug($decoded->sub . ' token expired');

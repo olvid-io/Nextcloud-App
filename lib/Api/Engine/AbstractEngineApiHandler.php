@@ -8,6 +8,8 @@ use Exception;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\IAppConfig;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -40,6 +42,8 @@ abstract class AbstractEngineApiHandler {
         protected readonly IUserManager     $userManager,
         ICacheFactory                       $cacheFactory,
         protected readonly LoggerInterface  $logger,
+        protected readonly OlvidUserConfigManager $userConfig,
+        protected readonly OlvidAppConfigManager  $olvidAppConfig,
     ) {
         $this->cache = $cacheFactory->createDistributed(Application::APP_ID);
     }

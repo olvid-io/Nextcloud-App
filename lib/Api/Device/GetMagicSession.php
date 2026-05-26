@@ -7,8 +7,6 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Utils\AppConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
@@ -43,11 +41,8 @@ class GetMagicSession extends AbstractDeviceApiHandler {
         }
 
         // --- 3. Validate magic token ---
-        $storedJson = $this->config->getUserValue(
-			$targetUser->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN);
-        if ($storedJson === '') {
+        $storedJson = $this->olvidUserConfig->getMagicToken($targetUser->getUID());
+        if ($storedJson === null) {
             $this->logger->warning('getMagicSession: no magic token stored for user');
             return $this->invalidRequest();
         }
@@ -68,8 +63,8 @@ class GetMagicSession extends AbstractDeviceApiHandler {
         }
 
         // --- 4. Generate session JWT ---
-		$privateKeyPem = AppConfigManager::getJwkKeyPrivateKey($this->appConfig);
-		$keyId         = AppConfigManager::getJwkKeyId($this->appConfig);
+		$privateKeyPem = $this->olvidAppConfig->getJwkKeyPrivateKey();
+		$keyId         = $this->olvidAppConfig->getJwkKeyId();
 		if ($privateKeyPem === null) {
 			$this->logger->error('getMagicSession: JWK private key not configured — run occ maintenance:repair');
 			return $this->internalError();

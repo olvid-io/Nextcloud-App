@@ -7,7 +7,7 @@ namespace OCA\Olvid\Settings;
 namespace OCA\Olvid\DeclarativeSettings;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Utils\AppConfigManager;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\Settings\DeclarativeSettingsTypes;
 use OCP\Settings\IDeclarativeSettingsForm;
 
@@ -24,7 +24,7 @@ class Admin implements IDeclarativeSettingsForm {
 			'doc_url' => '', // NcSettingsSection doc_url for documentation or help page, empty string if not needed
 			'fields' => [
 				[
-					'id' => AppConfigManager::APP_CONFIG_OLVID_SERVER_URL,
+					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_URL,
 					'title' => 'Olvid Server',
 					'description' => 'Optionally specify an alternative olvid distribution server to use',
 					'type' => DeclarativeSettingsTypes::URL,
@@ -33,7 +33,7 @@ class Admin implements IDeclarativeSettingsForm {
 					'placeholder'=> "",
 				],
 				[
-					'id' => AppConfigManager::APP_CONFIG_OLVID_SERVER_API_KEY,
+					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_API_KEY,
 					'title' => 'Olvid Server Api Key',
 					'description' => 'Optional api key used to generate Olvid+ licenses for users',
 					'type' => DeclarativeSettingsTypes::PASSWORD,

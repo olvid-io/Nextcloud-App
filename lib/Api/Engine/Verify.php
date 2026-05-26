@@ -6,9 +6,7 @@ namespace OCA\Olvid\Api\Engine;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Http\BinaryResponse;
-use OCA\Olvid\Utils\AppConfigManager;
 use OCA\Olvid\Utils\Encoded;
 
 /**
@@ -58,7 +56,7 @@ class Verify extends AbstractEngineApiHandler {
             }
 
             // Get app's EC public key (PEM)
-            $publicKeyPem = AppConfigManager::getJwkKeyPublicKey($this->appConfig);
+            $publicKeyPem = $this->olvidAppConfig->getJwkKeyPublicKey();
             if (!$publicKeyPem) {
                 throw new Exception('No JWK public key configured');
             }
@@ -88,8 +86,8 @@ class Verify extends AbstractEngineApiHandler {
                 return $this->binaryResult(false);
             }
 
-            $storedIdentity = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
-            if ($storedIdentity === '' || $storedIdentity !== $identity) {
+            $storedIdentity = $this->userConfig->getIdentity($user->getUID());
+            if ($storedIdentity === null || $storedIdentity !== $identity) {
                 $this->logger->debug('verify: identity mismatch for user ' . $userId);
                 return $this->binaryResult(false);
             }

@@ -6,9 +6,7 @@ namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
-use OCA\Olvid\Utils\AppConfigManager;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -27,33 +25,33 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// TODO feature revocation
 
 		// compute user details
-		$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
+		$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
 
 		// set or update full search string attributes
-		$userDetails->updateFullSearchString($user->getUID(), $this->config);
+		$userDetails->updateFullSearchString($user->getUID(), $this->olvidUserConfig);
 
 		// set signature (compute if necessary)
-		$signature = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);
+		$signature = $this->olvidUserConfig->getSignedDetails($user->getUID());
 		if (!$signature) {
-			$signature = $userDetails->sign($this->config, $this->appConfig);
+			$signature = $userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 		}
 		$response[Constants::ME_RESPONSE_SIGNATURE] = $signature;
 
 		// get current api  key, create a new one if there is an identity and no associated api key (fallback)
-		$apiKey = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY);
-		$identity = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
+		$apiKey = $this->olvidUserConfig->getApiKey($user->getUID());
+		$identity = $this->olvidUserConfig->getIdentity($user->getUID());
 		if ($identity && !$apiKey) {
 			// this might fail if an olvid server api have not been set
 			try {
-				$apiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
-				$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $apiKey);
+				$apiKey = OlvidServerUtils::requestNewApiKey($this->olvidAppConfig);
+				$this->olvidUserConfig->setApiKey($user->getUID(), $apiKey);
 			} catch (Exception $e) {
 				$this->logger->error("Me: cannot create user api key: " . $e);
 			}
 		}
 		$response[Constants::ME_RESPONSE_API_KEY] = $apiKey;
 
-		$response[Constants::ME_RESPONSE_SERVER] = AppConfigManager::getOlvidServerUrl($this->appConfig) ?? "";
+		$response[Constants::ME_RESPONSE_SERVER] = $this->olvidAppConfig->getOlvidServerUrl() ?? "";
 		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = true;
 		$response[Constants::ME_RESPONSE_TRANSFER_RESTRICTED] = false;
 
@@ -63,13 +61,13 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			Constants::ME_RESPONSE_MINIMUM_BUILD_VERSION_IOS_LABEL => Constants::MIN_BUILD_IOS,
 		];
 
-		$globalPushTopic = AppConfigManager::getGlobalPushTopic($this->appConfig);
+		$globalPushTopic = $this->olvidAppConfig->getGlobalPushTopic();
 		// global push topic not set try to request one
 		if (!$globalPushTopic) {
 			// this might fail if an olvid server api have not been set
 			try {
-				$globalPushTopic = OlvidServerUtils::requestNewPushTopic($this->appConfig);
-				AppConfigManager::setGlobalPushTopic($this->appConfig, $globalPushTopic);
+				$globalPushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
+				$this->olvidAppConfig->setGlobalPushTopic($globalPushTopic);
 			} catch (Exception $e) {
 				$this->logger->error("Me: cannot create global push topic: " . $e);
 			}
@@ -78,10 +76,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
 		if ($userDetails->identity) {
-			$nonce = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_NONCE);
+			$nonce = $this->olvidUserConfig->getNonce($user->getUID());
 			if (!$nonce) {
 				$nonce = uuid_create();
-				$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_NONCE, $nonce);
+				$this->olvidUserConfig->setNonce($user->getUID(), $nonce);
 			}
 			$response[Constants::ME_RESPONSE_NONCE] = $nonce;
 		}

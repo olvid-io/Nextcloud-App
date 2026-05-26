@@ -7,10 +7,8 @@ namespace OCA\Olvid\Api\Engine;
 use Exception;
 use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Crypto\ECSdsaVerifier;
 use OCA\Olvid\Http\BinaryResponse;
-use OCA\Olvid\Utils\AppConfigManager;
 use OCA\Olvid\Utils\Encoded;
 
 /**
@@ -84,12 +82,8 @@ class GetSession extends AbstractEngineApiHandler {
         }
 
         // --- 5. Get user Olvid identity -----------------------------------------
-        $identityB64 = $this->config->getUserValue(
-			$user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_IDENTITY
-		);
-        if ($identityB64 === '') {
+        $identityB64 = $this->userConfig->getIdentity($user->getUID());
+        if ($identityB64 === null) {
             $this->logger->warning('getSession: user has no Olvid identity');
             return $this->permissionDenied();
         }
@@ -117,8 +111,8 @@ class GetSession extends AbstractEngineApiHandler {
         }
 
         // --- 7. Generate bearer token --------------------------------------------
-		$privateKeyPem = AppConfigManager::getJwkKeyPrivateKey($this->appConfig);
-		$keyId         = AppConfigManager::getJwkKeyId($this->appConfig);
+		$privateKeyPem = $this->olvidAppConfig->getJwkKeyPrivateKey();
+		$keyId         = $this->olvidAppConfig->getJwkKeyId();
 		if ($privateKeyPem === null) {
 			$this->logger->error('getSession: JWK private key not configured — run occ maintenance:repair');
 			return $this->generalError();

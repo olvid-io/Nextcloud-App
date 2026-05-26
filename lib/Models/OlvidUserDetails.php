@@ -5,10 +5,8 @@ namespace OCA\Olvid\Models;
 use Firebase\JWT\JWT;
 use JsonSerializable;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Utils\AppConfigManager;
-use OCP\IAppConfig;
-use OCP\IConfig;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\IUser;
 
 class OlvidUserDetails implements JsonSerializable {
@@ -39,39 +37,24 @@ class OlvidUserDetails implements JsonSerializable {
 		$this->id = $id;
 	}
 
-	public static function computeDetails(IUser $user, IConfig $config) : OlvidUserDetails {
+	public static function computeDetails(IUser $user, OlvidUserConfigManager $userConfig) : OlvidUserDetails {
 		// prepare details
 		$id = $user->getUID();
 
 		// get user details from attributes
-		$firstname = $config->getUserValue($user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_FIRSTNAME
-		);
-		$lastname = $config->getUserValue($user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_LASTNAME
-		);
-		$position = $config->getUserValue($user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_POSITION
-		);
-		$company = $config->getUserValue($user->getUID(),
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_COMPANY
-		);
+		$firstname = $userConfig->getFirstname($user->getUID()) ?? '';
+		$lastname  = $userConfig->getLastname($user->getUID()) ?? '';
+		$position  = $userConfig->getPosition($user->getUID()) ?? '';
+		$company   = $userConfig->getCompany($user->getUID()) ?? '';
 
 		// fallback: if user does not set any field we use display name as a first name
 		if (!$firstname && !$lastname && !$position && !$company) {
 			$firstname = $user->getDisplayName();
 			// TODO keep ?
-//			$config->setUserValue($user->getUID(),
-//				Application::APP_ID,
-//				Constants::USER_ATTRIBUTE_OLVID_FIRSTNAME,
-//				$firstname);
+//			$userConfig->setFirstname($user->getUID(), $firstname);
 		}
 
-		$identity = trim($config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY));
+		$identity = $userConfig->getIdentity($user->getUID());
 		// set identity to null and not to an empty string, else android think we already have an identity on server ...
 		if (!$identity) {
 			$identity = null;
@@ -80,22 +63,22 @@ class OlvidUserDetails implements JsonSerializable {
 	}
 
 	// compute UserDetails signature, save it in database and return it
-	public function sign(IConfig $config, IAppConfig $appConfig): string
+	public function sign(OlvidUserConfigManager $userConfig, OlvidAppConfigManager $appConfig): string
 	{
 		// get signature key
-		$keyId = AppConfigManager::getJwkKeyId($appConfig);
-		$keyType = AppConfigManager::getJwkKeyType($appConfig);
-		$privateKey = AppConfigManager::getJwkKeyPrivateKey($appConfig);
+		$keyId = $appConfig->getJwkKeyId();
+		$keyType = $appConfig->getJwkKeyType();
+		$privateKey = $appConfig->getJwkKeyPrivateKey();
 
 		// sign details and store in database
 		$signedDetails = JWT::encode($this->jsonSerialize(), $privateKey, $keyType, $keyId);
-		$config->setUserValue($this->id, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, $signedDetails);
+		$userConfig->setSignedDetails($this->id, $signedDetails);
 		return $signedDetails;
 	}
 
 	// try to parse signed details for a user, this allows to get details only for user that properly registered on server
-	public static function parseSignedDetails(IUser $user, IConfig $config): ?OlvidUserDetails {
-		$signedDetails = $config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);
+	public static function parseSignedDetails(IUser $user, OlvidUserConfigManager $userConfig): ?OlvidUserDetails {
+		$signedDetails = $userConfig->getSignedDetails($user->getUID());
 		if (!$signedDetails) {
 			return null;
 		}
@@ -123,14 +106,11 @@ class OlvidUserDetails implements JsonSerializable {
 			($this->company == null ? "": $this->company);
     }
 
- 	public function updateFullSearchString(string $userId, IConfig $config): string {
+ 	public function updateFullSearchString(string $userId, OlvidUserConfigManager $userConfig): string {
 		// set or update full search string attributes
 		$fullSearchString = $this->computeFullSearchString();
-		if ($fullSearchString !== $config->getUserValue($userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD)) {
-			$config->setUserValue($userId,
-				Application::APP_ID,
-				Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD,
-				$fullSearchString);
+		if ($fullSearchString !== $userConfig->getFullSearchField($userId)) {
+			$userConfig->setFullSearchField($userId, $fullSearchString);
 		}
 		return $fullSearchString;
 	}

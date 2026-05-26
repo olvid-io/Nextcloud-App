@@ -41,23 +41,15 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		try {
-			$previousIdentity = $this->config->getUserValue(
-				$user->getUID(),
-				Application::APP_ID,
-				Constants::USER_ATTRIBUTE_OLVID_IDENTITY
-			);
-			$previousApiKey = $this->config->getUserValue(
-				$user->getUID(),
-				Application::APP_ID,
-				Constants::USER_ATTRIBUTE_OLVID_API_KEY
-			);
+			$previousIdentity = $this->olvidUserConfig->getIdentity($user->getUID());
+			$previousApiKey = $this->olvidUserConfig->getApiKey($user->getUID());
 
 			// no identity already registered
 			if (!$previousIdentity) {
 				// user is not supposed to have an api key, revoke it if there is one
 				if ($previousApiKey) {
 					try {
-						OlvidServerUtils::revokeApiKey($this->appConfig, $previousApiKey);
+						OlvidServerUtils::revokeApiKey($this->olvidAppConfig, $previousApiKey);
 					} catch (Exception $e) {
 						$this->logger->error("putKey: cannot revoke previous api key: " . $e->getMessage());
 					}
@@ -66,24 +58,19 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				// create and set new api key
 				// this might fail if an olvid server api have not been set
 				try {
-					$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
-					$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+					$newApiKey = OlvidServerUtils::requestNewApiKey($this->olvidAppConfig);
+					$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
 				} catch (Exception $e) {
 					// TODO if cannot set attribute return an error
 					$this->logger->warning("putKey: cannot create new api key: " . $e->getMessage());
 				}
 
 				// set user identity
-				$this->config->setUserValue(
-					$user->getUID(),
-					Application::APP_ID,
-					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
-					$identity
-				);
+				$this->olvidUserConfig->setIdentity($user->getUID(), $identity);
 
 				// sign user details and store them
-				$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
-				$userDetails->sign($this->config, $this->appConfig);
+				$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 			// trying to put the same identity
 			else if ($previousIdentity === $identity) {
@@ -91,8 +78,8 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				if (!$previousApiKey) {
 					// this might fail if an olvid server api have not been set
 					try {
-						$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
-						$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+						$newApiKey = OlvidServerUtils::requestNewApiKey($this->olvidAppConfig);
+						$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
 					} catch (Exception $e) {
 						// TODO if cannot set attribute return an error
 						$this->logger->warning("putKey: cannot create new api key: " . $e->getMessage());
@@ -100,64 +87,44 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				}
 
 				// sign user details and store them
-				$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
-				$userDetails->sign($this->config, $this->appConfig);
+				$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 			// trying to override previous identity
 			else if ($previousIdentity !== $identity) {
 				// revoke current api key if there is one
 				if ($previousApiKey) {
 					try {
-						OlvidServerUtils::revokeApiKey($this->appConfig, $previousApiKey);
+						OlvidServerUtils::revokeApiKey($this->olvidAppConfig, $previousApiKey);
 					} catch (Exception $e) {
 						$this->logger->error("putKey: cannot revoke previous api key: " . $e->getMessage());
 					}
 				}
 
 				// clear old identity
-				$this->config->setUserValue(
-					$user->getUID(),
-					Application::APP_ID,
-					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
-					null
-				);
+				$this->olvidUserConfig->setIdentity($user->getUID(), '');
 				// clear the nonce so that any identity enrolled with this user is automatically unbound from keycloak
-				$this->config->setUserValue(
-					$user->getUID(),
-					Application::APP_ID,
-					Constants::USER_ATTRIBUTE_OLVID_NONCE,
-					null
-				);
+				$this->olvidUserConfig->setNonce($user->getUID(), '');
 
 				// sign out the user: set revoked_before to mark any token signed before now to be revoked
-				$this->config->setUserValue(
-					$user->getUID(),
-					Application::APP_ID,
-					Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE,
-					time()
-				);
+				$this->olvidUserConfig->setSessionRevokedBefore($user->getUID(), time());
 
 				// create and set new api key
 				// this might fail if an olvid server api have not been set
 				try {
-					$newApiKey = OlvidServerUtils::requestNewApiKey($this->appConfig);
-					$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, $newApiKey);
+					$newApiKey = OlvidServerUtils::requestNewApiKey($this->olvidAppConfig);
+					$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
 				} catch (Exception $e) {
 					// TODO if cannot set attribute return an error
 					$this->logger->warning("putKey: cannot create new api key: " . $e->getMessage());
 				}
 
 				// we can now set new identity
-				$this->config->setUserValue(
-					$user->getUID(),
-					Application::APP_ID,
-					Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
-					$identity
-				);
+				$this->olvidUserConfig->setIdentity($user->getUID(), $identity);
 
 				// sign user details and store them
-				$userDetails = OlvidUserDetails::computeDetails($user, $this->config);
-				$userDetails->sign($this->config, $this->appConfig);
+				$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 
 			return $this->success();

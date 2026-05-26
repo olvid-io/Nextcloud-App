@@ -9,7 +9,6 @@
 				:name="t('olvid', 'No groups')"
 				:description="t('olvid', 'No Nextcloud groups found.')" />
 
-
 			<ul v-else class="groups-view__list">
 				<NcListItem
 					v-for="group in groups"

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use Exception;
-use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Utils\AppConfigManager;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -15,7 +14,6 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\TextPlainResponse;
-use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IUser;
@@ -28,13 +26,14 @@ use Psr\Log\LoggerInterface;
 class DebugApiController extends ApiController
 {
 	public function __construct(
-		string                           $appName,
-		IRequest                         $request,
-		private readonly IConfig         $config,
-		private readonly IUserSession    $userSession,
-		private readonly IAppConfig      $appConfig,
-		private readonly IUserManager    $userManager,
-		private readonly LoggerInterface $logger,
+		string                                   $appName,
+		IRequest                                 $request,
+		private readonly IConfig                 $config,
+		private readonly OlvidUserConfigManager  $userConfig,
+		private readonly IUserSession            $userSession,
+		private readonly OlvidAppConfigManager   $olvidAppConfig,
+		private readonly IUserManager            $userManager,
+		private readonly LoggerInterface         $logger,
 	)
 	{
 		parent::__construct($appName, $request);
@@ -51,13 +50,12 @@ class DebugApiController extends ApiController
 			$user = $this->userSession->getUser();
 			if ($user != null) {
 				$userConfig["display-name"] = $user->getDisplayName();
-				$userConfig["identity"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
-				$userConfig["identity"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY);
-				$userConfig["api-key"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY);
-				$userConfig["nonce"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_NONCE);
-				$userConfig["signed-details"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);
-				$userConfig["role"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_ROLE);
-				$userConfig["is-bot"] = $this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IS_BOT);
+				$userConfig["identity"] = $this->userConfig->getIdentity($user->getUID());
+				$userConfig["api-key"] = $this->userConfig->getApiKey($user->getUID());
+				$userConfig["nonce"] = $this->userConfig->getNonce($user->getUID());
+				$userConfig["signed-details"] = $this->userConfig->getSignedDetails($user->getUID());
+				$userConfig["role"] = $this->userConfig->getRole($user->getUID());
+				$userConfig["is-bot"] = $this->userConfig->getIsBot($user->getUID());
 			}
 		} catch (Exception $e) {
 			$this->logger->error("debug: Cannot compute userConfig: " . $e);
@@ -70,10 +68,10 @@ class DebugApiController extends ApiController
 
 		return new JSONResponse([
 			"appConfig" => [
-				"olvidServerUrl" => AppConfigManager::getOlvidServerUrl($this->appConfig),
-				"olvidServerApiKey" => AppConfigManager::getOlvidServerApiKey($this->appConfig),
-				"jwkKeyId" => AppConfigManager::getJwkKeyId($this->appConfig),
-				"jwkPublicKey" => AppConfigManager::getJwkKeyPublicKey($this->appConfig),
+				"olvidServerUrl" => $this->olvidAppConfig->getOlvidServerUrl(),
+				"olvidServerApiKey" => $this->olvidAppConfig->getOlvidServerApiKey(),
+				"jwkKeyId" => $this->olvidAppConfig->getJwkKeyId(),
+				"jwkPublicKey" => $this->olvidAppConfig->getJwkKeyPublicKey(),
 			],
 			"user" => $userConfig,
 			"userFields" => $userFields,
@@ -107,17 +105,9 @@ class DebugApiController extends ApiController
 		return new TextPlainResponse("reset " . count($users) . " users");
 	}
 
-	private function resetUser(Iuser $user): void {
+	private function resetUser(IUser $user): void {
 		try {
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_COMPANY, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_POSITION, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_API_KEY, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_NONCE, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_ROLE, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD, "");
-			$this->config->setUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IS_BOT, "");
+			$this->userConfig->deleteUserConfig($user->getUID());
 		} catch (PreConditionNotMetException) {}
 	}
 }

@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use OCA\Olvid\Api\App\GetMagicLink;
-use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidGroupConfigManager;
+use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserManager;
@@ -32,8 +30,8 @@ class AppApiController extends ApiController {
 		private readonly IGroupManager           $groupManager,
 		private readonly OlvidGroupConfigManager $olvidGroupConfig,
 		private readonly IUserManager            $userManager,
-		private readonly IConfig                 $config,
-		private readonly IAppConfig              $appConfig,
+		private readonly OlvidUserConfigManager  $olvidUserConfig,
+		private readonly OlvidAppConfigManager   $olvidAppConfig,
 		private readonly ?string                 $userId,
 		private readonly GetMagicLink            $getMagicLinkHandler,
 	) {
@@ -45,13 +43,7 @@ class AppApiController extends ApiController {
 	#[ApiRoute(verb: 'GET', url: '/app/status')]
 	public function status(): JSONResponse {
 
-		$identity = $this->config->getUserValue(
-			$this->userId,
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_IDENTITY,
-		);
-
-		return new JSONResponse(['olvidIdentityUploaded' => $identity !== '']);
+		return new JSONResponse(['olvidIdentityUploaded' => $this->olvidUserConfig->hasIdentity($this->userId)]);
 	}
 
 	#[NoCSRFRequired]
@@ -68,11 +60,7 @@ class AppApiController extends ApiController {
 
 	  // TODO implements
 
-	  $this->config->deleteUserValue(
-			$this->userId,
-			Application::APP_ID,
-			Constants::USER_ATTRIBUTE_OLVID_IDENTITY
-		);
+	  $this->olvidUserConfig->setIdentity($this->userId, '');
 
 		return new JSONResponse();
 	}
@@ -83,10 +71,10 @@ class AppApiController extends ApiController {
 	public function getMe(): JSONResponse {
 
 		return new JSONResponse([
-			'firstname' => $this->config->getUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FIRSTNAME),
-			'lastname'  => $this->config->getUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_LASTNAME),
-			'position'  => $this->config->getUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_POSITION),
-			'company'   => $this->config->getUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_COMPANY),
+			'firstname' => $this->olvidUserConfig->getFirstname($this->userId),
+			'lastname'  => $this->olvidUserConfig->getLastname($this->userId),
+			'position'  => $this->olvidUserConfig->getPosition($this->userId),
+			'company'   => $this->olvidUserConfig->getCompany($this->userId),
 		]);
 	}
 
@@ -97,24 +85,24 @@ class AppApiController extends ApiController {
 
 		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
 
-		$previousUserDetails = OlvidUserDetails::computeDetails($this->userSession->getUser(), $this->config);
+		$previousUserDetails = OlvidUserDetails::computeDetails($this->userSession->getUser(), $this->olvidUserConfig);
 
 		// update details
 		$updated = false;
 		if ($previousUserDetails->firstname !== $jsonParameters['firstname']) {
-			$this->config->setUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_FIRSTNAME, $jsonParameters['firstname']);
+			$this->olvidUserConfig->setFirstname($this->userId, $jsonParameters['firstname']);
 			$updated = true;
 		}
 		if ($previousUserDetails->lastname !== $jsonParameters['lastname']) {
-			$this->config->setUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_LASTNAME, $jsonParameters['lastname']);
+			$this->olvidUserConfig->setLastname($this->userId, $jsonParameters['lastname']);
 			$updated = true;
 		}
 		if ($previousUserDetails->position !== $jsonParameters['position']) {
-			$this->config->setUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_POSITION, $jsonParameters['position']);
+			$this->olvidUserConfig->setPosition($this->userId, $jsonParameters['position']);
 			$updated = true;
 		}
 		if ($previousUserDetails->company !== $jsonParameters['company']) {
-			$this->config->setUserValue($this->userId, Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_COMPANY, $jsonParameters['company']);
+			$this->olvidUserConfig->setCompany($this->userId, $jsonParameters['company']);
 			$updated = true;
 		}
 
@@ -124,11 +112,11 @@ class AppApiController extends ApiController {
 		}
 
 		// re-compute details and sign them
-		$userDetails = OlvidUserDetails::computeDetails($this->userSession->getUser(), $this->config);
-		$userDetails->sign($this->config, $this->appConfig);
+		$userDetails = OlvidUserDetails::computeDetails($this->userSession->getUser(), $this->olvidUserConfig);
+		$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 
 		// update full search field
-		$userDetails->updateFullSearchString($this->userId, $this->config);
+		$userDetails->updateFullSearchString($this->userId, $this->olvidUserConfig);
 
 		// notify user for change (if he registered)
 		if ($userDetails->identity) {
@@ -153,7 +141,7 @@ class AppApiController extends ApiController {
 				$members[] = [
 					"id"       => $member->getUID(),
 					"name"     => $member->getDisplayName(),
-					"useOlvid" => (bool)$this->config->getUserValue($member->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY),
+					"useOlvid" => $this->olvidUserConfig->hasIdentity($member->getUID()),
 				];
 			}
 			$response["groups"][] = [
@@ -235,7 +223,7 @@ class AppApiController extends ApiController {
 			$result[] = [
 				"id"       => $user->getUID(),
 				"name"     => $user->getDisplayName(),
-				"useOlvid" => (bool)$this->config->getUserValue($user->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_IDENTITY),
+				"useOlvid" => $this->olvidUserConfig->hasIdentity($user->getUID()),
 			];
 		}
 		return new JSONResponse(['users' => $result]);

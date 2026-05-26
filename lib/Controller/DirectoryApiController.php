@@ -16,7 +16,7 @@ use OCA\Olvid\Api\Device\Search;
 use OCA\Olvid\Api\Engine\GetSession;
 use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\Verify;
-use OCA\Olvid\Utils\AppConfigManager;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\AppFramework\ApiController as IApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -25,7 +25,6 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TextPlainResponse;
-use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 
@@ -40,7 +39,7 @@ class DirectoryApiController extends IApiController {
 	public function __construct(
         string $appName,
         IRequest $request,
-		private readonly IAppConfig $appConfig,
+		private readonly OlvidAppConfigManager $olvidAppConfig,
 		private readonly DiscoveryGenerator $discoveryGenerator,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly Me $meHandler,
@@ -120,10 +119,10 @@ class DirectoryApiController extends IApiController {
 				[
 					'kty' => 'EC',
 					'crv' => 'P-256',
-					'x'   => AppConfigManager::getJwkKeyPublicKeyX($this->appConfig),
-					'y'   => AppConfigManager::getJwkKeyPublicKeyY($this->appConfig),
+					'x'   => $this->olvidAppConfig->getJwkKeyPublicKeyX(),
+					'y'   => $this->olvidAppConfig->getJwkKeyPublicKeyY(),
 					'use' => 'sig',
-					'kid' => AppConfigManager::getJwkKeyId($this->appConfig),
+					'kid' => $this->olvidAppConfig->getJwkKeyId(),
 					'alg' => 'ES256'
 				]
 			]

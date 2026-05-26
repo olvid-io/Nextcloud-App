@@ -3,8 +3,7 @@
 namespace OCA\Olvid\Migration;
 
 use Exception;
-use OCA\Olvid\Utils\AppConfigManager;
-use OCP\IAppConfig;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -12,7 +11,7 @@ use Psr\Log\LoggerInterface;
 class OlvidRepairStep implements IRepairStep {
 	public function __construct(
 		private readonly LoggerInterface $logger,
-		private readonly IAppConfig $appConfig,
+		private readonly OlvidAppConfigManager $olvidAppConfig,
 	) {}
 
 	public function getName(): string {
@@ -29,7 +28,7 @@ class OlvidRepairStep implements IRepairStep {
 		 */
 		$output->info("Olvid: Check for jwks key material.");
 		$this->logger->info("Olvid: Check for jwks key material.");
-		$keyId = AppConfigManager::getJwkKeyId($this->appConfig);
+		$keyId = $this->olvidAppConfig->getJwkKeyId();
 		if (!$keyId) {
 			$output->info("Olvid: Create a new JWKS key");
 			$this->logger->info("Olvid: Create a new JWKS key");
@@ -51,12 +50,12 @@ class OlvidRepairStep implements IRepairStep {
 			$y = rtrim(strtr(base64_encode($details['ec']['y']), '+/', '-_'), '='); // base64 url encode
 
 			// store key in app config
-			AppConfigManager::setJwkKeyType($this->appConfig, "ES256");
-			AppConfigManager::setJwkKeyPrivateKey($this->appConfig, $privateKey);
-			AppConfigManager::setJwkKeyPublicKey($this->appConfig, $details["key"]);
-			AppConfigManager::setJwkKeyPublicKeyX($this->appConfig, $x);
-			AppConfigManager::setJwkKeyPublicKeyY($this->appConfig, $y);
-			AppConfigManager::setJwkKeyId($this->appConfig, $keyId);
+			$this->olvidAppConfig->setJwkKeyType("ES256");
+			$this->olvidAppConfig->setJwkKeyPrivateKey($privateKey);
+			$this->olvidAppConfig->setJwkKeyPublicKey($details["key"]);
+			$this->olvidAppConfig->setJwkKeyPublicKeyX($x);
+			$this->olvidAppConfig->setJwkKeyPublicKeyY($y);
+			$this->olvidAppConfig->setJwkKeyId($keyId);
 		}
 	}
 }

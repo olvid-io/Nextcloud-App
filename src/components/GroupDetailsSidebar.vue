@@ -56,7 +56,9 @@
 							:name="user.name"
 							:force-display-actions="true"
 							compact>
-							<template #subname>{{ user.id }}</template>
+							<template #subname>
+								{{ user.id }}
+							</template>
 							<template #actions>
 								<NcActionButton @click="addMember(user)">
 									{{ t('olvid', 'Add') }}
@@ -104,11 +106,11 @@ import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcCheckboxRadioSwitch from "@nextcloud/vue/components/NcCheckboxRadioSwitch";
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 
 export default {
 	name: 'GroupDetailsSidebar',
-	components: {NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcActionButton },
+	components: { NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcActionButton },
 
 	props: {
 		group: {

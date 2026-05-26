@@ -41,23 +41,6 @@ class Constants {
 	public const DETAILS_KEY_TIMESTAMP = "timestamp";
 
 	/*
-	 * User attributes keys in Config
-	 */
-	public const USER_ATTRIBUTE_OLVID_FIRSTNAME = "olvid-firstname";
-	public const USER_ATTRIBUTE_OLVID_LASTNAME = "olvid-lastname";
-	public const USER_ATTRIBUTE_OLVID_COMPANY = "olvid-company";
-	public const USER_ATTRIBUTE_OLVID_POSITION = "olvid-position";
-	public const USER_ATTRIBUTE_OLVID_IDENTITY = "olvid-identity";
-	public const USER_ATTRIBUTE_OLVID_API_KEY = "olvid-api-key";
-	public const USER_ATTRIBUTE_OLVID_NONCE = "olvid-nonce";
-	public const USER_ATTRIBUTE_OLVID_SIGNED_DETAILS = "olvid-signed-details";
-	public const USER_ATTRIBUTE_OLVID_ROLE = "olvid-role";
-	public const USER_ATTRIBUTE_OLVID_FULL_SEARCH_FIELD = "olvid-search";
-	public const USER_ATTRIBUTE_OLVID_IS_BOT = "olvid-is-bot";
-	public const USER_ATTRIBUTE_OLVID_MAGIC_TOKEN = "olvid-magic-token";
-	// when set, any token issued before this date is considered as invalid
-	public const USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE = 'olvid-session-revoked-before';
-	/*
 	 * Api request and response field names
 	 */
 	// /me constants

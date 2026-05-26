@@ -6,7 +6,6 @@ namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -31,7 +30,7 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		// set user signed details in response
-		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $this->config->getUserValue($otherUser->getUID(), Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS);
+		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $this->olvidUserConfig->getSignedDetails($otherUser->getUID());
 
 		return new JSONResponse($response);
     }
