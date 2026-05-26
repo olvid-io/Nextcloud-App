@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\App;
 
 use Exception;
-use OCA\Olvid\Api\Constants;
-use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Utils\AppConfigManager;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\IURLGenerator;
 use OCP\PreConditionNotMetException;
 use Psr\Log\LoggerInterface;
@@ -28,10 +25,10 @@ use Psr\Log\LoggerInterface;
  */
 class GetMagicLink {
     public function __construct(
-        private readonly IConfig          $config,
-        private readonly IAppConfig       $appConfig,
-        private readonly IURLGenerator    $urlGenerator,
-        private readonly LoggerInterface  $logger,
+        private readonly OlvidUserConfigManager $userConfig,
+        private readonly OlvidAppConfigManager  $appConfig,
+        private readonly IURLGenerator          $urlGenerator,
+        private readonly LoggerInterface        $logger,
     ) {}
 
     public function handle(string $userId): JSONResponse {
@@ -53,10 +50,8 @@ class GetMagicLink {
     private function createToken(string $userId): string {
         $token = uuid_create();
 		// TODO add an expiration field in user attributes instead of serialize / deserialize tokens ...
-        $this->config->setUserValue(
+        $this->userConfig->setMagicToken(
             $userId,
-            Application::APP_ID,
-            Constants::USER_ATTRIBUTE_OLVID_MAGIC_TOKEN,
             (string) json_encode(['token' => $token, 'expiration' => time() + 300]), // 5 min expiration
         );
         return $token;
@@ -75,7 +70,7 @@ class GetMagicLink {
      * @throws Exception
      */
     private function buildLink(string $userId, string $token): string {
-        $serverUrl    = AppConfigManager::getOlvidServerUrl($this->appConfig) ?? '';
+        $serverUrl    = $this->appConfig->getOlvidServerUrl() ?? '';
         $nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('') . '/apps/olvid';
 
         $payload = [
