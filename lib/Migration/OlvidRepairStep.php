@@ -4,6 +4,8 @@ namespace OCA\Olvid\Migration;
 
 use Exception;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidGroupConfigManager;
+use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -11,11 +13,13 @@ use Psr\Log\LoggerInterface;
 class OlvidRepairStep implements IRepairStep {
 	public function __construct(
 		private readonly LoggerInterface $logger,
+		private readonly IAppConfig $appConfig,
 		private readonly OlvidAppConfigManager $olvidAppConfig,
+		private readonly OlvidGroupConfigManager $olvidGroupConfig,
 	) {}
 
 	public function getName(): string {
-		return "Setup olvid";
+		return "Repair olvid";
 	}
 
 	/**
@@ -28,6 +32,16 @@ class OlvidRepairStep implements IRepairStep {
 		 */
 		$output->info("Olvid: Check for jwks key material.");
 		$this->logger->info("Olvid: Check for jwks key material.");
+		$this->createJwks($output);
+
+		/*
+		 * Clean database
+		 */
+		// TODO check group consistency in app storage
+		// TODO check user consistency in user storage
+	}
+
+	private function createJwks(IOutput $output) {
 		$keyId = $this->olvidAppConfig->getJwkKeyId();
 		if (!$keyId) {
 			$output->info("Olvid: Create a new JWKS key");
