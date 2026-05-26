@@ -12,7 +12,6 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\TemplateResponse;
 
-// TODO what is this ??
 /**
  * @psalm-suppress UnusedClass
  */
@@ -22,6 +21,17 @@ class PageController extends Controller {
 	#[OpenAPI(OpenAPI::SCOPE_IGNORE)]
 	#[FrontpageRoute(verb: 'GET', url: '/')]
 	public function index(): TemplateResponse {
+		return new TemplateResponse(
+			Application::APP_ID,
+			'index',
+		);
+	}
+
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[OpenAPI(OpenAPI::SCOPE_IGNORE)]
+	#[FrontpageRoute(verb: 'GET', url: '/{path}', requirements: ['path' => '.+'])]
+	public function indexPath(): TemplateResponse {
 		return new TemplateResponse(
 			Application::APP_ID,
 			'index',

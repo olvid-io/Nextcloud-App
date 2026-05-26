@@ -1,5 +1,6 @@
 <template>
 	<NcAppContent>
+		<NcHeaderMenu id="profile-header" />
 		<div id="olvid">
 			<!-- ── Enrollment section ─────────────────────────────────── -->
 			<div class="olvid-enrollment">
@@ -69,10 +70,11 @@ import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import QRCode from 'qrcode'
+import NcHeaderMenu from '@nextcloud/vue/dist/Components/NcHeaderMenu.js'
 
 export default {
 	name: 'ProfileView',
-	components: { NcAppContent, NcButton, NcTextField },
+	components: { NcHeaderMenu, NcAppContent, NcButton, NcTextField },
 	data() {
 		return {
 			loading: true,

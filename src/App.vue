@@ -1,24 +1,60 @@
 <template>
 	<NcContent app-name="olvid">
-		<OlvidNavigation :current-tab="currentTab" @select="currentTab = $event" />
-		<ProfileView v-if="currentTab === 'profile'" />
-		<GroupsView v-else-if="currentTab === 'groups'" />
-		<UsersView v-else-if="currentTab === 'users'" />
+		<OlvidNavigation />
+		<router-view
+			ref="view"
+			@open-group-sidebar="onOpenGroupSidebar" />
+
+		<GroupDetailsSidebar
+			v-if="selectedGroup"
+			:group="selectedGroup"
+			@close="onSidebarClose"
+			@updated="onGroupUpdated" />
 	</NcContent>
 </template>
 
-<script lang="ts">
+<script>
 import NcContent from '@nextcloud/vue/dist/Components/NcContent.js'
-import GroupsView from './views/GroupsView.vue'
+import GroupDetailsSidebar from './components/GroupDetailsSidebar.vue'
 import OlvidNavigation from './OlvidNavigation.vue'
-import ProfileView from './views/ProfileView.vue'
-import UsersView from './views/UsersView.vue'
 
 export default {
 	name: 'App',
-	components: { NcContent, OlvidNavigation, ProfileView, GroupsView, UsersView },
+	components: { NcContent, OlvidNavigation, GroupDetailsSidebar },
+
 	data() {
-		return { currentTab: 'profile' }
+		return {
+			selectedGroup: null,
+		}
+	},
+
+	watch: {
+		$route(to) {
+			if (to.name !== 'groups' && to.name !== 'group-detail') {
+				this.selectedGroup = null
+			}
+		},
+	},
+
+	methods: {
+		onOpenGroupSidebar(group) {
+			this.selectedGroup = group
+			this.$router.push({ name: 'group-detail', params: { groupId: group.id } }).catch(() => {})
+		},
+
+		onSidebarClose() {
+			this.selectedGroup = null
+			this.$router.push({ name: 'groups' }).catch(() => {})
+		},
+
+		onGroupUpdated(patch) {
+			if (this.selectedGroup && this.selectedGroup.id === patch.id) {
+				this.selectedGroup = { ...this.selectedGroup, ...patch }
+			}
+			if (this.$refs.view && typeof this.$refs.view.applyGroupPatch === 'function') {
+				this.$refs.view.applyGroupPatch(patch)
+			}
+		},
 	},
 }
 </script>
