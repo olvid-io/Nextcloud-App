@@ -17,15 +17,12 @@ use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Controller\DirectoryApiController;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
-use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
-use OCP\IUserManager;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 class ApiTest extends TestCase {
 	private DirectoryApiController $controller;
@@ -33,15 +30,10 @@ class ApiTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturnCallback(
-			fn(string $app, string $key) => match ($key) {
-				'olvid-jwk-key-id' => 'test-kid',
-				'olvid-jwk-public-key-x' => 'test-x-coord',
-				'olvid-jwk-public-key-y' => 'test-y-coord',
-				default => '',
-			}
-		);
+		$olvidAppConfig = $this->createMock(OlvidAppConfigManager::class);
+		$olvidAppConfig->method('getJwkKeyId')->willReturn('test-kid');
+		$olvidAppConfig->method('getJwkKeyPublicKeyX')->willReturn('test-x-coord');
+		$olvidAppConfig->method('getJwkKeyPublicKeyY')->willReturn('test-y-coord');
 
 		$urlGenerator = $this->createMock(IURLGenerator::class);
 		$urlGenerator->method('linkToOCSRouteAbsolute')->willReturn('https://cloud.example.com/ocs/v2.php');
@@ -49,7 +41,7 @@ class ApiTest extends TestCase {
 		$this->controller = new DirectoryApiController(
 			Application::APP_ID,
 			$this->createMock(IRequest::class),
-			$appConfig,
+			$olvidAppConfig,
 			$this->createMock(DiscoveryGenerator::class),
 			$urlGenerator,
 			$this->createMock(Me::class),

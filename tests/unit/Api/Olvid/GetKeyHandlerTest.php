@@ -7,7 +7,6 @@ namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\Device\BaseJsonResponse;
 use OCA\Olvid\Api\Device\GetKey;
-use OCA\Olvid\AppInfo\Application;
 
 class GetKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenUserIdMissing(): void {
@@ -34,9 +33,7 @@ class GetKeyHandlerTest extends ApiHandlerTestCase {
 		$caller = $this->mockUser('caller');
 		$bob = $this->mockUser('bob', 'Bob Builder');
 		$this->userManager->method('get')->with('bob')->willReturn($bob);
-		$this->config->method('getUserValue')
-			->with('bob', Application::APP_ID, Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS)
-			->willReturn('header.payload.sig');
+		$this->userConfig->method('getSignedDetails')->with('bob')->willReturn('header.payload.sig');
 
 		$handler = $this->makeHandler(GetKey::class);
 		$response = $handler->handler([

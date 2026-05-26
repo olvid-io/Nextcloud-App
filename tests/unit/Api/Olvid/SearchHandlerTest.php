@@ -14,7 +14,7 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 			$this->mockUser('alice'),
 			$this->mockUser('bob'),
 		]);
-		$this->config->method('getUserValue')->willReturn(''); // no identity for anyone
+		$this->userConfig->method('hasIdentity')->willReturn(false);
 
 		$handler = $this->makeHandler(Search::class);
 		$response = $handler->handler([], $caller);
@@ -30,7 +30,7 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		$this->userManager->method('search')->with('')->willReturn([$alice, $bob]);
 
 		// Build a fake signed-details JWT for alice whose middle part is
-		// base64-encoded JSON (the format getCurrentUserDetails() expects).
+		// base64-encoded JSON (the format parseSignedDetails() expects).
 		$alicePayload = base64_encode(json_encode([
 			Constants::DETAILS_KEY_ID => 'alice',
 			Constants::DETAILS_KEY_FIRST_NAME => 'Alice Wonder',
@@ -42,16 +42,11 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		]));
 		$aliceFakeJwt = "header.{$alicePayload}.sig";
 
-		$this->config->method('getUserValue')->willReturnCallback(
-			function (string $uid, string $app, string $key) use ($aliceFakeJwt): string {
-				if ($uid === 'alice' && $key === Constants::USER_ATTRIBUTE_OLVID_IDENTITY) {
-					return 'alice-olvid-id';
-				}
-				if ($uid === 'alice' && $key === Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS) {
-					return $aliceFakeJwt;
-				}
-				return ''; // bob has no identity → excluded
-			}
+		$this->userConfig->method('hasIdentity')->willReturnCallback(
+			fn(string $uid) => $uid === 'alice'
+		);
+		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+			fn(string $uid) => $uid === 'alice' ? $aliceFakeJwt : null
 		);
 
 		$handler = $this->makeHandler(Search::class);

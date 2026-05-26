@@ -10,14 +10,10 @@ use OCA\Olvid\Api\Device\Me;
 class MeHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsCachedSignatureWithoutResigning(): void {
 		$user = $this->mockUser('alice');
-		$this->config->method('getUserValue')->willReturnCallback(
-			fn(string $uid, string $app, string $key) => match ($key) {
-				Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS => 'cached.jwt.value',
-				Constants::USER_ATTRIBUTE_OLVID_API_KEY => 'stored-api-key',
-				default => '',
-			}
-		);
-		$this->appConfig->method('getValueString')->willReturn('');
+		$this->userConfig->method('getSignedDetails')->with('alice')->willReturn('cached.jwt.value');
+		$this->userConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
+		$this->olvidAppConfig->method('getOlvidServerUrl')->willReturn('');
+		$this->olvidAppConfig->method('getGlobalPushTopic')->willReturn(null);
 
 		$handler = $this->makeHandler(Me::class);
 		$response = $handler->handler([], $user);
@@ -29,14 +25,9 @@ class MeHandlerTest extends ApiHandlerTestCase {
 
 	public function testHandlerSignsAndReturnsDetailsWhenNoCacheExists(): void {
 		$user = $this->mockUser('alice', 'Alice Wonder');
-		$this->config->method('getUserValue')->willReturnCallback(
-			fn(string $uid, string $app, string $key) => match ($key) {
-				Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS => '', // no cache → triggers signing
-				Constants::USER_ATTRIBUTE_OLVID_IDENTITY => 'alice-olvid-identity',
-				Constants::USER_ATTRIBUTE_OLVID_API_KEY => 'stored-api-key',
-				default => '',
-			}
-		);
+		$this->userConfig->method('getSignedDetails')->with('alice')->willReturn(null);
+		$this->userConfig->method('getIdentity')->with('alice')->willReturn('alice-olvid-identity');
+		$this->userConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(Me::class);

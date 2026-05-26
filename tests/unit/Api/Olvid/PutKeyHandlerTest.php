@@ -24,14 +24,36 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = [];
-		$this->config->method('setUserValue')->willReturnCallback(
-			function (string $uid, string $app, string $key, mixed $value) use (&$store): void {
-				$store[$key] = $value;
+		$this->userConfig->method('getIdentity')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
+		);
+		$this->userConfig->method('setIdentity')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['identity'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->config->method('getUserValue')->willReturnCallback(
-			fn(string $uid, string $app, string $key) => $store[$key] ?? ''
+		$this->userConfig->method('getApiKey')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['apiKey'] ?? null; }
 		);
+		$this->userConfig->method('setApiKey')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['apiKey'] = $value;
+			}
+		);
+		$this->userConfig->method('setSignedDetails')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['signedDetails'] = $value;
+			}
+		);
+		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['signedDetails'] ?? null; }
+		);
+		// computeDetails calls these
+		$this->userConfig->method('getFirstname')->willReturn(null);
+		$this->userConfig->method('getLastname')->willReturn(null);
+		$this->userConfig->method('getPosition')->willReturn(null);
+		$this->userConfig->method('getCompany')->willReturn(null);
+		$this->userConfig->method('getFullSearchField')->willReturn(null);
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
@@ -41,29 +63,51 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$this->assertSuccessResponse($response);
 
 		// check store
-		$this->assertSame('new-olvid-identity', $store[Constants::USER_ATTRIBUTE_OLVID_IDENTITY]);
+		$this->assertSame('new-olvid-identity', $store['identity']);
 		// Signed details must have been cached as a valid three-part JWT
-		$this->assertArrayHasKey(Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS, $store);
-		$this->assertCount(3, explode('.', $store[Constants::USER_ATTRIBUTE_OLVID_SIGNED_DETAILS]));
-		$this->assertNotNull(OlvidUserDetails::parseSignedDetails($user, $this->config));
+		$this->assertArrayHasKey('signedDetails', $store);
+		$this->assertCount(3, explode('.', $store['signedDetails']));
+		$this->assertNotNull(OlvidUserDetails::parseSignedDetails($user, $this->userConfig));
 
 		// No session revocation on first upload
-		$this->assertArrayNotHasKey(Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE, $store);
+		$this->assertArrayNotHasKey('sessionRevokedBefore', $store);
 	}
 
 	// Branch 2: same identity re-uploaded → re-sign details, no revocation
 	public function testHandlerSucceedsWhenSameIdentityReUploaded(): void {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
-		$store = [Constants::USER_ATTRIBUTE_OLVID_IDENTITY => 'same-identity'];
-		$this->config->method('setUserValue')->willReturnCallback(
-			function (string $uid, string $app, string $key, mixed $value) use (&$store): void {
-				$store[$key] = $value;
+		$store = ['identity' => 'same-identity'];
+		$this->userConfig->method('getIdentity')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
+		);
+		$this->userConfig->method('setIdentity')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['identity'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->config->method('getUserValue')->willReturnCallback(
-			fn(string $uid, string $app, string $key) => $store[$key] ?? ''
+		$this->userConfig->method('getApiKey')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['apiKey'] ?? null; }
 		);
+		$this->userConfig->method('setApiKey')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['apiKey'] = $value;
+			}
+		);
+		$this->userConfig->method('setSignedDetails')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['signedDetails'] = $value;
+			}
+		);
+		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['signedDetails'] ?? null; }
+		);
+		// computeDetails calls these
+		$this->userConfig->method('getFirstname')->willReturn(null);
+		$this->userConfig->method('getLastname')->willReturn(null);
+		$this->userConfig->method('getPosition')->willReturn(null);
+		$this->userConfig->method('getCompany')->willReturn(null);
+		$this->userConfig->method('getFullSearchField')->willReturn(null);
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
@@ -73,22 +117,54 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 
 		$this->assertSuccessResponse($response);
 		// No session revocation when re-uploading the same identity
-		$this->assertArrayNotHasKey(Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE, $store);
+		$this->assertArrayNotHasKey('sessionRevokedBefore', $store);
 	}
 
 	// Branch 3: different identity uploaded → revoke session, clear nonce, set new identity
 	public function testHandlerRevokesSessionWhenIdentityIsOverridden(): void {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
-		$store = [Constants::USER_ATTRIBUTE_OLVID_IDENTITY => 'old-identity'];
-		$this->config->method('setUserValue')->willReturnCallback(
-			function (string $uid, string $app, string $key, mixed $value) use (&$store): void {
-				$store[$key] = $value;
+		$store = ['identity' => 'old-identity'];
+		$this->userConfig->method('getIdentity')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
+		);
+		$this->userConfig->method('setIdentity')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['identity'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->config->method('getUserValue')->willReturnCallback(
-			fn(string $uid, string $app, string $key) => $store[$key] ?? ''
+		$this->userConfig->method('getApiKey')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['apiKey'] ?? null; }
 		);
+		$this->userConfig->method('setApiKey')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['apiKey'] = $value;
+			}
+		);
+		$this->userConfig->method('setNonce')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['nonce'] = $value !== '' ? $value : null;
+			}
+		);
+		$this->userConfig->method('setSessionRevokedBefore')->willReturnCallback(
+			function (string $uid, int $value) use (&$store): void {
+				$store['sessionRevokedBefore'] = $value;
+			}
+		);
+		$this->userConfig->method('setSignedDetails')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store['signedDetails'] = $value;
+			}
+		);
+		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+			function (string $uid) use (&$store) { return $store['signedDetails'] ?? null; }
+		);
+		// computeDetails calls these
+		$this->userConfig->method('getFirstname')->willReturn(null);
+		$this->userConfig->method('getLastname')->willReturn(null);
+		$this->userConfig->method('getPosition')->willReturn(null);
+		$this->userConfig->method('getCompany')->willReturn(null);
+		$this->userConfig->method('getFullSearchField')->willReturn(null);
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
@@ -97,11 +173,11 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		], $user);
 
 		$this->assertSuccessResponse($response);
-		$this->assertSame('new-identity', $store[Constants::USER_ATTRIBUTE_OLVID_IDENTITY]);
+		$this->assertSame('new-identity', $store['identity']);
 		// Session must be revoked when identity changes
-		$this->assertArrayHasKey(Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE, $store);
-		$this->assertGreaterThan(0, $store[Constants::USER_ATTRIBUTE_OLVID_SESSION_REVOKED_BEFORE]);
+		$this->assertArrayHasKey('sessionRevokedBefore', $store);
+		$this->assertGreaterThan(0, $store['sessionRevokedBefore']);
 		// Nonce must be cleared so any previously enrolled identity is unbound
-		$this->assertNull($store[Constants::USER_ATTRIBUTE_OLVID_NONCE]);
+		$this->assertNull($store['nonce']);
 	}
 }

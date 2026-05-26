@@ -27,22 +27,22 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$this->configureAppConfigWithKeys();
 
 		$store = [];
-		$this->config->method('setUserValue')->willReturnCallback(
-			function ($uid, $app, $key, $value) use (&$store): void {
-				$store["$uid:$key"] = $value;
+		$this->userConfig->method('setMagicToken')->willReturnCallback(
+			function (string $uid, string $value) use (&$store): void {
+				$store["$uid:magic-token"] = $value;
 			}
 		);
-		$this->config->method('getUserValue')->willReturnCallback(
-			function ($uid, $app, $key) use (&$store) {
-				return $store["$uid:$key"] ?? '';
+		$this->userConfig->method('getMagicToken')->willReturnCallback(
+			function (string $uid) use (&$store) {
+				return $store["$uid:magic-token"] ?? null;
 			}
 		);
 
 		// --- Step 1: web app requests the magic link ---
 		$magicLink = new GetMagicLink(
-			$this->config,
-			$this->appConfig,
-			$this->urlGenerator,   // needs a mock — see note below
+			$this->userConfig,
+			$this->olvidAppConfig,
+			$this->urlGenerator,
 			$this->logger,
 		);
 		$linkResponse = $magicLink->handle('alice');
@@ -86,7 +86,7 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 
 		// Store an already-expired token
 		$expiredJson = json_encode(['token' => 'valid-token', 'expiration' => time() - 1]);
-		$this->config->method('getUserValue')->willReturn($expiredJson);
+		$this->userConfig->method('getMagicToken')->willReturn($expiredJson);
 
 		$handler = $this->makeGetMagicSessionHandler();
 		$response = $handler->handler([
@@ -98,7 +98,7 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$this->assertErrorResponse($response, \OCA\Olvid\Api\Device\BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
 
-	// GetMagicSession has a different constructor than AbstractDeviceApiHandler handlers
+	// GetMagicSession uses the AbstractDeviceApiHandler constructor
 	private function makeGetMagicSessionHandler(): GetMagicSession
 	{
 		return new GetMagicSession(
@@ -106,9 +106,12 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 			$this->config,
 			$this->appConfig,
 			$this->userManager,
+			$this->groupManager,
 			$this->accountManager,
 			$this->lockingProvider,
 			$this->logger,
+			$this->userConfig,
+			$this->olvidAppConfig,
 		);
 	}
 }

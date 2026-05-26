@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Device\BaseJsonResponse;
+use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -34,6 +36,10 @@ abstract class ApiHandlerTestCase extends TestCase {
 	protected IConfig $config;
 	/** @var IAppConfig&\PHPUnit\Framework\MockObject\MockObject */
 	protected IAppConfig $appConfig;
+	/** @var OlvidUserConfigManager&\PHPUnit\Framework\MockObject\MockObject */
+	protected OlvidUserConfigManager $userConfig;
+	/** @var OlvidAppConfigManager&\PHPUnit\Framework\MockObject\MockObject */
+	protected OlvidAppConfigManager $olvidAppConfig;
 	/** @var IUserManager&\PHPUnit\Framework\MockObject\MockObject */
 	protected IUserManager $userManager;
 	/** @var IAccountManager&\PHPUnit\Framework\MockObject\MockObject */
@@ -66,6 +72,8 @@ abstract class ApiHandlerTestCase extends TestCase {
 		parent::setUp();
 		$this->config = $this->createMock(IConfig::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->userConfig = $this->createMock(OlvidUserConfigManager::class);
+		$this->olvidAppConfig = $this->createMock(OlvidAppConfigManager::class);
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->accountManager = $this->createMock(IAccountManager::class);
 		$this->userSession = $this->createMock(IUserSession::class);
@@ -85,19 +93,14 @@ abstract class ApiHandlerTestCase extends TestCase {
 	}
 
 	/**
-	 * Configure the appConfig mock to return real JWK key material so that
-	 * OlvidUserDetails::signUserDetails() can produce a valid ES256 JWT.
+	 * Configure the olvidAppConfig mock to return real JWK key material so that
+	 * OlvidUserDetails::sign() can produce a valid ES256 JWT.
 	 */
 	protected function configureAppConfigWithKeys(): void {
-		$this->appConfig->method('getValueString')->willReturnCallback(
-			fn(string $app, string $key) => match ($key) {
-				'olvid-jwk-key-id' => 'test-key-id',
-				'olvid-jwk-key-type' => 'ES256',
-				'olvid-jwk-private-key' => self::$testPrivateKey,
-				'olvid-server-url' => 'https://server.test.olvid.io',
-				default => '',
-			}
-		);
+		$this->olvidAppConfig->method('getJwkKeyId')->willReturn('test-key-id');
+		$this->olvidAppConfig->method('getJwkKeyType')->willReturn('ES256');
+		$this->olvidAppConfig->method('getJwkKeyPrivateKey')->willReturn(self::$testPrivateKey);
+		$this->olvidAppConfig->method('getOlvidServerUrl')->willReturn('https://server.test.olvid.io');
 	}
 
 	/** Instantiate a handler with the shared mock dependencies. */
@@ -107,9 +110,12 @@ abstract class ApiHandlerTestCase extends TestCase {
 			$this->config,
 			$this->appConfig,
 			$this->userManager,
+			$this->groupManager,
 			$this->accountManager,
 			$this->lockingProvider,
 			$this->logger,
+			$this->userConfig,
+			$this->olvidAppConfig,
 		);
 	}
 
