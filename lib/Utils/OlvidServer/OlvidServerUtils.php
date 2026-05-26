@@ -12,12 +12,12 @@ class OlvidServerUtils {
 	 * // TODO
 	 * @throws Exception
 	 */
-	public static function requestNewApiKey(OlvidAppConfigManager $appConfig): string
+	public static function requestNewApiKey(OlvidAppConfigManager $olvidAppConfig): string
 	{
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_API_KEY;
-		$query->keycloakApiKey = $appConfig->getOlvidServerApiKey() ?? "";
-		$serverUrl = $appConfig->getOlvidServerUrl();
+		$query->keycloakApiKey = $olvidAppConfig->getOlvidServerApiKey() ?? "";
+		$serverUrl = $olvidAppConfig->getOlvidServerUrl();
 		if ($serverUrl == null || $query->keycloakApiKey == null) {
 //			throw new InvalidApiKeyException();
 			// TODO
@@ -25,29 +25,22 @@ class OlvidServerUtils {
 		}
 
 		$serverResponse = OlvidServerUtils::serverApiRequest($serverUrl, $query);
-
-		if ($serverResponse["error"]) {
-			throw new ("Olvid server returned an error: " . $serverResponse["error"]);
-		}
-
 		return $serverResponse["apiKey"];
 	}
 
 	/**
 	 * @throws OlvidServerException
 	 * // TODO
-	 * @throws Exception
+	 * @throws InvalidApiKeyException
 	 */
-	public static function revokeApiKey(OlvidAppConfigManager $appConfig, string $apiKeyToRevoke): bool {
+	public static function revokeApiKey(OlvidAppConfigManager $olvidAppConfig, string $apiKeyToRevoke): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REVOKE_API_KEY;
 		$query->apiKeyToRevoke = $apiKeyToRevoke;
-		$query->keycloakApiKey = $appConfig->getOlvidServerApiKey();
-		$serverUrl = $appConfig->getOlvidServerUrl();
+		$query->keycloakApiKey = $olvidAppConfig->getOlvidServerApiKey();
+		$serverUrl = $olvidAppConfig->getOlvidServerUrl();
 		if ($serverUrl == null || $query->keycloakApiKey == null) {
-//			throw new InvalidApiKeyException();
-			// TODO
-			throw new Exception("InvalidApiKeyException");
+			throw new InvalidApiKeyException();
 		}
 
 		try {
@@ -64,12 +57,12 @@ class OlvidServerUtils {
 	 * // TODO
 	 * @throws Exception
 	 */
-	public static function requestNewPushTopic(OlvidAppConfigManager $appConfig): string
+	public static function requestNewPushTopic(OlvidAppConfigManager $olvidAppConfig): string
 	{
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_PUSH_TOPIC;
-		$query->keycloakApiKey = $appConfig->getOlvidServerApiKey() ?? "";
-		$serverUrl = $appConfig->getOlvidServerUrl();
+		$query->keycloakApiKey = $olvidAppConfig->getOlvidServerApiKey() ?? "";
+		$serverUrl = $olvidAppConfig->getOlvidServerUrl();
 		if ($serverUrl == null || $query->keycloakApiKey == null) {
 //			throw new InvalidApiKeyException();
 			// TODO
@@ -77,18 +70,13 @@ class OlvidServerUtils {
 		}
 
 		$serverResponse = OlvidServerUtils::serverApiRequest($serverUrl, $query);
-
-		if ($serverResponse["error"]) {
-			throw new ("Olvid server returned an error: " . $serverResponse["error"]);
-		}
-
 		return $serverResponse["pushTopic"];
 	}
 
 	/**
 	 * @throws OlvidServerException
 	 * // TODO
-	 * @throws Exception
+	 * @throws InvalidRequestException|InternalErrorException|InvalidApiKeyException|ApiKeyNotFoundException|MissingBotPermissionException|Exception
 	 */
 	private static function serverApiRequest(string $serverUrl, JsonSerializable $jsonRequest): array {
 		$session = curl_init($serverUrl . "/keycloakQuery");
@@ -99,28 +87,18 @@ class OlvidServerUtils {
 		curl_close($session);
 		$jsonResponse = json_decode($server_output, associative: true);
 
-		if ($jsonResponse["error"]) {
+		if (array_key_exists("error", $jsonResponse) && $jsonResponse["error"]) {
 			switch ($jsonResponse["error"]) {
 				case OlvidServerException::ERROR_INVALID_REQUEST:
-//					throw new InvalidRequestException();
-					// TODO
-					throw new Exception("InvalidRequestException");
+					throw new InvalidRequestException();
 				case OlvidServerException::ERROR_INTERNAL:
-//					throw new InternalErrorException();
-					// TODO
-					throw new Exception("InternalErrorException");
+					throw new InternalErrorException();
 				case OlvidServerException::ERROR_INVALID_API_KEY:
-//					throw new InvalidApiKeyException();
-					// TODO
-					throw new Exception("Exception");
+					throw new InvalidApiKeyException();
 				case OlvidServerException::ERROR_API_KEY_NOT_FOUND:
-//					throw new ApiKeyNotFoundException();
-					// TODO
-					throw new Exception("ApiKeyNotFoundException");
+					throw new ApiKeyNotFoundException();
 				case OlvidServerException::ERROR_MISSING_BOT_PERMISSION:
-//					throw new MissingBotPermissionException();
-					// TODO
-					throw new Exception("MissingBotPermissionException");
+					throw new MissingBotPermissionException();
 			}
 		}
 		return $jsonResponse;
