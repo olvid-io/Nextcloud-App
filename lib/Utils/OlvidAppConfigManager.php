@@ -22,6 +22,18 @@ class OlvidAppConfigManager {
 	private const APP_CONFIG_JWK_PUBLIC_KEY_X = "olvid-jwk-public-key-x";
 	private const APP_CONFIG_JWK_PUBLIC_KEY_Y = "olvid-jwk-public-key-y";
 
+	private const ALL_KEYS = [
+		self::APP_CONFIG_OLVID_SERVER_URL,
+		self::APP_CONFIG_OLVID_SERVER_API_KEY,
+		self::APP_CONFIG_GLOBAL_PUSH_TOPIC,
+		self::APP_CONFIG_JWK_KEY_ID,
+		self::APP_CONFIG_JWK_KEY_TYPE,
+		self::APP_CONFIG_JWK_PRIVATE_KEY,
+		self::APP_CONFIG_JWK_PUBLIC_KEY,
+		self::APP_CONFIG_JWK_PUBLIC_KEY_X,
+		self::APP_CONFIG_JWK_PUBLIC_KEY_Y,
+	];
+
 	public function __construct(private readonly IAppConfig $appConfig) {}
 
 	private function getStringOrNull(string $key): ?string {
@@ -92,5 +104,14 @@ class OlvidAppConfigManager {
 	}
 	public function setJwkKeyPublicKeyY(string $value): void {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_JWK_PUBLIC_KEY_Y, $value);
+	}
+
+	/*
+	 * Clean method
+	 */
+	public function deleteAppConfig(): void {
+		foreach (self::ALL_KEYS as $key) {
+			$this->appConfig->deleteKey(Application::APP_ID, $key);
+		}
 	}
 }

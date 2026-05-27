@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\App;
 
 use Exception;
+use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IURLGenerator;
 use OCP\PreConditionNotMetException;
@@ -49,11 +51,8 @@ class GetMagicLink {
      */
     private function createToken(string $userId): string {
         $token = uuid_create();
-		// TODO add an expiration field in user attributes instead of serialize / deserialize tokens ...
-        $this->userConfig->setMagicToken(
-            $userId,
-            (string) json_encode(['token' => $token, 'expiration' => time() + 300]), // 5 min expiration
-        );
+		$this->userConfig->setMagicToken($userId, $token);
+		$this->userConfig->setMagicTokenExpiration($userId, TimeUtil::currentTimeMillis() + Constants::MAGIC_LINK_DURATION_S * 1000);
         return $token;
     }
 

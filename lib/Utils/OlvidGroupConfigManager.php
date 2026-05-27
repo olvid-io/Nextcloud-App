@@ -12,6 +12,17 @@ class OlvidGroupConfigManager {
 	private const GROUP_CONFIG_ENABLED     = '-enabled';
 	private const GROUP_CONFIG_CUSTOM_NAME = '-custom-name';
 	private const GROUP_CONFIG_DESCRIPTION = '-description';
+	private const GROUP_BLOB = '-signed-blob';
+	private const GROUP_CONFIG_LAST_MODIFICATION_TIMESTAMP = '-last-modification-timestamp';
+
+	private const ALL_KEYS = [
+		self::GROUP_CONFIG_ENABLED,
+		self::GROUP_CONFIG_CUSTOM_NAME,
+		self::GROUP_CONFIG_DESCRIPTION,
+		self::GROUP_BLOB,
+		self::GROUP_CONFIG_LAST_MODIFICATION_TIMESTAMP,
+	];
+
 
 	public function __construct(private readonly IAppConfig $appConfig) {}
 
@@ -51,12 +62,33 @@ class OlvidGroupConfigManager {
 		$this->appConfig->setValueString(Application::APP_ID, self::getKey($groupId, self::GROUP_CONFIG_DESCRIPTION), $description);
 	}
 
+	// signed blob
+	// Olvid description
+	public function getBlob(string $groupId): ?string {
+		return $this->getStringOrNull(self::getKey($groupId, self::GROUP_BLOB));
+	}
+	public function setBlob(string $groupId, string $blob): void {
+		$this->appConfig->setValueString(Application::APP_ID, self::getKey($groupId, self::GROUP_BLOB), $blob);
+	}
+
+
+	// last modification timestamp
+	public function getLastModificationTimestamp(string $groupId): ?int {
+		return $this->getStringOrNull(self::getKey($groupId, self::GROUP_CONFIG_LAST_MODIFICATION_TIMESTAMP));
+	}
+	public function setLastModificationTimestamp(string $groupId, int $timestamp): void {
+		$this->appConfig->setValueString(Application::APP_ID, self::getKey($groupId, self::GROUP_CONFIG_LAST_MODIFICATION_TIMESTAMP), (string)$timestamp);
+	}
+
 	/*
 	 ** Clean method
 	 */
 	public function deleteGroupConfig(string $groupId): void {
-		$this->appConfig->deleteKey(Application::APP_ID, self::getKey($groupId, self::GROUP_CONFIG_ENABLED));
-		$this->appConfig->deleteKey(Application::APP_ID, self::getKey($groupId, self::GROUP_CONFIG_CUSTOM_NAME));
-		$this->appConfig->deleteKey(Application::APP_ID, self::getKey($groupId, self::GROUP_CONFIG_DESCRIPTION));
+		foreach (self::ALL_KEYS as $key) {
+			$this->appConfig->deleteKey(Application::APP_ID, self::getKey($groupId, $key));
+		}
+	}
+	public function getGroupConfig(string $groupId): array {
+		return $this->appConfig->getAllValues(Application::APP_ID, self::GROUP_CONFIG_PREFIX . $groupId);
 	}
 }

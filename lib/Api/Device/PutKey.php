@@ -9,6 +9,7 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
@@ -107,7 +108,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$this->olvidUserConfig->setNonce($user->getUID(), '');
 
 				// sign out the user: set revoked_before to mark any token signed before now to be revoked
-				$this->olvidUserConfig->setSessionRevokedBefore($user->getUID(), time());
+				$this->olvidUserConfig->setSessionRevokedBefore($user->getUID(), TimeUtil::currentTimeMillis());
 
 				// create and set new api key
 				// this might fail if an olvid server api have not been set

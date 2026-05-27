@@ -8,6 +8,7 @@ use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\OlvidUserDetails;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -87,7 +88,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// TODO feature revocations
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = [];
 
-		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = time();
+		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = TimeUtil::currentTimeMillis();
 
         return new JSONResponse($response, 200);
     }

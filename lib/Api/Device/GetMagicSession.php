@@ -7,6 +7,7 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
@@ -41,25 +42,17 @@ class GetMagicSession extends AbstractDeviceApiHandler {
         }
 
         // --- 3. Validate magic token ---
-        $storedJson = $this->olvidUserConfig->getMagicToken($targetUser->getUID());
-        if ($storedJson === null) {
-            $this->logger->warning('getMagicSession: no magic token stored for user');
-            return $this->invalidRequest();
-        }
+		$magicToken = $this->olvidUserConfig->getMagicToken($targetUser->getUID());
+		if ($magicToken !== null || $magicToken !== $token) {
+			$this->logger->warning('getMagicSession: invalid magic token: ' . $user);
+			return $this->invalidRequest();
+		}
 
-		// Decode magic token
-        $stored = json_decode($storedJson, true);
-        if (!is_array($stored) || !isset($stored['token']) || $stored['token'] !== $token) {
-            $this->logger->warning('getMagicSession: invalid token for user');
-            return $this->invalidRequest();
-        }
-
-        // Check magic token expiration (null = no expiration)
-        if (isset($stored['expiration']) && $stored['expiration'] !== null) {
-            if ($stored['expiration'] < time()) {
-                $this->logger->warning('getMagicSession: expired magic token for user');
-                return $this->invalidRequest();
-            }
+        // Check magic token expiration
+		$magicTokenExpiration = $this->olvidUserConfig->getMagicTokenExpiration($targetUser->getUID());
+        if ($magicTokenExpiration === null || $magicTokenExpiration < TimeUtil::currentTimeMillis()) {
+			$this->logger->warning('getMagicSession: expired magic token for user');
+			return $this->invalidRequest();
         }
 
         // --- 4. Generate session JWT ---
@@ -74,7 +67,8 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 			$this->logger->error('getMagicSession: failed to load JWK private key from PEM');
 			return $this->internalError();
 		}
-		$now       = time();
+		// timestamp in jwt must be in seconds
+		$now       = TimeUtil::currentTimeS();
 		$expiresIn = Constants::MAGIC_SESSION_DURATION_S;
 
 		$accessToken = JWT::encode([

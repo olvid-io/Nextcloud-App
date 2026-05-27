@@ -20,6 +20,7 @@ class OlvidUserConfigManager {
 	private const USER_CONFIG_FULL_SEARCH_FIELD    = 'olvid-search';
 	private const USER_CONFIG_IS_BOT               = 'olvid-is-bot';
 	private const USER_CONFIG_MAGIC_TOKEN          = 'olvid-magic-token';
+	private const USER_CONFIG_MAGIC_TOKEN_EXPIRATION = 'olvid-magic-token-expiration';
 	private const USER_CONFIG_SESSION_REVOKED_BEFORE = 'olvid-session-revoked-before';
 
 	private const ALL_KEYS = [
@@ -149,6 +150,16 @@ class OlvidUserConfigManager {
 	}
 	public function setMagicToken(string $uid, string $value): void {
 		$this->setString($uid, self::USER_CONFIG_MAGIC_TOKEN, $value);
+	}
+
+	// magic token expiration
+	public function getMagicTokenExpiration(string $uid): ?int {
+		$value = $this->getStringOrNull($uid, self::USER_CONFIG_MAGIC_TOKEN_EXPIRATION);
+		$timestamp = (int)$value;
+		return $timestamp !== 0 ? $timestamp : null;
+	}
+	public function setMagicTokenExpiration(string $uid, int $value): void {
+		$this->setString($uid, self::USER_CONFIG_MAGIC_TOKEN_EXPIRATION, (string)$value);
 	}
 
 	// session revoked before

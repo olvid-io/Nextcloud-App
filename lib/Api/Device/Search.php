@@ -11,7 +11,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
-class Search extends AbstractDeviceApiHandler {
+class Search extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $user): Response {
 		try {
 			$filter = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (string)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;

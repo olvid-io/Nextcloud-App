@@ -7,6 +7,7 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -35,7 +36,7 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		// current timestamp in milliseconds
-		$response[Constants::LIST_USERS_RESPONSE_TIMESTAMP] = (int)(microtime(true) * 1000);
+		$response[Constants::LIST_USERS_RESPONSE_TIMESTAMP] = TimeUtil::currentTimeMillis();
 
 		return new JSONResponse($response);
     }

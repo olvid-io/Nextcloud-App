@@ -10,6 +10,7 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Crypto\ECSdsaVerifier;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
+use OCA\Olvid\Utils\TimeUtil;
 
 /**
  * POST /olvid-rest/getSession
@@ -122,7 +123,8 @@ class GetSession extends AbstractEngineApiHandler {
 			$this->logger->error('getSession: failed to load JWK private key from PEM');
 			return $this->generalError();
 		}
-		$now        = time();
+		// timestamp in jwt must be in seconds
+		$now        = TimeUtil::currentTimeS();
 		$expiresIn  = Constants::IDENTITY_SESSION_DURATION_S;
 
 		$accessToken = JWT::encode([

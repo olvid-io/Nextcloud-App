@@ -7,6 +7,7 @@ use JsonSerializable;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\IUser;
 
 class OlvidUserDetails implements JsonSerializable {
@@ -42,10 +43,10 @@ class OlvidUserDetails implements JsonSerializable {
 		$id = $user->getUID();
 
 		// get user details from attributes
-		$firstname = $userConfig->getFirstname($user->getUID()) ?? '';
-		$lastname  = $userConfig->getLastname($user->getUID()) ?? '';
-		$position  = $userConfig->getPosition($user->getUID()) ?? '';
-		$company   = $userConfig->getCompany($user->getUID()) ?? '';
+		$firstname = $olvidUserConfig->getFirstname($user->getUID()) ?? '';
+		$lastname  = $olvidUserConfig->getLastname($user->getUID()) ?? '';
+		$position  = $olvidUserConfig->getPosition($user->getUID()) ?? '';
+		$company   = $olvidUserConfig->getCompany($user->getUID()) ?? '';
 
 		// fallback: if user does not set any field we use display name as a first name
 		if (!$firstname && !$lastname && !$position && !$company) {
@@ -54,25 +55,25 @@ class OlvidUserDetails implements JsonSerializable {
 //			$userConfig->setFirstname($user->getUID(), $firstname);
 		}
 
-		$identity = $userConfig->getIdentity($user->getUID());
+		$identity = $olvidUserConfig->getIdentity($user->getUID());
 		// set identity to null and not to an empty string, else android think we already have an identity on server ...
 		if (!$identity) {
 			$identity = null;
 		}
-		return new OlvidUserDetails($id, $firstname, $lastname, $position, $company, $identity, time());
+		return new OlvidUserDetails($id, $firstname, $lastname, $position, $company, $identity, TimeUtil::currentTimeMillis());
 	}
 
 	// compute UserDetails signature, save it in database and return it
-	public function sign(OlvidUserConfigManager $userConfig, OlvidAppConfigManager $appConfig): string
+	public function sign(OlvidUserConfigManager $olvidUserConfig, OlvidAppConfigManager $olvidAppConfig): string
 	{
 		// get signature key
-		$keyId = $appConfig->getJwkKeyId();
-		$keyType = $appConfig->getJwkKeyType();
-		$privateKey = $appConfig->getJwkKeyPrivateKey();
+		$keyId = $olvidAppConfig->getJwkKeyId();
+		$keyType = $olvidAppConfig->getJwkKeyType();
+		$privateKey = $olvidAppConfig->getJwkKeyPrivateKey();
 
 		// sign details and store in database
 		$signedDetails = JWT::encode($this->jsonSerialize(), $privateKey, $keyType, $keyId);
-		$userConfig->setSignedDetails($this->id, $signedDetails);
+		$olvidUserConfig->setSignedDetails($this->id, $signedDetails);
 		return $signedDetails;
 	}
 

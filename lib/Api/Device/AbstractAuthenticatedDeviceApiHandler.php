@@ -51,7 +51,6 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 		}
 
 		$user = $this->userManager->get($decoded->sub);
-		$this->logger->debug($decoded->sub . ' logged in using bearer token');
 
 		// check token was not revoked
 		$sessionsRevokedBefore = $this->olvidUserConfig->getSessionRevokedBefore($user->getUID());
