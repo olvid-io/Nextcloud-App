@@ -11,6 +11,7 @@ use OCA\Olvid\Api\App\GetMagicLink;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\Device\GetMagicSession;
 use OCA\Olvid\Tests\Unit\Api\Olvid\ApiHandlerTestCase;
+use OCA\Olvid\Utils\TimeUtil;
 
 /**
  * Simulates the full magic-link device onboarding flow:
@@ -27,20 +28,30 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$this->configureAppConfigWithKeys();
 
 		$store = [];
-		$this->userConfig->method('setMagicToken')->willReturnCallback(
+		$this->olvidUserConfig->method('setMagicToken')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store["$uid:magic-token"] = $value;
 			}
 		);
-		$this->userConfig->method('getMagicToken')->willReturnCallback(
+		$this->olvidUserConfig->method('getMagicToken')->willReturnCallback(
 			function (string $uid) use (&$store) {
 				return $store["$uid:magic-token"] ?? null;
+			}
+		);
+		$this->olvidUserConfig->method('setMagicTokenExpiration')->willReturnCallback(
+			function (string $uid, int $value) use (&$store): void {
+				$store["$uid:magic-token-expiration"] = $value;
+			}
+		);
+		$this->olvidUserConfig->method('getMagicTokenExpiration')->willReturnCallback(
+			function (string $uid) use (&$store) {
+				return $store["$uid:magic-token-expiration"] ?? null;
 			}
 		);
 
 		// --- Step 1: web app requests the magic link ---
 		$magicLink = new GetMagicLink(
-			$this->userConfig,
+			$this->olvidUserConfig,
 			$this->olvidAppConfig,
 			$this->urlGenerator,
 			$this->logger,
@@ -59,12 +70,12 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$extractedUsername = $payload['magic']['username'];
 
 		// --- Step 3: device exchanges token for a bearer JWT ---
-		$sessionHandler = $this->makeGetMagicSessionHandler();
-		$sessionResponse = $sessionHandler->handler([
+		$magicSessionHandler = $this->makeGetMagicSessionHandler();
+		$magicSessionResponse = $magicSessionHandler->handler([
 			Constants::GET_MAGIC_SESSION_REQUEST_USERNAME => $extractedUsername,
 			Constants::GET_MAGIC_SESSION_REQUEST_TOKEN => $extractedToken,
 		], null);
-		$sessionData = $this->getResponseData($sessionResponse);
+		$sessionData = $this->getResponseData($magicSessionResponse);
 
 		$this->assertArrayHasKey('access_token', $sessionData);
 		$this->assertSame('Bearer', $sessionData['token_type']);
@@ -76,7 +87,7 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 
 		$this->assertSame('alice', $decoded->sub);
 		$this->assertSame('session', $decoded->type);
-		$this->assertGreaterThan(time(), $decoded->exp);
+		$this->assertGreaterThan(TimeUtil::currentTimeS(), $decoded->exp);
 	}
 
 	public function testMagicSessionFailsWithExpiredToken(): void
@@ -85,8 +96,8 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$this->userManager->method('get')->with('alice')->willReturn($user);
 
 		// Store an already-expired token
-		$expiredJson = json_encode(['token' => 'valid-token', 'expiration' => time() - 1]);
-		$this->userConfig->method('getMagicToken')->willReturn($expiredJson);
+		$expiredJson = json_encode(['token' => 'valid-token', 'expiration' => TimeUtil::currentTimeMillis() - 1]);
+		$this->olvidUserConfig->method('getMagicToken')->willReturn($expiredJson);
 
 		$handler = $this->makeGetMagicSessionHandler();
 		$response = $handler->handler([
@@ -110,8 +121,9 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 			$this->accountManager,
 			$this->lockingProvider,
 			$this->logger,
-			$this->userConfig,
+			$this->olvidUserConfig,
 			$this->olvidAppConfig,
+			$this->olvidGroupConfig,
 		);
 	}
 }

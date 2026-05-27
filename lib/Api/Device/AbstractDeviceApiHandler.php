@@ -6,6 +6,7 @@ namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidGroupConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -23,16 +24,17 @@ abstract class AbstractDeviceApiHandler {
 	protected ?IUser $user = null;
 
     public function __construct(
-		protected readonly IRequest               $request,
-		protected readonly IConfig                $config,
-		protected readonly IAppConfig             $appConfig,
-		protected readonly IUserManager           $userManager,
-		protected readonly IGroupManager          $groupManager,
-        protected readonly IAccountManager        $accountManager,
-		protected readonly ILockingProvider       $lockingProvider,
-		protected readonly LoggerInterface        $logger,
-		protected readonly OlvidUserConfigManager $olvidUserConfig,
-		protected readonly OlvidAppConfigManager  $olvidAppConfig,
+		protected readonly IRequest                $request,
+		protected readonly IConfig                 $config,
+		protected readonly IAppConfig              $appConfig,
+		protected readonly IUserManager            $userManager,
+		protected readonly IGroupManager           $groupManager,
+        protected readonly IAccountManager         $accountManager,
+		protected readonly ILockingProvider        $lockingProvider,
+		protected readonly LoggerInterface         $logger,
+		protected readonly OlvidUserConfigManager  $olvidUserConfig,
+		protected readonly OlvidAppConfigManager   $olvidAppConfig,
+		protected readonly OlvidGroupConfigManager $olvidGroupConfig,
     ) {}
 
     public function handle(): Response {

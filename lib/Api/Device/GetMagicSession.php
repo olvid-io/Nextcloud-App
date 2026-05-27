@@ -43,7 +43,7 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 
         // --- 3. Validate magic token ---
 		$magicToken = $this->olvidUserConfig->getMagicToken($targetUser->getUID());
-		if ($magicToken !== null || $magicToken !== $token) {
+		if ($magicToken === null || $token !== $magicToken) {
 			$this->logger->warning('getMagicSession: invalid magic token: ' . $user);
 			return $this->invalidRequest();
 		}
