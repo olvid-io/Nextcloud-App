@@ -84,7 +84,7 @@ class DebugApiController extends ApiController
 	public function reset(): TextPlainResponse {
 		$user = $this->userSession->getUser();
 		if ($user) {
-			$this->resetUser($user);
+			$this->olvidUserConfig->deleteUserConfig($user->getUID());
 			return new TextPlainResponse("reset " . $user->getDisplayName());
 		}
 		else {
@@ -97,7 +97,7 @@ class DebugApiController extends ApiController
 	public function resetAll(): TextPlainResponse {
 		$users = $this->userManager->search("");
 		foreach ($users as $user) {
-			$this->resetUser($user);
+			$this->olvidUserConfig->deleteUserConfig($user->getUID());
 		}
 		return new TextPlainResponse("reset " . count($users) . " users");
 	}
