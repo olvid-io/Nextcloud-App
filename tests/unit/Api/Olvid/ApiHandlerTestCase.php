@@ -6,6 +6,7 @@ namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Device\BaseJsonResponse;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidGroupConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -37,9 +38,11 @@ abstract class ApiHandlerTestCase extends TestCase {
 	/** @var IAppConfig&\PHPUnit\Framework\MockObject\MockObject */
 	protected IAppConfig $appConfig;
 	/** @var OlvidUserConfigManager&\PHPUnit\Framework\MockObject\MockObject */
-	protected OlvidUserConfigManager $userConfig;
+	protected OlvidUserConfigManager $olvidUserConfig;
 	/** @var OlvidAppConfigManager&\PHPUnit\Framework\MockObject\MockObject */
 	protected OlvidAppConfigManager $olvidAppConfig;
+	/** @var OlvidUserConfigManager&\PHPUnit\Framework\MockObject\MockObject */
+	protected OlvidGroupConfigManager $olvidGroupConfig;
 	/** @var IUserManager&\PHPUnit\Framework\MockObject\MockObject */
 	protected IUserManager $userManager;
 	/** @var IAccountManager&\PHPUnit\Framework\MockObject\MockObject */
@@ -72,8 +75,9 @@ abstract class ApiHandlerTestCase extends TestCase {
 		parent::setUp();
 		$this->config = $this->createMock(IConfig::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
-		$this->userConfig = $this->createMock(OlvidUserConfigManager::class);
+		$this->olvidUserConfig = $this->createMock(OlvidUserConfigManager::class);
 		$this->olvidAppConfig = $this->createMock(OlvidAppConfigManager::class);
+		$this->olvidGroupConfig = $this->createMock(OlvidGroupConfigManager::class);
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->accountManager = $this->createMock(IAccountManager::class);
 		$this->userSession = $this->createMock(IUserSession::class);
@@ -114,8 +118,9 @@ abstract class ApiHandlerTestCase extends TestCase {
 			$this->accountManager,
 			$this->lockingProvider,
 			$this->logger,
-			$this->userConfig,
+			$this->olvidUserConfig,
 			$this->olvidAppConfig,
+			$this->olvidGroupConfig,
 		);
 	}
 

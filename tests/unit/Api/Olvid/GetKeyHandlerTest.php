@@ -33,7 +33,7 @@ class GetKeyHandlerTest extends ApiHandlerTestCase {
 		$caller = $this->mockUser('caller');
 		$bob = $this->mockUser('bob', 'Bob Builder');
 		$this->userManager->method('get')->with('bob')->willReturn($bob);
-		$this->userConfig->method('getSignedDetails')->with('bob')->willReturn('header.payload.sig');
+		$this->olvidUserConfig->method('getSignedDetails')->with('bob')->willReturn('header.payload.sig');
 
 		$handler = $this->makeHandler(GetKey::class);
 		$response = $handler->handler([

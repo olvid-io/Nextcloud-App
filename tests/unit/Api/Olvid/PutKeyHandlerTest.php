@@ -24,36 +24,36 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = [];
-		$this->userConfig->method('getIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('getIdentity')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
 		);
-		$this->userConfig->method('setIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('setIdentity')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['identity'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->userConfig->method('getApiKey')->willReturnCallback(
+		$this->olvidUserConfig->method('getApiKey')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['apiKey'] ?? null; }
 		);
-		$this->userConfig->method('setApiKey')->willReturnCallback(
+		$this->olvidUserConfig->method('setApiKey')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['apiKey'] = $value;
 			}
 		);
-		$this->userConfig->method('setSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('setSignedDetails')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['signedDetails'] = $value;
 			}
 		);
-		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('getSignedDetails')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['signedDetails'] ?? null; }
 		);
 		// computeDetails calls these
-		$this->userConfig->method('getFirstname')->willReturn(null);
-		$this->userConfig->method('getLastname')->willReturn(null);
-		$this->userConfig->method('getPosition')->willReturn(null);
-		$this->userConfig->method('getCompany')->willReturn(null);
-		$this->userConfig->method('getFullSearchField')->willReturn(null);
+		$this->olvidUserConfig->method('getFirstname')->willReturn(null);
+		$this->olvidUserConfig->method('getLastname')->willReturn(null);
+		$this->olvidUserConfig->method('getPosition')->willReturn(null);
+		$this->olvidUserConfig->method('getCompany')->willReturn(null);
+		$this->olvidUserConfig->method('getFullSearchField')->willReturn(null);
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
@@ -67,7 +67,7 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		// Signed details must have been cached as a valid three-part JWT
 		$this->assertArrayHasKey('signedDetails', $store);
 		$this->assertCount(3, explode('.', $store['signedDetails']));
-		$this->assertNotNull(OlvidUserDetails::parseSignedDetails($user, $this->userConfig));
+		$this->assertNotNull(OlvidUserDetails::parseSignedDetails($user, $this->olvidUserConfig));
 
 		// No session revocation on first upload
 		$this->assertArrayNotHasKey('sessionRevokedBefore', $store);
@@ -78,36 +78,36 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = ['identity' => 'same-identity'];
-		$this->userConfig->method('getIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('getIdentity')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
 		);
-		$this->userConfig->method('setIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('setIdentity')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['identity'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->userConfig->method('getApiKey')->willReturnCallback(
+		$this->olvidUserConfig->method('getApiKey')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['apiKey'] ?? null; }
 		);
-		$this->userConfig->method('setApiKey')->willReturnCallback(
+		$this->olvidUserConfig->method('setApiKey')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['apiKey'] = $value;
 			}
 		);
-		$this->userConfig->method('setSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('setSignedDetails')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['signedDetails'] = $value;
 			}
 		);
-		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('getSignedDetails')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['signedDetails'] ?? null; }
 		);
 		// computeDetails calls these
-		$this->userConfig->method('getFirstname')->willReturn(null);
-		$this->userConfig->method('getLastname')->willReturn(null);
-		$this->userConfig->method('getPosition')->willReturn(null);
-		$this->userConfig->method('getCompany')->willReturn(null);
-		$this->userConfig->method('getFullSearchField')->willReturn(null);
+		$this->olvidUserConfig->method('getFirstname')->willReturn(null);
+		$this->olvidUserConfig->method('getLastname')->willReturn(null);
+		$this->olvidUserConfig->method('getPosition')->willReturn(null);
+		$this->olvidUserConfig->method('getCompany')->willReturn(null);
+		$this->olvidUserConfig->method('getFullSearchField')->willReturn(null);
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);
@@ -125,46 +125,46 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = ['identity' => 'old-identity'];
-		$this->userConfig->method('getIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('getIdentity')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
 		);
-		$this->userConfig->method('setIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('setIdentity')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['identity'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->userConfig->method('getApiKey')->willReturnCallback(
+		$this->olvidUserConfig->method('getApiKey')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['apiKey'] ?? null; }
 		);
-		$this->userConfig->method('setApiKey')->willReturnCallback(
+		$this->olvidUserConfig->method('setApiKey')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['apiKey'] = $value;
 			}
 		);
-		$this->userConfig->method('setNonce')->willReturnCallback(
+		$this->olvidUserConfig->method('setNonce')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['nonce'] = $value !== '' ? $value : null;
 			}
 		);
-		$this->userConfig->method('setSessionRevokedBefore')->willReturnCallback(
+		$this->olvidUserConfig->method('setSessionRevokedBefore')->willReturnCallback(
 			function (string $uid, int $value) use (&$store): void {
 				$store['sessionRevokedBefore'] = $value;
 			}
 		);
-		$this->userConfig->method('setSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('setSignedDetails')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['signedDetails'] = $value;
 			}
 		);
-		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('getSignedDetails')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['signedDetails'] ?? null; }
 		);
 		// computeDetails calls these
-		$this->userConfig->method('getFirstname')->willReturn(null);
-		$this->userConfig->method('getLastname')->willReturn(null);
-		$this->userConfig->method('getPosition')->willReturn(null);
-		$this->userConfig->method('getCompany')->willReturn(null);
-		$this->userConfig->method('getFullSearchField')->willReturn(null);
+		$this->olvidUserConfig->method('getFirstname')->willReturn(null);
+		$this->olvidUserConfig->method('getLastname')->willReturn(null);
+		$this->olvidUserConfig->method('getPosition')->willReturn(null);
+		$this->olvidUserConfig->method('getCompany')->willReturn(null);
+		$this->olvidUserConfig->method('getFullSearchField')->willReturn(null);
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(PutKey::class);

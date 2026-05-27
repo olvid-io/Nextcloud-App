@@ -10,8 +10,8 @@ use OCA\Olvid\Api\Device\Me;
 class MeHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsCachedSignatureWithoutResigning(): void {
 		$user = $this->mockUser('alice');
-		$this->userConfig->method('getSignedDetails')->with('alice')->willReturn('cached.jwt.value');
-		$this->userConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
+		$this->olvidUserConfig->method('getSignedDetails')->with('alice')->willReturn('cached.jwt.value');
+		$this->olvidUserConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
 		$this->olvidAppConfig->method('getOlvidServerUrl')->willReturn('');
 		$this->olvidAppConfig->method('getGlobalPushTopic')->willReturn(null);
 
@@ -25,9 +25,9 @@ class MeHandlerTest extends ApiHandlerTestCase {
 
 	public function testHandlerSignsAndReturnsDetailsWhenNoCacheExists(): void {
 		$user = $this->mockUser('alice', 'Alice Wonder');
-		$this->userConfig->method('getSignedDetails')->with('alice')->willReturn(null);
-		$this->userConfig->method('getIdentity')->with('alice')->willReturn('alice-olvid-identity');
-		$this->userConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
+		$this->olvidUserConfig->method('getSignedDetails')->with('alice')->willReturn(null);
+		$this->olvidUserConfig->method('getIdentity')->with('alice')->willReturn('alice-olvid-identity');
+		$this->olvidUserConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
 		$this->configureAppConfigWithKeys();
 
 		$handler = $this->makeHandler(Me::class);

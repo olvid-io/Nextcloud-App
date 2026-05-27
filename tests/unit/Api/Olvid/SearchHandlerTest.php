@@ -14,7 +14,7 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 			$this->mockUser('alice'),
 			$this->mockUser('bob'),
 		]);
-		$this->userConfig->method('hasIdentity')->willReturn(false);
+		$this->olvidUserConfig->method('hasIdentity')->willReturn(false);
 
 		$handler = $this->makeHandler(Search::class);
 		$response = $handler->handler([], $caller);
@@ -42,10 +42,10 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		]));
 		$aliceFakeJwt = "header.{$alicePayload}.sig";
 
-		$this->userConfig->method('hasIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('hasIdentity')->willReturnCallback(
 			fn(string $uid) => $uid === 'alice'
 		);
-		$this->userConfig->method('getSignedDetails')->willReturnCallback(
+		$this->olvidUserConfig->method('getSignedDetails')->willReturnCallback(
 			fn(string $uid) => $uid === 'alice' ? $aliceFakeJwt : null
 		);
 
