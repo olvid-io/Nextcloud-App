@@ -10,7 +10,7 @@ use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\IUser;
 
-class OlvidUserDetails implements JsonSerializable {
+class JsonUserDetails implements JsonSerializable {
 	public String $id;
     public ?String $identity;
     public String $firstname;
@@ -60,7 +60,7 @@ class OlvidUserDetails implements JsonSerializable {
 		if (!$identity) {
 			$identity = null;
 		}
-		return new OlvidUserDetails($id, $firstname, $lastname, $position, $company, $identity, TimeUtil::currentTimeMillis());
+		return new JsonUserDetails($id, $firstname, $lastname, $position, $company, $identity, TimeUtil::currentTimeMillis());
 	}
 
 	// compute UserDetails signature, save it in database and return it
@@ -78,7 +78,7 @@ class OlvidUserDetails implements JsonSerializable {
 	}
 
 	// try to parse signed details for a user, this allows to get details only for user that properly registered on server
-	public static function parseSignedDetails(IUser $user, OlvidUserConfigManager $userConfig): ?OlvidUserDetails {
+	public static function parseSignedDetails(IUser $user, OlvidUserConfigManager $userConfig): ?JsonUserDetails {
 		$signedDetails = $userConfig->getSignedDetails($user->getUID());
 		if (!$signedDetails) {
 			return null;
@@ -88,7 +88,7 @@ class OlvidUserDetails implements JsonSerializable {
 		$jsonDetails = base64_decode($encodedDetails);
 		$details = json_decode($jsonDetails, true);
 
-		return new OlvidUserDetails(
+		return new JsonUserDetails(
 			$details[Constants::DETAILS_KEY_ID] ?? "",
 			$details[Constants::DETAILS_KEY_FIRST_NAME] ?? "",
 			$details[Constants::DETAILS_KEY_LAST_NAME] ?? "",
@@ -101,7 +101,7 @@ class OlvidUserDetails implements JsonSerializable {
 	}
 
 	public function computeFullSearchString(): string {
-        return OlvidUserDetails::unAccent($this->firstname == null ? "" : $this->firstname) . " " .
+        return JsonUserDetails::unAccent($this->firstname == null ? "" : $this->firstname) . " " .
 			($this->lastname == null ? "": $this->lastname) . " " .
 			($this->position == null ? "": $this->position) . " " .
 			($this->company == null ? "": $this->company);
