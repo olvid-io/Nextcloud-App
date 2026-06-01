@@ -6,8 +6,9 @@ namespace OCA\Olvid\Api\Device;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
+use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -26,7 +27,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// TODO feature revocation
 
 		// compute user details
-		$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+		$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
 
 		// set or update full search string attributes
 		$userDetails->updateFullSearchString($user->getUID(), $this->olvidUserConfig);
@@ -79,7 +80,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		if ($userDetails->identity) {
 			$nonce = $this->olvidUserConfig->getNonce($user->getUID());
 			if (!$nonce) {
-				$nonce = uuid_create();
+				$nonce = RandomUtil::uuid_create();
 				$this->olvidUserConfig->setNonce($user->getUID(), $nonce);
 			}
 			$response[Constants::ME_RESPONSE_NONCE] = $nonce;

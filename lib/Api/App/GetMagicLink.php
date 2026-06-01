@@ -8,6 +8,7 @@ use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IURLGenerator;
@@ -50,7 +51,7 @@ class GetMagicLink {
      * @throws PreConditionNotMetException
      */
     private function createToken(string $userId): string {
-        $token = uuid_create();
+        $token = RandomUtil::uuid_create();
 		$this->userConfig->setMagicToken($userId, $token);
 		$this->userConfig->setMagicTokenExpiration($userId, TimeUtil::currentTimeMillis() + Constants::MAGIC_LINK_DURATION_S * 1000);
         return $token;

@@ -11,34 +11,38 @@ use OCA\Olvid\Utils\TimeUtil;
 use OCP\IUser;
 
 class JsonUserDetails implements JsonSerializable {
+	use JsonSerializableTrait;
+
+	#[JsonField(Constants::DETAILS_KEY_ID)]
 	public String $id;
+	#[JsonField(Constants::DETAILS_KEY_IDENTITY)]
     public ?String $identity;
+	#[JsonField(Constants::DETAILS_KEY_FIRST_NAME)]
     public String $firstname;
+	#[JsonField(Constants::DETAILS_KEY_LAST_NAME)]
     public String $lastname;
+	#[JsonField(Constants::DETAILS_KEY_POSITION)]
     public ?String $position;
+	#[JsonField(Constants::DETAILS_KEY_COMPANY)]
     public ?String $company;
+	#[JsonField(Constants::DETAILS_KEY_TIMESTAMP)]
     public int $timestamp;
 
-	/**
-	 * @param int $timestamp
-	 * @param String $company
-	 * @param String $position
-	 * @param String $lastname
-	 * @param String $firstname
-	 * @param ?String $identity
-	 * @param String $id
-	 */
-	private function __construct(string $id, string $firstname, string $lastname, string $position, string $company, ?string $identity, int $timestamp) {
-		$this->timestamp = $timestamp;
-		$this->company = $company;
-		$this->position = $position;
-		$this->lastname = $lastname;
-		$this->firstname = $firstname;
-		$this->identity = $identity;
-		$this->id = $id;
+	// TODO what if details expired ? check java version
+	// get signed details in db or compute them
+	public static function getSignedDetails(IUser $user, OlvidUserConfigManager $olvidUserConfig, OlvidAppConfigManager $olvidAppConfig) : String {
+		$signedDetails = $olvidUserConfig->getSignedDetails($user->getUID());
+		if ($signedDetails) {
+			return $signedDetails;
+		}
+		else {
+			$details = JsonUserDetails::computeDetails($user, $olvidUserConfig);
+			return $details->sign($olvidUserConfig, $olvidAppConfig);
+		}
 	}
 
-	public static function computeDetails(IUser $user, OlvidUserConfigManager $userConfig) : OlvidUserDetails {
+
+	public static function computeDetails(IUser $user, OlvidUserConfigManager $olvidUserConfig) : JsonUserDetails {
 		// prepare details
 		$id = $user->getUID();
 
@@ -60,11 +64,19 @@ class JsonUserDetails implements JsonSerializable {
 		if (!$identity) {
 			$identity = null;
 		}
-		return new JsonUserDetails($id, $firstname, $lastname, $position, $company, $identity, TimeUtil::currentTimeMillis());
+		$details = new JsonUserDetails();
+		$details->id = $id;
+		$details->firstname = $firstname;
+		$details->lastname = $lastname;
+		$details->position = $position;
+		$details->company = $company;
+		$details->identity = $identity;
+		$details->timestamp = TimeUtil::currentTimeMillis();
+		return $details;
 	}
 
 	// compute UserDetails signature, save it in database and return it
-	public function sign(OlvidUserConfigManager $olvidUserConfig, OlvidAppConfigManager $olvidAppConfig): string
+	public function sign(OlvidUserConfigManager $olvidUserConfig, OlvidAppConfigManager $olvidAppConfig): String
 	{
 		// get signature key
 		$keyId = $olvidAppConfig->getJwkKeyId();
@@ -85,29 +97,24 @@ class JsonUserDetails implements JsonSerializable {
 		}
 
 		$encodedDetails = explode(".", $signedDetails)[1];
-		$jsonDetails = base64_decode($encodedDetails);
-		$details = json_decode($jsonDetails, true);
+		$jsonDetailsString = base64_decode($encodedDetails);
+		if (!$jsonDetailsString) {
+			return null;
+		}
+		$jsonDetailsArray = json_decode($jsonDetailsString, true);
+		if (!is_array($jsonDetailsArray)) {
+			return null;
+		}
+		return JsonUserDetails::fromArray($jsonDetailsArray);	}
 
-		return new JsonUserDetails(
-			$details[Constants::DETAILS_KEY_ID] ?? "",
-			$details[Constants::DETAILS_KEY_FIRST_NAME] ?? "",
-			$details[Constants::DETAILS_KEY_LAST_NAME] ?? "",
-			$details[Constants::DETAILS_KEY_POSITION] ?? "",
-			$details[Constants::DETAILS_KEY_COMPANY] ?? "",
-			// set identity to null and not to an empty string, else android think we already have an identity on server ...
-			trim($details[Constants::DETAILS_KEY_IDENTITY]) ? $details[Constants::DETAILS_KEY_IDENTITY] : null,
-			$details[Constants::DETAILS_KEY_TIMESTAMP] ?? 0,
-		);
-	}
-
-	public function computeFullSearchString(): string {
+	public function computeFullSearchString(): String {
         return JsonUserDetails::unAccent($this->firstname == null ? "" : $this->firstname) . " " .
 			($this->lastname == null ? "": $this->lastname) . " " .
 			($this->position == null ? "": $this->position) . " " .
 			($this->company == null ? "": $this->company);
     }
 
- 	public function updateFullSearchString(string $userId, OlvidUserConfigManager $userConfig): string {
+ 	public function updateFullSearchString(String $userId, OlvidUserConfigManager $userConfig): String {
 		// set or update full search string attributes
 		$fullSearchString = $this->computeFullSearchString();
 		if ($fullSearchString !== $userConfig->getFullSearchField($userId)) {
@@ -117,7 +124,7 @@ class JsonUserDetails implements JsonSerializable {
 	}
 
 	# taken from https://gist.github.com/lohic/d01c458e69be636c2365
-	private static function unAccent(string $str): string {
+	private static function unAccent(String $str): String {
 		// transform accent to html entities
 		$str = htmlentities($str, ENT_NOQUOTES, 'utf-8');
 		// replace html entities with non accentuated characters
@@ -127,18 +134,5 @@ class JsonUserDetails implements JsonSerializable {
 		// delete the rest
 		// $str = preg_replace('#&[^;]+;#', '', $str);
 		return $str;
-	}
-
-	public function jsonSerialize(): array {
-		return [
-			Constants::DETAILS_KEY_ID => $this->id,
-			// set identity to null and not to an empty string
-			Constants::DETAILS_KEY_IDENTITY => $this->identity && trim($this->identity) ? $this->identity : null,
-			Constants::DETAILS_KEY_FIRST_NAME => $this->firstname,
-			Constants::DETAILS_KEY_LAST_NAME => $this->lastname,
-			Constants::DETAILS_KEY_POSITION => $this->position,
-			Constants::DETAILS_KEY_COMPANY => $this->company,
-			Constants::DETAILS_KEY_TIMESTAMP => $this->timestamp,
-		];
 	}
 }

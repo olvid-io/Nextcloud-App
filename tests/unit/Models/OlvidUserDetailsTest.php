@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Tests\Unit\Models;
 
-use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\IUser;
@@ -29,7 +29,7 @@ class OlvidUserDetailsTest extends TestCase {
 	public function testSignUserDetailsReturnsThreePartJwt(): void {
 		[$user, $userConfig, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', ['identity' => 'alice-identity-string']);
 
-		$userDetails = OlvidUserDetails::computeDetails($user, $userConfig);
+		$userDetails = JsonUserDetails::computeDetails($user, $userConfig);
 		$jwt = $userDetails->sign($userConfig, $appConfig);
 
 		$this->assertCount(3, explode('.', $jwt), 'Expected a JWT with header.payload.signature');
@@ -38,7 +38,7 @@ class OlvidUserDetailsTest extends TestCase {
 	public function testSignUserDetailsPayloadContainsCorrectFields(): void {
 		[$user, $userConfig, $appConfig] = $this->buildSigningMocks('alice', 'Alice Wonder', ['identity' => 'alice-identity']);
 
-		$userDetails = OlvidUserDetails::computeDetails($user, $userConfig);
+		$userDetails = JsonUserDetails::computeDetails($user, $userConfig);
 		$jwt = $userDetails->sign($userConfig, $appConfig);
 
 		// Decode the payload part (index 1) — JWT uses base64url, add padding for decode
@@ -48,7 +48,7 @@ class OlvidUserDetailsTest extends TestCase {
 		$this->assertSame('alice', $payload['id']);
 		$this->assertSame('Alice Wonder', $payload['first-name']);
 		$this->assertSame('alice-identity', $payload['identity']);
-		$this->assertSame('', $payload['last-name']);
+		$this->assertArrayNotHasKey('last-name', $payload);
 	}
 
 	public function testSignUserDetailsCachesJwtInConfig(): void {
@@ -61,7 +61,7 @@ class OlvidUserDetailsTest extends TestCase {
 			}
 		);
 
-		$userDetails = OlvidUserDetails::computeDetails($user, $userConfig);
+		$userDetails = JsonUserDetails::computeDetails($user, $userConfig);
 		$jwt = $userDetails->sign($userConfig, $appConfig);
 
 		$this->assertNotNull($cachedValue);
@@ -77,7 +77,7 @@ class OlvidUserDetailsTest extends TestCase {
 		$userConfig = $this->createMock(OlvidUserConfigManager::class);
 		$userConfig->method('getSignedDetails')->willReturn(null);
 
-		$this->assertNull(OlvidUserDetails::parseSignedDetails($user, $userConfig));
+		$this->assertNull(JsonUserDetails::parseSignedDetails($user, $userConfig));
 	}
 
 	public function testGetCurrentUserDetailsParsesSignatureStoredBySignUserDetails(): void {
@@ -90,7 +90,7 @@ class OlvidUserDetailsTest extends TestCase {
 			}
 		);
 
-		$userDetails = OlvidUserDetails::computeDetails($user, $userConfig);
+		$userDetails = JsonUserDetails::computeDetails($user, $userConfig);
 		$userDetails->sign($userConfig, $appConfig);
 
 		$this->assertNotNull($stored, 'Expected sign() to cache a JWT');
@@ -99,7 +99,7 @@ class OlvidUserDetailsTest extends TestCase {
 		$userConfig2 = $this->createMock(OlvidUserConfigManager::class);
 		$userConfig2->method('getSignedDetails')->willReturn($stored);
 
-		$details = OlvidUserDetails::parseSignedDetails($user, $userConfig2);
+		$details = JsonUserDetails::parseSignedDetails($user, $userConfig2);
 
 		$this->assertNotNull($details);
 		$this->assertSame('alice', $details->id);

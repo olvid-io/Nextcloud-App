@@ -14,7 +14,7 @@ if (file_exists($ncBootstrap)) {
 	}
 }
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../composer/autoload.php';
 require_once __DIR__ . '/Stubs.php';
 
 if (class_exists('\OC_App') && class_exists('\OC_Hook')) {

@@ -7,7 +7,7 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\Response;
@@ -70,7 +70,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$this->olvidUserConfig->setIdentity($user->getUID(), $identity);
 
 				// sign user details and store them
-				$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 			// trying to put the same identity
@@ -88,7 +88,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				}
 
 				// sign user details and store them
-				$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 			// trying to override previous identity
@@ -124,7 +124,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$this->olvidUserConfig->setIdentity($user->getUID(), $identity);
 
 				// sign user details and store them
-				$userDetails = OlvidUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 

@@ -68,7 +68,11 @@ trait JsonSerializableTrait {
 			return empty($mapped) ? null : $mapped;
 		}
 		if ($field->class !== null) {
-			return $value->jsonSerialize();
+			$serialized = $value->jsonSerialize();
+			if (empty($serialized)) {
+				return $field->emptyAsObject ? (object)[] : null;
+			}
+			return $serialized;
 		}
 		return $value;
 	}

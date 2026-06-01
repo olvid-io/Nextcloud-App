@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace OCA\Olvid\Models;
 
+use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use JsonSerializable;
@@ -11,79 +14,71 @@ use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
-use OCP\IGroup;
-use OCP\IUser;
 
 class JsonGroupBlob implements JsonSerializable {
-	// this is the nextcloud internal group id (not serialized in blob)
-	public string $groupId;
+	use JsonSerializableTrait;
 
-	// this is the Olvid randomly generated group id, serialized in blob
-	public ?string $bytesGroupUid;
-	public ?JsonGroupDetails $groupDetails;
-	public ?string $photoUid;
-	public ?string $encodedPhotoKey;
-	public ?string $pushTopic;
-	/**
-	 * @var JsonGroupMemberAndPermissions[]
-	 */
-	public array $groupMembersAndPermissions;
-	public ?string $serializedSharedSettings;
-	public int $timestamp;
+	#[JsonField('', excludeFromJson: true)]
+	public string $groupId = '';
 
-	public function __construct(
-		string            $groupId,
-		?string           $bytesGroupUid,
-		?JsonGroupDetails $groupDetails,
-		?string           $photoUid,
-		?string           $encodedPhotoKey,
-		?string           $pushTopic,
-		array             $groupMembersAndPermissions,
-		?string           $serializedSharedSettings,
-		int               $timestamp,
-	) {
-		$this->groupId = $groupId;
-		$this->bytesGroupUid = $bytesGroupUid;
-		$this->groupDetails = $groupDetails;
-		$this->photoUid = $photoUid;
-		$this->encodedPhotoKey = $encodedPhotoKey;
-		$this->pushTopic = $pushTopic;
-		$this->groupMembersAndPermissions = $groupMembersAndPermissions;
-		$this->serializedSharedSettings = $serializedSharedSettings;
-		$this->timestamp = $timestamp;
+	#[JsonField('guid', isBytes: true)]
+	public ?string $bytesGroupUid = null;
+
+	#[JsonField('details', class: JsonGroupDetails::class)]
+	public ?JsonGroupDetails $groupDetails = null;
+
+	#[JsonField('photo_label', isBytes: true)]
+	public ?string $photoUid = null;
+
+	#[JsonField('photo_key', isBytes: true)]
+	public ?string $encodedPhotoKey = null;
+
+	#[JsonField('pt')]
+	public ?string $pushTopic = null;
+
+	#[JsonField('gm_perms', class: JsonGroupMemberAndPermissions::class, isArray: true)]
+	public array $groupMembersAndPermissions = [];
+
+	#[JsonField('sss')]
+	public ?string $serializedSharedSettings = null;
+
+	#[JsonField('timestamp')]
+	public int $timestamp = 0;
+
+	public static function fromArray(string $groupId, array $data): self {
+		$instance = static::hydrateFromArray($data);
+		$instance->groupId = $groupId;
+		return $instance;
 	}
 
-	public static function computeBlob(OlvidGroup $olvidGroup, array $groupMembers, OlvidAppConfigManager $olvidAppConfigManager, OlvidUserConfigManager $olvidUserConfigManager): JsonGroupBlob {
-		// build previous members map (to re-use invitation nonce)
+	public static function computeBlob(OlvidGroup $olvidGroup, String $defaultName, array $groupMembers, OlvidAppConfigManager $olvidAppConfigManager, OlvidUserConfigManager $olvidUserConfigManager): JsonGroupBlob {
 		$previousMembers = [];
 		if ($olvidGroup->getSignedGroupBlob()) {
-			$publicKeyPem = $olvidAppConfigManager->getJwkKeyPublicKey();
-			$decoded = JWT::decode($olvidGroup->getSignedGroupBlob(), new Key($publicKeyPem, 'ES256'));
-			$originalBlob = JsonGroupBlob::fromArray($olvidGroup->getGroupId(), (array)$decoded);
-
-			foreach ($originalBlob->groupMembersAndPermissions as $prev) {
-				if ($prev?->keycloakUserId !== null) {
-					$previousMembers[$prev->keycloakUserId] = $prev;
+			try {
+				$publicKeyPem = $olvidAppConfigManager->getJwkKeyPublicKey();
+				$decoded = JWT::decode($olvidGroup->getSignedGroupBlob(), new Key($publicKeyPem, 'ES256'));
+				$originalBlob = JsonGroupBlob::fromArray($olvidGroup->getGroupId(), (array)$decoded);
+				foreach ($originalBlob->groupMembersAndPermissions as $prev) {
+					if ($prev->keycloakUserId !== null) {
+						$previousMembers[$prev->keycloakUserId] = $prev;
+					}
 				}
+			} catch (Exception $e) {
+				// corrupt or expired blob — start fresh, no previous members to reuse
 			}
 		}
 
-		// compute group member and permissions
 		$groupMembersAndPermissions = [];
 		foreach ($groupMembers as $member) {
 			if (!$olvidUserConfigManager->hasIdentity($member->getUID())) {
 				continue;
 			}
-			// TODO check if there are other things to re-use from previous blob
-			// re-user previous permissions and invitation nonce
 			if (isset($previousMembers[$member->getUID()])) {
 				$permissions = $previousMembers[$member->getUID()]->permissions;
 				$invitationNonce = $previousMembers[$member->getUID()]->groupInvitationNonce;
-			}
-			// default user permissions
-			else {
-				$permissions = ["eo", "sm"]; // TODO improve set default set
-				$invitationNonce = RandomUtil::random_bytes(Constants::UID_SIZE);
+			} else {
+				$permissions = ["eo", "sm"]; // TODO improve default set
+				$invitationNonce = RandomUtil::random_bytes(Constants::GROUP_INVITATION_NONCE_SIZE);
 			}
 			$groupMembersAndPermissions[] = new JsonGroupMemberAndPermissions(
 				$member->getUID(),
@@ -94,57 +89,23 @@ class JsonGroupBlob implements JsonSerializable {
 			);
 		}
 
-		return new JsonGroupBlob(
-			$olvidGroup->getGroupId(),
-			$olvidGroup->getGroupUid(),
-			new JsonGroupDetails($olvidGroup->getDiscussionName(), $olvidGroup->getDiscussionDescription()),
-			null,
-			null,
-			$olvidGroup->getPushTopic(),
-			$groupMembersAndPermissions,
-			null,
-			TimeUtil::currentTimeMillis()
-		);
+		// compute group name
+		$blobGroupName = $olvidGroup->getDiscussionName() === null || !trim($olvidGroup->getDiscussionName()) ? $defaultName : $olvidGroup->getDiscussionName();
+
+		$blob = new JsonGroupBlob();
+		$blob->groupId = $olvidGroup->getGroupId();
+		$blob->bytesGroupUid = $olvidGroup->getGroupUid();
+		$blob->groupDetails = new JsonGroupDetails($blobGroupName, $olvidGroup->getDiscussionDescription());
+		$blob->pushTopic = $olvidGroup->getPushTopic();
+		$blob->groupMembersAndPermissions = $groupMembersAndPermissions;
+		$blob->timestamp = TimeUtil::currentTimeMillis();
+		return $blob;
 	}
 
 	public function sign(OlvidAppConfigManager $olvidAppConfigManager): string {
-		// get signature key
 		$keyId = $olvidAppConfigManager->getJwkKeyId();
 		$keyType = $olvidAppConfigManager->getJwkKeyType();
 		$privateKey = $olvidAppConfigManager->getJwkKeyPrivateKey();
-
-		// sign details and store in database
-		$signedBlob = JWT::encode($this->jsonSerialize(), $privateKey, $keyType, $keyId);
-		return $signedBlob;
-	}
-
-	/*
-	 ** JSON tools
-	 */
-	public static function fromArray(string $groupId, array $data): JsonGroupBlob {
-		return new JsonGroupBlob(
-			$groupId,
-			isset($data['guid']) ? (base64_decode($data['guid']) ?: null) : null,
-			JsonGroupDetails::fromArray(isset($data['details']) ? (array)$data['details'] : []),
-			isset($data['photo_label']) ? base64_decode($data['photo_label']) : null,
-			isset($data['photo_key']) ? base64_decode($data['photo_key']) : null,
-			$data['pt'] ?? null,
-			array_map(fn($m) => JsonGroupMemberAndPermissions::fromArray((array)$m), $data['gm_perms'] ?? []),
-			$data['sss'] ?? null,
-			$data['timestamp'] ?? 0,
-		);
-	}
-
-	public function jsonSerialize(): array {
-		return array_filter([
-			'guid' => $this->bytesGroupUid !== null ? base64_encode($this->bytesGroupUid) : null,
-			'details' => $this->groupDetails?->jsonSerialize(),
-			'photo_label' => $this->photoUid !== null ? base64_encode($this->photoUid) : null,
-			'photo_key' => $this->encodedPhotoKey !== null ? base64_encode($this->encodedPhotoKey) : null,
-			'pt' => $this->pushTopic,
-			'gm_perms' => $this->groupMembersAndPermissions,
-			'sss' => $this->serializedSharedSettings,
-			'timestamp' => $this->timestamp,
-		], fn($v) => $v !== null);
+		return JWT::encode($this->jsonSerialize(), $privateKey, $keyType, $keyId);
 	}
 }

@@ -6,8 +6,9 @@ namespace OCA\Olvid\Controller;
 
 use Exception;
 use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Db\OlvidDatabase;
+use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidGroupConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -37,7 +38,7 @@ class DebugApiController extends ApiController
 		private readonly LoggerInterface         $logger,
 		private readonly OlvidAppConfigManager   $olvidAppConfig,
 		private readonly OlvidUserConfigManager  $olvidUserConfig,
-		private readonly OlvidGroupConfigManager $olvidGroupConfig,
+		private readonly OlvidDatabase           $db,
 	)
 	{
 		parent::__construct($appName, $request);
@@ -67,8 +68,22 @@ class DebugApiController extends ApiController
 		$response = [];
 
 		$userGroups = $this->groupManager->getUserGroups($this->userSession->getUser());
-		foreach ($userGroups as $group) {
-			$response[$group->getGID()] = $this->olvidGroupConfig->getGroupConfig($group->getGID());
+		foreach ($userGroups as $nextcloudGroup) {
+			$olvidGroup = $this->db->group->findByGroupIdOrNull($nextcloudGroup->getGID());
+
+			$response[$nextcloudGroup->getGID()] = [
+				"groupId" => $olvidGroup?->getgroupId(),
+				"groupUid" => $olvidGroup?->getGroupUid() !== null ? base64_encode($olvidGroup?->getGroupUid()) : null,
+				"lastModificationTimestamp" => $olvidGroup?->getLastModificationTimestamp(),
+				"pushTopic" => $olvidGroup?->getPushTopic(),
+				"groupPhotoUid" => $olvidGroup?->getGroupPhotoUid(),
+				"serializedSharedSettings" => $olvidGroup?->getSerializedSharedSettings(),
+				"signedGroupBlob" => $olvidGroup?->getSignedGroupBlob(),
+				"enabled" => $olvidGroup?->getEnabled(),
+				"discussionName" => $olvidGroup?->getDiscussionName(),
+				"discussionDescription" => $olvidGroup?->getDiscussionDescription(),
+				"blob" => $olvidGroup !== null ? JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig) : null,
+			];
 		}
 
 		return new JSONResponse($response);
@@ -78,11 +93,8 @@ class DebugApiController extends ApiController
 	#[ApiRoute(verb: 'GET', url: '/debug/groupsReset')]
 	public function groupsReset(): JSONResponse
 	{
-		$groups = $this->groupManager->search("");
-		foreach ($groups as $group) {
-			$this->olvidGroupConfig->deleteGroupConfig($group->getGID());
-		}
-
+		$this->db->group->deleteAll();
+		$this->db->groupDeletion->deleteAll();
 		return new JSONResponse("Done");
 	}
 
@@ -125,16 +137,20 @@ class DebugApiController extends ApiController
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/resetAll')]
 	public function resetAll(): JSONResponse {
+		// reset app data
 		$this->olvidAppConfig->deleteAppConfig();
 
+		// reset users data
 		$users = $this->userManager->search("");
 		foreach ($users as $user) {
 			$this->olvidUserConfig->deleteUserConfig($user->getUID());
 		}
-		$groups = $this->groupManager->search("");
-		foreach ($groups as $group) {
-			$this->olvidGroupConfig->deleteGroupConfig($group->getGID());
-		}
+
+		// reset groups data
+		$groups = $this->db->group->findAll();
+		$this->db->group->deleteAll();
+		$this->db->groupDeletion->deleteAll();
+
 		return new JSONResponse([
 			"success" => true,
 			"cleaned-app" => true,

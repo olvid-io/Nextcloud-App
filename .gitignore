@@ -1,7 +1,7 @@
 /.idea/
 /*.iml
 
-/vendor/
+/composer/
 /vendor-bin/*/vendor/
 
 /.php-cs-fixer.cache

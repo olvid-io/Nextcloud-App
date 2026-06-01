@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\Device;
 
 use Exception;
+use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidGroupConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -25,16 +25,16 @@ abstract class AbstractDeviceApiHandler {
 
     public function __construct(
 		protected readonly IRequest                $request,
+		protected readonly LoggerInterface         $logger,
 		protected readonly IConfig                 $config,
 		protected readonly IAppConfig              $appConfig,
 		protected readonly IUserManager            $userManager,
 		protected readonly IGroupManager           $groupManager,
         protected readonly IAccountManager         $accountManager,
 		protected readonly ILockingProvider        $lockingProvider,
-		protected readonly LoggerInterface         $logger,
 		protected readonly OlvidUserConfigManager  $olvidUserConfig,
 		protected readonly OlvidAppConfigManager   $olvidAppConfig,
-		protected readonly OlvidGroupConfigManager $olvidGroupConfig,
+		protected readonly OlvidDatabase           $db,
     ) {}
 
     public function handle(): Response {
@@ -42,15 +42,15 @@ abstract class AbstractDeviceApiHandler {
 		try {
 			$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
 		} catch (Exception $exception) {
-			$this->logger->error(get_class($this) . ": cannot parse request: " . $exception);
+			$this->logger->error(get_class($this) . ": cannot parse request: ", ["exception" => $exception]);
 			return $this->internalError();
 		}
 
 		try {
 			return $this->handler($jsonParameters, $this->user);
 		}
-		catch (Exception $e) {
-			$this->logger->error(get_class($this) . ": unexpected exception in handler: " . $e);
+		catch (Exception $exception) {
+			$this->logger->error(get_class($this) . ": unexpected exception in handler", ["exception" => $exception]);
 			return $this->internalError();
 		}
     }

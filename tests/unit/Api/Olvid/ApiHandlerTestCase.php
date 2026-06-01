@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Device\BaseJsonResponse;
+use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidGroupConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -41,8 +41,6 @@ abstract class ApiHandlerTestCase extends TestCase {
 	protected OlvidUserConfigManager $olvidUserConfig;
 	/** @var OlvidAppConfigManager&\PHPUnit\Framework\MockObject\MockObject */
 	protected OlvidAppConfigManager $olvidAppConfig;
-	/** @var OlvidUserConfigManager&\PHPUnit\Framework\MockObject\MockObject */
-	protected OlvidGroupConfigManager $olvidGroupConfig;
 	/** @var IUserManager&\PHPUnit\Framework\MockObject\MockObject */
 	protected IUserManager $userManager;
 	/** @var IAccountManager&\PHPUnit\Framework\MockObject\MockObject */
@@ -59,6 +57,8 @@ abstract class ApiHandlerTestCase extends TestCase {
 	protected ILockingProvider $lockingProvider;
 	/** @var IURLGenerator&\PHPUnit\Framework\MockObject\MockObject */
 	protected IURLGenerator $urlGenerator;
+	/** @var OlvidDatabase&\PHPUnit\Framework\MockObject\MockObject */
+	protected OlvidDatabase $db;
 
 	public static function setUpBeforeClass(): void {
 		$res = openssl_pkey_new([
@@ -77,7 +77,6 @@ abstract class ApiHandlerTestCase extends TestCase {
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->olvidUserConfig = $this->createMock(OlvidUserConfigManager::class);
 		$this->olvidAppConfig = $this->createMock(OlvidAppConfigManager::class);
-		$this->olvidGroupConfig = $this->createMock(OlvidGroupConfigManager::class);
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->accountManager = $this->createMock(IAccountManager::class);
 		$this->userSession = $this->createMock(IUserSession::class);
@@ -86,6 +85,7 @@ abstract class ApiHandlerTestCase extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->lockingProvider = $this->createMock(ILockingProvider::class);
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->db = $this->createMock(OlvidDatabase::class);
 	}
 
 	/** Build a mock IUser with the given uid and display name. */
@@ -98,7 +98,7 @@ abstract class ApiHandlerTestCase extends TestCase {
 
 	/**
 	 * Configure the olvidAppConfig mock to return real JWK key material so that
-	 * OlvidUserDetails::sign() can produce a valid ES256 JWT.
+	 * JsonUserDetails::sign() can produce a valid ES256 JWT.
 	 */
 	protected function configureAppConfigWithKeys(): void {
 		$this->olvidAppConfig->method('getJwkKeyId')->willReturn('test-key-id');
@@ -111,16 +111,16 @@ abstract class ApiHandlerTestCase extends TestCase {
 	protected function makeHandler(string $handlerClass): object {
 		return new $handlerClass(
 			$this->request,
+			$this->logger,
 			$this->config,
 			$this->appConfig,
 			$this->userManager,
 			$this->groupManager,
 			$this->accountManager,
 			$this->lockingProvider,
-			$this->logger,
 			$this->olvidUserConfig,
 			$this->olvidAppConfig,
-			$this->olvidGroupConfig,
+			$this->db
 		);
 	}
 

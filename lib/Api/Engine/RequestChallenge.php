@@ -8,6 +8,7 @@ use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
+use OCA\Olvid\Utils\RandomUtil;
 
 /**
  * POST /olvid-rest/requestChallenge
@@ -43,7 +44,7 @@ class RequestChallenge extends AbstractEngineApiHandler {
 
         // --- 2. Generate challenge (always, even for unknown users, to avoid leaking existence) ---
         try {
-            $challenge = random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
+            $challenge = RandomUtil::random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
         } catch (Exception $e) {
             $this->logger->error('requestChallenge: cannot generate random bytes: ' . $e->getMessage());
             return $this->generalError();

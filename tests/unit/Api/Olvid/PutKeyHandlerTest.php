@@ -7,7 +7,7 @@ namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\Device\BaseJsonResponse;
 use OCA\Olvid\Api\Device\PutKey;
-use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Models\JsonUserDetails;
 
 class PutKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenIdentityMissing(): void {
@@ -67,7 +67,7 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		// Signed details must have been cached as a valid three-part JWT
 		$this->assertArrayHasKey('signedDetails', $store);
 		$this->assertCount(3, explode('.', $store['signedDetails']));
-		$this->assertNotNull(OlvidUserDetails::parseSignedDetails($user, $this->olvidUserConfig));
+		$this->assertNotNull(JsonUserDetails::parseSignedDetails($user, $this->olvidUserConfig));
 
 		// No session revocation on first upload
 		$this->assertArrayNotHasKey('sessionRevokedBefore', $store);

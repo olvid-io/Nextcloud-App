@@ -56,8 +56,8 @@ abstract class AbstractEngineApiHandler {
         $rawInput = (string) file_get_contents('php://input');
         try {
             return $this->handler($rawInput);
-        } catch (Exception $e) {
-            $this->logger->error(get_class($this) . ': unexpected exception: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            $this->logger->error(get_class($this) . ': unexpected exception', ["exception" => $exception]);
             return $this->generalError();
         }
     }

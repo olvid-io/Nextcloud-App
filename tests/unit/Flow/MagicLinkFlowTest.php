@@ -114,16 +114,16 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 	{
 		return new GetMagicSession(
 			$this->request,
+			$this->logger,
 			$this->config,
 			$this->appConfig,
 			$this->userManager,
 			$this->groupManager,
 			$this->accountManager,
 			$this->lockingProvider,
-			$this->logger,
 			$this->olvidUserConfig,
 			$this->olvidAppConfig,
-			$this->olvidGroupConfig,
+			$this->db
 		);
 	}
 }

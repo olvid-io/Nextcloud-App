@@ -7,7 +7,6 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
@@ -63,45 +62,5 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 		}
 
 		return $user;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// standard responses
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	public static function success(): JSONResponse {
-		return new JSONResponse(["status"=> BaseJsonResponse::STATUS_SUCCESS], 200);
-    }
-
-    // error responses for devices
-    public static function permissionDenied(): JSONResponse {
-        return AbstractAuthenticatedDeviceApiHandler::createErrorResponse(BaseJsonResponse::ERROR_CODE_PERMISSION_DENIED, "permission denied");
-    }
-
-    public static function invalidRequest(): JSONResponse {
-        return AbstractAuthenticatedDeviceApiHandler::createErrorResponse(BaseJsonResponse::ERROR_CODE_INVALID_REQUEST, "invalid request");
-    }
-
-    public static function identityAlreadyUploaded(): JSONResponse {
-        return AbstractAuthenticatedDeviceApiHandler::createErrorResponse(BaseJsonResponse::ERROR_CODE_IDENTITY_ALREADY_UPLOADED, "identity already uploaded, use override option");
-    }
-
-    public static function identityWasRevoked(): JSONResponse {
-        return AbstractAuthenticatedDeviceApiHandler::createErrorResponse(BaseJsonResponse::ERROR_CODE_IDENTITY_WAS_REVOKED, "Identity has been revoked");
-    }
-
-    public static function identityNotUploadedYet(): JSONResponse {
-        return AbstractAuthenticatedDeviceApiHandler::createErrorResponse(BaseJsonResponse::ERROR_CODE_IDENTITY_NOT_UPLOADED_YET, "Identity was not uploaded yet");
-    }
-
-    public static function internalError(): JSONResponse {
-        return AbstractAuthenticatedDeviceApiHandler::createErrorResponse(BaseJsonResponse::ERROR_CODE_INTERNAL_ERROR, "internal error");
-    }
-
-	public static function createErrorResponse(int $errorCode, string $message): JSONResponse {
-		$response = new BaseJsonResponse($message, $errorCode, BaseJsonResponse::STATUS_ERROR);
-		$response->message = $message;
-		$response->error = $errorCode;
-		$response->status = BaseJsonResponse::STATUS_ERROR;
-		return new JSONResponse($response, 200);
 	}
 }

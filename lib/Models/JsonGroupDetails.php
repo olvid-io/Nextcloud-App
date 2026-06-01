@@ -7,16 +7,17 @@ namespace OCA\Olvid\Models;
 use JsonSerializable;
 
 class JsonGroupDetails implements JsonSerializable {
-	public ?string $name;
-	public ?string $description;
+	use JsonSerializableTrait;
+
+	#[JsonField('name')]
+	public ?string $name = null;
+
+	#[JsonField('description')]
+	public ?string $description = null;
 
 	public function __construct(?string $name = null, ?string $description = null) {
 		$this->name        = self::nullOrTrim($name);
 		$this->description = self::nullOrTrim($description);
-	}
-
-	public static function fromArray(array $data): self {
-		return new self($data['name'] ?? null, $data['description'] ?? null);
 	}
 
 	public function isEmpty(): bool {
@@ -26,13 +27,6 @@ class JsonGroupDetails implements JsonSerializable {
 	public function equals(self $other): bool {
 		return $this->name === $other->name
 			&& $this->description === $other->description;
-	}
-
-	public function jsonSerialize(): array {
-		return array_filter([
-			'name'        => $this->name,
-			'description' => $this->description,
-		], fn($v) => $v !== null);
 	}
 
 	private static function nullOrTrim(?string $value): ?string {

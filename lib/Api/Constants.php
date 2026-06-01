@@ -20,6 +20,13 @@ class Constants {
 	public const OLVID_DIRECTORY_API_VERSION = 1;
 
 	/*
+	 ** time and sizes
+	 */
+	public const UID_SIZE = 32;
+	public const GROUP_INVITATION_NONCE_SIZE = 16;
+	public const DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS = 60 * 86_400_000; // 60 days in millis
+
+	/*
 	 * Engine API (binary Encoded protocol — requestChallenge / getSession)
 	 */
 	public const ENGINE_NONCE_LENGTH            = 32;

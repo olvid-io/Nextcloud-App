@@ -4,8 +4,7 @@ namespace OCA\Olvid\Migration;
 
 use Exception;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidGroupConfigManager;
-use OCP\IAppConfig;
+use OCA\Olvid\Utils\RandomUtil;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -13,9 +12,7 @@ use Psr\Log\LoggerInterface;
 class OlvidRepairStep implements IRepairStep {
 	public function __construct(
 		private readonly LoggerInterface $logger,
-		private readonly IAppConfig $appConfig,
 		private readonly OlvidAppConfigManager $olvidAppConfig,
-		private readonly OlvidGroupConfigManager $olvidGroupConfig,
 	) {}
 
 	public function getName(): string {
@@ -47,7 +44,7 @@ class OlvidRepairStep implements IRepairStep {
 			$output->info("Olvid: Create a new JWKS key");
 			$this->logger->info("Olvid: Create a new JWKS key");
 
-			$keyId = uuid_create();
+			$keyId = RandomUtil::uuid_create();
 
 			// generate key pair
 			$config = [

@@ -5,44 +5,48 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use OCA\Olvid\Api\App\GetMagicLink;
-use OCA\Olvid\Models\OlvidUserDetails;
+use OCA\Olvid\Api\App\UpdateGroups;
+use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Db\OlvidGroupMapper;
+use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidGroupConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 
 /*
  ** This Api is the backend for the Nextcloud application
  */
 class AppApiController extends ApiController {
 	public function __construct(
-		string                                   $appName,
-		IRequest                                 $request,
+		IRequest $request,
+		private readonly LoggerInterface         $logger,
 		private readonly IUserSession            $userSession,
 		private readonly IGroupManager           $groupManager,
-		private readonly OlvidGroupConfigManager $olvidGroupConfig,
+		private readonly OlvidGroupMapper        $olvidGroupMapper,
 		private readonly IUserManager            $userManager,
 		private readonly OlvidUserConfigManager  $olvidUserConfig,
 		private readonly OlvidAppConfigManager   $olvidAppConfig,
 		private readonly ?string                 $userId,
 		private readonly GetMagicLink            $getMagicLinkHandler,
+		private readonly UpdateGroups            $updateGroupsHandler,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(Application::APP_ID, $request);
 	}
 
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/status')]
 	public function status(): JSONResponse {
-
 		return new JSONResponse(['olvidIdentityUploaded' => $this->olvidUserConfig->hasIdentity($this->userId)]);
 	}
 
@@ -82,10 +86,9 @@ class AppApiController extends ApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'PUT', url: '/app/me')]
 	public function updateMe(): JSONResponse {
-
 		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
 
-		$previousUserDetails = OlvidUserDetails::computeDetails($this->userSession->getUser(), $this->olvidUserConfig);
+		$previousUserDetails = JsonUserDetails::computeDetails($this->userSession->getUser(), $this->olvidUserConfig);
 
 		// update details
 		$updated = false;
@@ -112,7 +115,7 @@ class AppApiController extends ApiController {
 		}
 
 		// re-compute details and sign them
-		$userDetails = OlvidUserDetails::computeDetails($this->userSession->getUser(), $this->olvidUserConfig);
+		$userDetails = JsonUserDetails::computeDetails($this->userSession->getUser(), $this->olvidUserConfig);
 		$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 
 		// update full search field
@@ -136,6 +139,7 @@ class AppApiController extends ApiController {
 		$response = ["groups" => []];
 		foreach ($groups as $group) {
 			$gid = $group->getGID();
+			$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($gid);
 			$members = [];
 			foreach ($group->getUsers() as $member) {
 				$members[] = [
@@ -147,9 +151,9 @@ class AppApiController extends ApiController {
 			$response["groups"][] = [
 				"id"          => $gid,
 				"name"        => $group->getDisplayName(),
-				"enabled"     => $this->olvidGroupConfig->getIsOlvidDiscussionEnabled($gid),
-				"customName"  => $this->olvidGroupConfig->getCustomName($gid),
-				"description" => $this->olvidGroupConfig->getDescription($gid),
+				"enabled"     => $olvidGroup?->getEnabled() ?? false,
+				"customName"  => $olvidGroup?->getDiscussionName() ?? null, "",
+				"description" => $olvidGroup?->getDiscussionDescription() ?? "",
 				"members"     => $members,
 			];
 		}
@@ -159,24 +163,8 @@ class AppApiController extends ApiController {
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
-	public function updateGroup(string $groupId): JSONResponse {
-		if ($this->groupManager->get($groupId) === null) {
-			return new JSONResponse(['error' => 'group not found'], 404);
-		}
-
-		$body = json_decode(file_get_contents('php://input'), true) ?? [];
-
-		if (isset($body['enabled'])) {
-			$this->olvidGroupConfig->setIsOlvidDiscussionEnabled($groupId, $body['enabled']);
-		}
-		if (array_key_exists('customName', $body)) {
-			$this->olvidGroupConfig->setCustomName($groupId, (string)$body['customName']);
-		}
-		if (array_key_exists('description', $body)) {
-			$this->olvidGroupConfig->setDescription($groupId, (string)$body['description']);
-		}
-
-		return new JSONResponse([]);
+	public function updateGroup(string $groupId): Response {
+		return $this->updateGroupsHandler->handle($groupId);
 	}
 
 	#[NoCSRFRequired]
