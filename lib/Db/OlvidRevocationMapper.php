@@ -42,4 +42,11 @@ class OlvidRevocationMapper extends QBMapper {
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, Types::BIGINT)));
 		$qb->executeStatement();
 	}
+
+	/** @return OlvidRevocation[] */
+	public function findAll(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
 }

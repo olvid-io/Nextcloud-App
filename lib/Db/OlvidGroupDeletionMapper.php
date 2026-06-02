@@ -26,4 +26,11 @@ class OlvidGroupDeletionMapper extends QBMapper {
 		$qb->delete($this->getTableName());
 		$qb->executeStatement();
 	}
+
+	/** @return OlvidGroupDeletion[] */
+	public function findAll(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
 }

@@ -20,4 +20,11 @@ class OlvidGroupKickedMapper extends QBMapper {
 			->where($qb->expr()->lt('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
 		$qb->executeStatement();
 	}
+
+	/** @return OlvidGroupKicked[] */
+	public function findAll(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
 }

@@ -37,6 +37,13 @@ class OlvidGroupMapper extends QBMapper {
 	}
 
 	/** @return OlvidGroup[] */
+	public function findAll(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
+
+	/** @return OlvidGroup[] */
 	public function findAllEnabled(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
