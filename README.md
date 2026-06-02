@@ -15,6 +15,16 @@ npm run watch
 ### Android dev
 Setup https with mkcert: https://juliusknorr.github.io/nextcloud-docker-dev/basics/ssl/
 
+```shell
+    Install mkcert
+    Go to data/ssl
+    mkcert -cert-file nextcloud.local.crt -key-file nextcloud.local.key nextcloud.local
+    Add PROTOCOL=https to your .env file
+    docker compose restart proxy
+    There is also a script to generate/update all certs: ./scripts/update-certs
+
+```
+
 Listen on every interface: 
 - .env add: IP_BIND=0.0.0.0
 - docker compose up -d
