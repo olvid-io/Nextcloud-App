@@ -7,7 +7,7 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\JsonUserDetails;
-use OCA\Olvid\Utils\OlvidServer\OlvidServerUtils;
+use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
@@ -45,7 +45,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		if ($identity && !$apiKey) {
 			// this might fail if an olvid server api have not been set
 			try {
-				$apiKey = OlvidServerUtils::requestNewApiKey($this->olvidAppConfig);
+				$apiKey = $this->olvidServer->requestNewApiKey();
 				$this->olvidUserConfig->setApiKey($user->getUID(), $apiKey);
 			} catch (Exception $e) {
 				$this->logger->error('Me: cannot create user api key: ' . $e);
@@ -68,7 +68,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		if (!$globalPushTopic) {
 			// this might fail if an olvid server api have not been set
 			try {
-				$globalPushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
+				$globalPushTopic = $this->olvidServer->requestNewPushTopic();
 				$this->olvidAppConfig->setGlobalPushTopic($globalPushTopic);
 			} catch (Exception $e) {
 				$this->logger->error('Me: cannot create global push topic: ' . $e->getMessage());

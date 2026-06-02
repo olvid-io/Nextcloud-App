@@ -123,7 +123,8 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 			$this->lockingProvider,
 			$this->olvidUserConfig,
 			$this->olvidAppConfig,
-			$this->db
+			$this->db,
+			$this->olvidServer
 		);
 	}
 }

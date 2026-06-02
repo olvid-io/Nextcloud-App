@@ -7,6 +7,7 @@ namespace OCA\Olvid\Api\Device;
 use Exception;
 use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -35,6 +36,7 @@ abstract class AbstractDeviceApiHandler {
 		protected readonly OlvidUserConfigManager  $olvidUserConfig,
 		protected readonly OlvidAppConfigManager   $olvidAppConfig,
 		protected readonly OlvidDatabase           $db,
+		protected readonly OlvidServer $olvidServer
     ) {}
 
     public function handle(): Response {

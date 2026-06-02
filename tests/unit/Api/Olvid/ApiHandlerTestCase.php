@@ -7,6 +7,7 @@ namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 use OCA\Olvid\Api\Device\BaseJsonResponse;
 use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -59,6 +60,8 @@ abstract class ApiHandlerTestCase extends TestCase {
 	protected IURLGenerator $urlGenerator;
 	/** @var OlvidDatabase&\PHPUnit\Framework\MockObject\MockObject */
 	protected OlvidDatabase $db;
+	/** @var OlvidServer&\PHPUnit\Framework\MockObject\MockObject */
+	protected OlvidServer $olvidServer;
 
 	public static function setUpBeforeClass(): void {
 		$res = openssl_pkey_new([
@@ -86,6 +89,7 @@ abstract class ApiHandlerTestCase extends TestCase {
 		$this->lockingProvider = $this->createMock(ILockingProvider::class);
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);
 		$this->db = $this->createMock(OlvidDatabase::class);
+		$this->olvidServer = $this->createMock(OlvidServer::class);
 	}
 
 	/** Build a mock IUser with the given uid and display name. */
@@ -120,7 +124,8 @@ abstract class ApiHandlerTestCase extends TestCase {
 			$this->lockingProvider,
 			$this->olvidUserConfig,
 			$this->olvidAppConfig,
-			$this->db
+			$this->db,
+			$this->olvidServer
 		);
 	}
 
