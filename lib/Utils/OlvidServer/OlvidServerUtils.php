@@ -67,6 +67,23 @@ class OlvidServerUtils {
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
+	public static function revokePushTopic(OlvidAppConfigManager $olvidAppConfig, String $pushTopic): void {
+		$query = new JsonOlvidServerRequest();
+		$query->q = JsonOlvidServerRequest::QUERY_DELETE_PUSH_TOPIC;
+		$query->pushTopic = $pushTopic;
+		$query->keycloakApiKey = $olvidAppConfig->getOlvidServerApiKey() ?? '';
+		$serverUrl = $olvidAppConfig->getOlvidServerUrl();
+		if ($serverUrl == null || $query->keycloakApiKey == null) {
+			throw new InvalidConfigurationException();
+		}
+
+		OlvidServerUtils::serverApiRequest($serverUrl, $query);
+	}
+
+	/**
+	 * @throws OlvidServerException
+	 * @throws InvalidConfigurationException
+	 */
 	public static function sendGroupNotification(OlvidAppConfigManager $olvidAppConfig, String $pushTopic): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_NOTIFY_PUSH_TOPIC_USERS;
@@ -84,10 +101,9 @@ class OlvidServerUtils {
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
-	public static function sendSingleUserNotification(OlvidAppConfigManager $olvidAppConfig, String $pushTopic, String $userIdentity): bool {
+	public static function sendSingleUserNotification(OlvidAppConfigManager $olvidAppConfig, String $userIdentity): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_NOTIFY_SINGLE_USER;
-		$query->pushTopic = $pushTopic;
 		$query->keycloakApiKey = $olvidAppConfig->getOlvidServerApiKey();
 		$query->userIdentity = base64_decode($userIdentity);
 		$serverUrl = $olvidAppConfig->getOlvidServerUrl();

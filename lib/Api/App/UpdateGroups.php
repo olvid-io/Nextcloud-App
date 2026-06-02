@@ -16,6 +16,7 @@ use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\DB\Exception;
+use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserManager;
@@ -25,20 +26,18 @@ use Psr\Log\LoggerInterface;
 class UpdateGroups {
 	public function __construct(
 		IRequest $request,
-		private readonly LoggerInterface         $logger,
-		private readonly IUserSession            $userSession,
-		private readonly IGroupManager           $groupManager,
-		private readonly OlvidGroupMapper        $olvidGroupMapper,
-		private readonly IUserManager            $userManager,
-		private readonly OlvidUserConfigManager  $olvidUserConfig,
-		private readonly OlvidAppConfigManager   $olvidAppConfig,
-		private readonly ?string                 $userId,
-		private readonly GetMagicLink            $getMagicLinkHandler,
-		private readonly OlvidDatabase           $db
-
-	) {}
+		private readonly LoggerInterface $logger,
+		private readonly IGroupManager $groupManager,
+		private readonly OlvidGroupMapper $olvidGroupMapper,
+		private readonly OlvidUserConfigManager $olvidUserConfig,
+		private readonly OlvidAppConfigManager $olvidAppConfig,
+		private readonly OlvidDatabase $db,
+	) {
+	}
 
 	public function handle(string $groupId): Response {
+		$enableStatusChanged = false;
+
 		try {
 			$nextcloudGroup = $this->groupManager->get($groupId);
 			if ($nextcloudGroup === null) {
@@ -51,18 +50,8 @@ class UpdateGroups {
 				$olvidGroup = OlvidGroup::create($groupId);
 			}
 
-			// create a push topic if group does not have one (new group, or existing without push topic)
-			// (might fail if no api key filled)
-			try {
-				$pushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
-				$olvidGroup->setPushTopic($pushTopic);
-			} catch (\Exception $e) {
-				$this->logger->error("cannot create push topic: " . $e);
-			}
-
 			// update group fields
 			$request = json_decode(file_get_contents('php://input'), true) ?? [];
-			$enableStatusChanged = false;
 			if (isset($request['enabled']) && $request['enabled'] !== $olvidGroup->getEnabled()) {
 				$olvidGroup->setEnabled($request['enabled']);
 				$enableStatusChanged = true;
@@ -115,40 +104,80 @@ class UpdateGroups {
 						$groupDeletion->setTimestamp($currentTimestamp);
 						$this->db->groupDeletion->update($groupDeletion);
 					}
-
 				}
 			}
 
-			// we can now recompute blob and store it database
+			/*
+			** manage push topics before computing the new blob, and we will send them laters
+			 */
+			// send notification if groups is enabled, or if group was disabled not
+			$needToSendNotification = $olvidGroup->getEnabled() || ($enableStatusChanged);
+			// if group is disabled we revoke any existing push topic after notification sending
+			$revokeExistingPushTopic = !$olvidGroup->getEnabled();
+			// if group is enabled we create a push topic if necessary
+			$createPushTopicIfNecessary = $olvidGroup->getEnabled();
+			// if we must send notification send them after blob re-computing
+			$sendNotificationCallback = null;
+
+			try {
+				if ($needToSendNotification) {
+					// we have no push topic, send notifications individually
+					if ($olvidGroup->getPushTopic() === null) {
+						$sendNotificationCallback = function (IGroup $nextcloudGroup, OlvidGroup $olvidGroup) {
+							foreach ($nextcloudGroup->getUsers() as $user) {
+								$userIdentity = $this->olvidUserConfig->getIdentity($user->getUID());
+								if ($userIdentity !== null) {
+									OlvidServerUtils::sendSingleUserNotification($this->olvidAppConfig, $userIdentity);
+								}
+							}
+						};
+					}
+					// else use existing push topics
+					else {
+						$sendNotificationCallback = function (IGroup $nextcloudGroup, OlvidGroup $olvidGroup) {
+							OlvidServerUtils::sendGroupNotification($this->olvidAppConfig, $olvidGroup->getPushTopic());
+						};
+					}
+				}
+
+				// create push topic if necessary, and set it in database
+				if ($olvidGroup->getPushTopic() === null && $createPushTopicIfNecessary) {
+					$pushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
+					$olvidGroup->setPushTopic($pushTopic);
+					$olvidGroup = $this->db->group->update($olvidGroup);
+				}
+				// revoke existing push topic if necessary
+				elseif ($olvidGroup->getPushTopic() !== null && $revokeExistingPushTopic) {
+					OlvidServerUtils::revokePushTopic($this->olvidAppConfig, $olvidGroup->getPushTopic());
+					$olvidGroup->setPushTopic(null);
+					$this->db->group->update($olvidGroup);
+				}
+			} catch (\Exception $e) {
+				$this->logger->error('cannot prepare group update notifications', ['exception' => $e]);
+			}
+
+			/*
+			 * we can now recompute blob and store it database
+			 */
 			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
 			$signedBlob = $blob->sign($this->olvidAppConfig);
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup = $this->insertOrUpdateOlvidGroup($olvidGroup);
 
 			/*
-			 ** notify group members
+			 * Send notifications now, we are ready
 			 */
-			try {
-				// use group push topic
-				if ($olvidGroup->getPushTopic() !== null) {
-					OlvidServerUtils::sendGroupNotification($this->olvidAppConfig, $olvidGroup->getPushTopic());
+			if ($sendNotificationCallback !== null) {
+				try {
+					$sendNotificationCallback($nextcloudGroup, $olvidGroup);
+				} catch (\Exception $e) {
+					$this->logger->error('cannot notify group members', ['exception' => $e]);
 				}
-				// create a new push topic for this group
-				else {
-					$pushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
-					$olvidGroup->setPushTopic($pushTopic);
-					$olvidGroup = $this->db->group->update($olvidGroup);
-
-					// we cannot use this new push topic, notify each user individually
-					// TODO notify
-				}
-			} catch (\Exception $e) {
-				$this->logger->error("cannot notify group members", ["exception" => $e]);
 			}
 
 			return new JSONResponse($olvidGroup);
 		} catch (Exception $exception) {
-			$this->logger->error("Unexpected exception", ["exception" => $exception]);
+			$this->logger->error('Unexpected exception', ['exception' => $exception]);
 			return new JSONResponse([], 500);
 		}
 	}
