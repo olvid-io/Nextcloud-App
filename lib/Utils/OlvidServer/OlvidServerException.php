@@ -14,6 +14,15 @@ abstract class OlvidServerException extends Exception {
 }
 
 // cannot parse / use request
+class InvalidConfigurationException extends Exception {
+	public function __construct() {
+		parent::__construct();
+		$this->code = 0;
+		$this->message = "Invalid configuration: missing api key or server url";
+	}
+}
+
+// cannot parse / use request
 class InvalidRequestException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();

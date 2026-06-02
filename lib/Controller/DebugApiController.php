@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use Exception;
+use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -168,6 +170,13 @@ class DebugApiController extends ApiController {
 				'blob' => $olvidGroup !== null ? JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig) : null,
 			];
 		}
+
+		$earliestRevocationTimestamp = TimeUtil::currentTimeMillis() - Constants::DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS;
+		// get all deleted groups
+		$response['groupDeleted'] = $this->db->groupDeletion->getSignatureAfterTimestamp($earliestRevocationTimestamp);
+
+		// get all groups user was removed from
+		$response['groupKicked'] = $this->db->groupKicked->getSignatureAfterTimestamp($this->userSession->getUser()->getUID(), $earliestRevocationTimestamp);
 
 		return new JSONResponse($response);
 	}

@@ -39,8 +39,7 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 			}
 
 			// only add groups that were modified recently
-			$lastModificationTimestamp = $olvidGroup->getLastModificationTimestamp();
-			if ($requestTimestamp === null ||  $requestTimestamp < $lastModificationTimestamp) {
+			if ($requestTimestamp === null || $requestTimestamp < $olvidGroup->getLastModificationTimestamp()) {
 				$signedGroupBlobs[] = $olvidGroup->getSignedGroupBlob();
 			}
 		}
@@ -48,16 +47,18 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		$earliestRevocationTimestamp = $requestTimestamp != null ? $requestTimestamp : ($currentTimestamp - Constants::DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS);
 
 		// get all deleted groups
-		$signedGroupDeletions = [];
+		$signedGroupDeletions = $this->db->groupDeletion->getSignatureAfterTimestamp($earliestRevocationTimestamp);
 
 		// get all groups user was removed from
-		$signedGroupKicks = [];
+		$signedGroupKicks = $this->db->groupKicked->getSignatureAfterTimestamp($user->getUID(), $earliestRevocationTimestamp);
 
-		return new JSONResponse([
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_BLOBS => count($signedGroupBlobs) ? $signedGroupBlobs : null,
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS => count($signedGroupDeletions) ? $signedGroupDeletions : null,
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_KICKS => count($signedGroupKicks) ? $signedGroupKicks : null,
+		$response = [
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_BLOBS => count($signedGroupBlobs) ? $signedGroupBlobs : [],
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS => count($signedGroupDeletions) ? array_map(fn ($v) => $v->getSignature(), $signedGroupDeletions) : [],
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_KICKS => count($signedGroupKicks) ? array_map(fn ($v) => $v->getSignature(), $signedGroupKicks) : [],
 			Constants::GROUPS_RESPONSE_CURRENT_TIMESTAMP => $currentTimestamp,
-		]);
+		];
+
+		return new JSONResponse($response);
 	}
 }

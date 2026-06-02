@@ -62,8 +62,10 @@ class UpdateGroups {
 
 			// update group fields
 			$request = json_decode(file_get_contents('php://input'), true) ?? [];
+			$enableStatusChanged = false;
 			if (isset($request['enabled']) && $request['enabled'] !== $olvidGroup->getEnabled()) {
 				$olvidGroup->setEnabled($request['enabled']);
+				$enableStatusChanged = true;
 			}
 			if (array_key_exists('customName', $request) && $request['customName'] !== $olvidGroup->getDiscussionName()) {
 				$olvidGroup->setDiscussionName((string)$request['customName']);
@@ -77,44 +79,74 @@ class UpdateGroups {
 				return new Response(200);
 			}
 
-			// olvid discussion is enabled
-			if ($olvidGroup->getEnabled()) {
-				// recompute blob
-				$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
-				$signedBlob = $blob->sign($this->olvidAppConfig);
-				$olvidGroup->setSignedGroupBlob($signedBlob);
+			// group was enabled or disabled, manage groupDeletion in database
+			if ($enableStatusChanged) {
+				// group have been enabled, remove any GroupDeletion in database
+				if ($olvidGroup->getEnabled()) {
+					$groupDeletion = $this->db->groupDeletion->getByGroupIdOrNull($groupId);
+					if ($groupDeletion !== null) {
+						$this->db->groupDeletion->delete($groupDeletion);
+					}
+				}
+				// group have been disabled, create or update a group deletion in database
+				else {
+					// get signature key
+					$keyId = $this->olvidAppConfig->getJwkKeyId();
+					$keyType = $this->olvidAppConfig->getJwkKeyType();
+					$privateKey = $this->olvidAppConfig->getJwkKeyPrivateKey();
 
-				// update group in database
-				$olvidGroup = $this->insertOrUpdateOlvidGroup($olvidGroup);
+					// sign deletion
+					$currentTimestamp = TimeUtil::currentTimeMillis();
+					$deletionData = new JsonGroupDeletionData();
+					$deletionData->groupUid = $olvidGroup->getGroupUid(); // Olvid group Uid (not nextcloud id)
+					$deletionData->timestamp = $currentTimestamp;
+					$signedDeletionData = JWT::encode($deletionData->jsonSerialize(), $privateKey, $keyType, $keyId);
 
-				// TODO notify
-				// as the group push topic was created just now, we can't use it yet
-				//  --> notify each group member individually
+					$groupDeletion = $this->db->groupDeletion->getByGroupIdOrNull($groupId);
+
+					// create a new deletion
+					if ($groupDeletion === null) {
+						$groupDeletion = OlvidGroupDeletion::create($groupId, $currentTimestamp, $signedDeletionData);
+						$this->db->groupDeletion->insert($groupDeletion);
+					}
+					// update existing deletion
+					else {
+						$groupDeletion->setSignature($signedDeletionData);
+						$groupDeletion->setTimestamp($currentTimestamp);
+						$this->db->groupDeletion->update($groupDeletion);
+					}
+
+				}
 			}
-			// olvid discussion have been disabled
-			else {
-				// get signature key
-				$keyId = $this->olvidAppConfig->getJwkKeyId();
-				$keyType = $this->olvidAppConfig->getJwkKeyType();
-				$privateKey = $this->olvidAppConfig->getJwkKeyPrivateKey();
 
-				// sign deletion and store in database
-				$currentTimestamp = TimeUtil::currentTimeMillis();
-				$deletionData = new JsonGroupDeletionData($groupId, $currentTimestamp);
-				$signedDeletionData = JWT::encode($deletionData->jsonSerialize(), $privateKey, $keyType, $keyId);
-				$groupDeletion = OlvidGroupDeletion::create($groupId, $currentTimestamp, $signedDeletionData);
-				$this->db->groupDeletion->insert($groupDeletion);
+			// we can now recompute blob and store it database
+			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
+			$signedBlob = $blob->sign($this->olvidAppConfig);
+			$olvidGroup->setSignedGroupBlob($signedBlob);
+			$olvidGroup = $this->insertOrUpdateOlvidGroup($olvidGroup);
 
-				// recompute blob and save in db
-				$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
-				$signedBlob = $blob->sign($this->olvidAppConfig);
-				$olvidGroup->setSignedGroupBlob($signedBlob);
-				$olvidGroup = $this->insertOrUpdateOlvidGroup($olvidGroup);
+			/*
+			 ** notify group members
+			 */
+			try {
+				// use group push topic
+				if ($olvidGroup->getPushTopic() !== null) {
+					OlvidServerUtils::sendGroupNotification($this->olvidAppConfig, $olvidGroup->getPushTopic());
+				}
+				// create a new push topic for this group
+				else {
+					$pushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
+					$olvidGroup->setPushTopic($pushTopic);
+					$olvidGroup = $this->db->group->update($olvidGroup);
 
-				// TODO notify
+					// we cannot use this new push topic, notify each user individually
+					// TODO notify
+				}
+			} catch (\Exception $e) {
+				$this->logger->error("cannot notify group members", ["exception" => $e]);
 			}
 
-			return new JSONResponse([]);
+			return new JSONResponse($olvidGroup);
 		} catch (Exception $exception) {
 			$this->logger->error("Unexpected exception", ["exception" => $exception]);
 			return new JSONResponse([], 500);

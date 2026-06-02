@@ -27,4 +27,13 @@ class OlvidGroupKickedMapper extends QBMapper {
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
 	}
+
+	/** @return OlvidGroupKicked[] */
+	public function getSignatureAfterTimestamp(String $userId, int $earliestRevocationTimestamp) : array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('signature')->from($this->getTableName())
+			->where($qb->expr()->gt('timestamp', $qb->createNamedParameter($earliestRevocationTimestamp, Types::BIGINT)))
+			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+		return $this->findEntities($qb);
+	}
 }

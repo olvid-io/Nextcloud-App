@@ -48,12 +48,12 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 				$apiKey = OlvidServerUtils::requestNewApiKey($this->olvidAppConfig);
 				$this->olvidUserConfig->setApiKey($user->getUID(), $apiKey);
 			} catch (Exception $e) {
-				$this->logger->error("Me: cannot create user api key: " . $e);
+				$this->logger->error('Me: cannot create user api key: ' . $e);
 			}
 		}
 		$response[Constants::ME_RESPONSE_API_KEY] = $apiKey;
 
-		$response[Constants::ME_RESPONSE_SERVER] = $this->olvidAppConfig->getOlvidServerUrl() ?? "";
+		$response[Constants::ME_RESPONSE_SERVER] = $this->olvidAppConfig->getOlvidServerUrl() ?? '';
 		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = true;
 		$response[Constants::ME_RESPONSE_TRANSFER_RESTRICTED] = false;
 
@@ -71,7 +71,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 				$globalPushTopic = OlvidServerUtils::requestNewPushTopic($this->olvidAppConfig);
 				$this->olvidAppConfig->setGlobalPushTopic($globalPushTopic);
 			} catch (Exception $e) {
-				$this->logger->error("Me: cannot create global push topic: " . $e);
+				$this->logger->error('Me: cannot create global push topic: ' . $e->getMessage());
 			}
 		}
 		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : [];
@@ -91,6 +91,6 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = TimeUtil::currentTimeMillis();
 
-        return new JSONResponse($response, 200);
-    }
+		return new JSONResponse($response, 200);
+	}
 }
