@@ -12,20 +12,22 @@
 		</NcAppNavigationItem>
 
 		<NcAppNavigationItem
+			v-if="isAdmin"
+			:name="t('olvid', 'Users')"
+			:active="$route.name === 'users' || $route.name === 'user-detail'"
+			@click="$router.push({ name: 'users' }).catch(() => {})">
+			<template #icon>
+				<AccountMultipleIcon :size="20" />
+			</template>
+		</NcAppNavigationItem>
+
+		<NcAppNavigationItem
+			v-if="isAdmin"
 			:name="t('olvid', 'Groups')"
 			:active="$route.name === 'groups' || $route.name === 'group-detail'"
 			@click="$router.push({ name: 'groups' }).catch(() => {})">
 			<template #icon>
 				<AccountGroupIcon :size="20" />
-			</template>
-		</NcAppNavigationItem>
-
-		<NcAppNavigationItem
-			:name="t('olvid', 'Users')"
-			:active="$route.name === 'users'"
-			@click="$router.push({ name: 'users' }).catch(() => {})">
-			<template #icon>
-				<AccountMultipleIcon :size="20" />
 			</template>
 		</NcAppNavigationItem>
 	</NcAppNavigation>
@@ -42,5 +44,11 @@ import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationI
 export default {
 	name: 'OlvidNavigation',
 	components: { NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, AccountIcon, AccountGroupIcon, AccountMultipleIcon },
+	props: {
+		isAdmin: {
+			type: Boolean,
+			default: false,
+		},
+	},
 }
 </script>

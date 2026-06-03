@@ -114,11 +114,8 @@ export default {
 	},
 	async mounted() {
 		try {
-			const [statusRes, meRes] = await Promise.all([
-				axios.get(generateOcsUrl('/apps/olvid/app/status')),
-				axios.get(generateOcsUrl('/apps/olvid/app/me')),
-			])
-			this.olvidIdentityUploaded = statusRes.data.olvidIdentityUploaded
+			const meRes = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
+			this.olvidIdentityUploaded = meRes.data.olvidIdentityUploaded
 			this.form = {
 				firstname: meRes.data.firstname ?? '',
 				lastname: meRes.data.lastname ?? '',
@@ -137,7 +134,7 @@ export default {
 			this.error = null
 			this.magicLink = null
 			try {
-				const response = await axios.get(generateOcsUrl('/apps/olvid/app/getMagicLink'))
+				const response = await axios.get(generateOcsUrl('/apps/olvid/app/me/getMagicLink'))
 				this.magicLink = response.data.configurationUrl
 			} catch (e) {
 				this.error = 'Could not generate magic link: ' + (e.response?.data?.error ?? e.message)
@@ -149,7 +146,7 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				await axios.get(generateOcsUrl('/apps/olvid/app/revokeIdentity'))
+				await axios.get(generateOcsUrl('/apps/olvid/app/me/revokeIdentity'))
 				this.olvidIdentityUploaded = false
 				// Go directly to QR view for re-enrollment
 				await this.fetchMagicLink()

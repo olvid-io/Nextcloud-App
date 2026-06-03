@@ -13,13 +13,13 @@
 				<NcListItem
 					v-for="group in groups"
 					:key="group.id"
-					:name="group.name"
+					:name="group.displayName"
 					:active="$route.params.groupId === group.id"
 					:force-display-actions="true"
 					@click="$emit('open-group-sidebar', group)">
 
 					<template #icon>
-						<NcAvatar :display-name="group.name" :is-no-user="true" />
+						<NcAvatar :display-name="group.displayName" :is-no-user="true" />
 					</template>
 
 					<template #subname>
@@ -31,17 +31,17 @@
 							:id="`group-enabled-${group.id}`"
 							:checked="group.enabled"
 							type="switch"
-							:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.name })"
+							:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.displayName })"
 							@update:checked="enableOlvidDiscussionForGroup(group, $event)"
 							@click.native.stop>
 							{{ t('olvid', 'Olvid Discussion') }}
 						</NcCheckboxRadioSwitch>
 					</template>
 
-					<template #actions>
-						<NcActionButton @click.stop="$emit('open-group-sidebar', group)">
+					<template #extra-actions>
+						<NcButton size="small" @click.stop="$emit('open-group-sidebar', group)">
 							{{ t('olvid', 'Details') }}
-						</NcActionButton>
+						</NcButton>
 					</template>
 				</NcListItem>
 			</ul>
@@ -52,18 +52,18 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
 import NcHeaderMenu from '@nextcloud/vue/dist/Components/NcHeaderMenu.js'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 
 export default {
 	name: 'GroupsView',
-	components: { NcListItem, NcAvatar, NcHeaderMenu, NcAppContent, NcCheckboxRadioSwitch, NcActionButton, NcEmptyContent, NcLoadingIcon },
+	components: { NcListItem, NcAvatar, NcButton, NcHeaderMenu, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
 
 	emits: ['open-group-sidebar'],
 
@@ -109,7 +109,7 @@ export default {
 		async enableOlvidDiscussionForGroup(group, enabled) {
 			group.enabled = enabled
 			try {
-				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${group.id}`), { enabled })
+				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}`), { enabled })
 			} catch (e) {
 				group.enabled = !enabled
 				console.error('Could not enable/disable group', e)

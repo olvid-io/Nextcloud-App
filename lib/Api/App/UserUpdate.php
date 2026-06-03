@@ -9,12 +9,11 @@ use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use OCP\IUser;
 use Psr\Log\LoggerInterface;
 
-class MeUpdate {
+class UserUpdate {
 	public function __construct(
 		IRequest $request,
 		private readonly LoggerInterface $logger,
@@ -24,27 +23,25 @@ class MeUpdate {
 	) {
 	}
 
-	public function handle(IUser $user): JSONResponse {
-		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
-
+	public function handle(IUser $user, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): JSONResponse {
 		$previousUserDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
 
 		// update details
 		$updated = false;
-		if ($previousUserDetails->firstname !== $jsonParameters['firstname']) {
-			$this->olvidUserConfig->setFirstname($user->getUID(), $jsonParameters['firstname']);
+		if ($previousUserDetails->firstname !== $newFirstname) {
+			$this->olvidUserConfig->setFirstname($user->getUID(), $newFirstname);
 			$updated = true;
 		}
-		if ($previousUserDetails->lastname !== $jsonParameters['lastname']) {
-			$this->olvidUserConfig->setLastname($user->getUID(), $jsonParameters['lastname']);
+		if ($previousUserDetails->lastname !== $newLastname) {
+			$this->olvidUserConfig->setLastname($user->getUID(), $newLastname);
 			$updated = true;
 		}
-		if ($previousUserDetails->position !== $jsonParameters['position']) {
-			$this->olvidUserConfig->setPosition($user->getUID(), $jsonParameters['position']);
+		if ($previousUserDetails->position !== $newPosition) {
+			$this->olvidUserConfig->setPosition($user->getUID(), $newPosition);
 			$updated = true;
 		}
-		if ($previousUserDetails->company !== $jsonParameters['company']) {
-			$this->olvidUserConfig->setCompany($user->getUID(), $jsonParameters['company']);
+		if ($previousUserDetails->company !== $newCompany) {
+			$this->olvidUserConfig->setCompany($user->getUID(), $newCompany);
 			$updated = true;
 		}
 

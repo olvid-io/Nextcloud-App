@@ -16,5 +16,6 @@ export default new Router({
 		{ path: '/groups', name: 'groups', component: GroupsView },
 		{ path: '/groups/:groupId', name: 'group-detail', component: GroupsView, props: true },
 		{ path: '/users', name: 'users', component: UsersView },
+		{ path: '/users/:userId', name: 'user-detail', component: UsersView, props: true },
 	],
 })

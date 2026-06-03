@@ -1,7 +1,7 @@
 <template>
 	<NcAppSidebar
-		:name="form.customName || group.name"
-		:subname="form.customName ? group.name : ''"
+		:name="form.customName || group.displayName"
+		:subname="form.customName ? group.displayName : ''"
 		@close="$emit('close')">
 		<!-- Details tab -->
 		<NcAppSidebarTab id="details" :name="t('olvid', 'Details')" :order="0">
@@ -10,13 +10,13 @@
 					:id="`group-enabled-${group.id}`"
 					:checked="group.enabled"
 					type="switch"
-					:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.name })"
+					:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.displayName })"
 					@update:checked="enableOlvidDiscussionForGroup(group, $event)"
 					@click.native.stop>
 					{{ t('olvid', 'Olvid Discussion') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField
-					:value="group.name"
+					:value="group.displayName"
 					:label="t('olvid', 'Nextcloud name')"
 					:disabled="true" />
 				<NcTextField
@@ -31,12 +31,8 @@
 						rows="4"
 						:placeholder="t('olvid', 'Group description in Olvid')" />
 				</div>
-				<p v-if="saveError" class="group-sidebar__error">
-					{{ saveError }}
-				</p>
-				<p v-if="saveSuccess" class="group-sidebar__success">
-					{{ t('olvid', 'Saved.') }}
-				</p>
+				<p v-if="saveError" class="group-sidebar__error">{{ saveError }}</p>
+				<p v-if="saveSuccess" class="group-sidebar__success">{{ t('olvid', 'Saved.') }}</p>
 				<NcButton :disabled="saving" @click="save">
 					{{ t('olvid', 'Save') }}
 				</NcButton>
@@ -56,8 +52,11 @@
 						<NcListItem
 							v-for="user in searchResults"
 							:key="user.id"
-							:name="user.name"
+							:name="user.displayName"
 							compact>
+							<template #icon>
+								<OlvidAvatar :user="user.id" :display-name="user.displayName" :use-olvid="user.useOlvid" />
+							</template>
 							<template #subname>
 								{{ user.id }}
 							</template>
@@ -75,12 +74,12 @@
 					<NcListItem
 						v-for="member in members"
 						:key="member.id"
-						:name="member.name"
+						:name="member.displayName"
 						compact>
+						<template #icon>
+							<OlvidAvatar :user="member.id" :display-name="member.displayName" :use-olvid="member.useOlvid" />
+						</template>
 						<template #subname>
-							<span v-if="member.useOlvid" class="group-sidebar__olvid-badge">
-								{{ t('olvid', 'Olvid') }}
-							</span>
 							{{ member.id }}
 						</template>
 						<template #extra-actions>
@@ -106,11 +105,12 @@ import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import OlvidAvatar from './OlvidAvatar.vue'
 
 export default {
 	name: 'GroupDetailsSidebar',
-	components: { NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
+	components: { OlvidAvatar, NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
 
 	props: {
 		group: {
@@ -159,7 +159,7 @@ export default {
 			this.saveError = null
 			this.saveSuccess = false
 			try {
-				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${this.group.id}`), {
+				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}`), {
 					customName: this.form.customName,
 					description: this.form.description,
 				})
@@ -175,7 +175,7 @@ export default {
 		async enableOlvidDiscussionForGroup(group, enabled) {
 			try {
 				group.enabled = enabled
-				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${group.id}`), { enabled })
+				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}`), { enabled })
 			} catch (e) {
 				group.enabled = !enabled
 				console.error('Could not enable/disable group', e)
@@ -196,7 +196,7 @@ export default {
 
 		async addMember(user) {
 			try {
-				await axios.post(generateOcsUrl(`/apps/olvid/app/groups/${this.group.id}/members/${user.id}`))
+				await axios.post(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/members/${encodeURIComponent(user.id)}`))
 				this.members.push(user)
 				this.searchResults = this.searchResults.filter(u => u.id !== user.id)
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
@@ -207,7 +207,7 @@ export default {
 
 		async removeMember(member) {
 			try {
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/${this.group.id}/members/${member.id}`))
+				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/members/${encodeURIComponent(member.id)}`))
 				this.members = this.members.filter(m => m.id !== member.id)
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
@@ -292,16 +292,6 @@ export default {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-	}
-
-	&__olvid-badge {
-		display: inline-block;
-		font-size: 0.75rem;
-		background: var(--color-primary-element);
-		color: var(--color-primary-element-text);
-		border-radius: 3px;
-		padding: 1px 4px;
-		margin-right: 4px;
 	}
 
 	&__empty {

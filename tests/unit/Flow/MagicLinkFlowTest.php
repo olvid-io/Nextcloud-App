@@ -7,7 +7,7 @@ namespace OCA\Olvid\Tests\Unit\Flow;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use OCA\Olvid\Api\App\GetMagicLink;
+use OCA\Olvid\Api\App\UserGetMagicLink;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Api\Device\GetMagicSession;
 use OCA\Olvid\Tests\Unit\Api\Olvid\ApiHandlerTestCase;
@@ -50,7 +50,7 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		);
 
 		// --- Step 1: web app requests the magic link ---
-		$magicLink = new GetMagicLink(
+		$magicLink = new UserGetMagicLink(
 			$this->olvidUserConfig,
 			$this->olvidAppConfig,
 			$this->urlGenerator,

@@ -70,7 +70,7 @@ class GroupEventListener implements IEventListener {
 					try {
 						$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
 					} catch (Exception $e) {
-						$this->logger->error('groupChangedHandler: cannot send notification: ' . $e->getMessage());
+						$this->logger->error('groupChangedHandler: cannot send notification: ', ['exception' => $e]);
 					}
 				}
 			}
@@ -91,7 +91,7 @@ class GroupEventListener implements IEventListener {
 				try {
 					$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
 				} catch (Exception $e) {
-					$this->logger->error('groupDeletedHandler: cannot send notification: ' . $e->getMessage());
+					$this->logger->error('groupDeletedHandler: cannot send notification: ', ['exception' => $e]);
 				}
 			}
 		}
