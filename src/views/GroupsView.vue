@@ -1,6 +1,12 @@
 <template>
 	<NcAppContent>
-		<NcHeaderMenu id="groups-header" />
+		<div class="groups-view__header">
+			<span class="groups-view__title" />
+			<NcButton type="primary" @click="showCreateModal = true">
+				{{ t('olvid', '+ Create Group') }}
+			</NcButton>
+		</div>
+
 		<div class="groups-view">
 			<NcLoadingIcon v-if="loading" :size="44" />
 
@@ -19,7 +25,7 @@
 					@click="$emit('open-group-sidebar', group)">
 
 					<template #icon>
-						<NcAvatar :display-name="group.displayName" :is-no-user="true" />
+						<OlvidAvatar :display-name="group.displayName" :is-no-user="true" :use-olvid="group.enabled" />
 					</template>
 
 					<template #subname>
@@ -46,24 +52,30 @@
 				</NcListItem>
 			</ul>
 		</div>
+
+		<!-- Create group modal -->
+		<CreateGroupModal
+			v-if="showCreateModal"
+			@close="showCreateModal = false"
+			@created="onGroupCreated" />
 	</NcAppContent>
 </template>
 
 <script>
 import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcHeaderMenu from '@nextcloud/vue/dist/Components/NcHeaderMenu.js'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import OlvidAvatar from '../components/OlvidAvatar.vue'
+import CreateGroupModal from '../components/CreateGroupModal.vue'
 
 export default {
 	name: 'GroupsView',
-	components: { NcListItem, NcAvatar, NcButton, NcHeaderMenu, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
+	components: { OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
 
 	emits: ['open-group-sidebar'],
 
@@ -71,6 +83,7 @@ export default {
 		return {
 			groups: [],
 			loading: true,
+			showCreateModal: false,
 		}
 	},
 
@@ -122,6 +135,34 @@ export default {
 				this.groups.splice(idx, 1, { ...this.groups[idx], ...patch })
 			}
 		},
+
+		onGroupCreated(group) {
+			this.groups.push(group)
+		},
 	},
 }
 </script>
+
+<style scoped lang="scss">
+.groups-view {
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 16px 8px;
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	&__title {
+		margin: 0;
+		font-size: 1.1rem;
+		font-weight: 600;
+	}
+
+	&__list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+}
+</style>

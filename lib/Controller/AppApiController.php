@@ -113,6 +113,29 @@ class AppApiController extends ApiController {
 	}
 
 	#[AdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/app/groups')]
+	public function groupsPost(): JSONResponse {
+		$body = json_decode(file_get_contents('php://input'), true) ?? [];
+		$gid = trim($body['id'] ?? '');
+
+		if ($gid === '') {
+			return new JSONResponse(['error' => 'id is required'], 400);
+		}
+
+		if ($this->groupManager->get($gid) !== null) {
+			return new JSONResponse(['error' => 'group already exists'], 400);
+		}
+
+		$group = $this->groupManager->createGroup($gid);
+		return new JSONResponse([
+			'id' => $group->getGID(),
+			'displayName' => $group->getDisplayName(),
+			'enabled' => false,
+			'members' => [],
+		]);
+	}
+
+	#[AdminRequired]
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
 	public function groupsPut(string $groupId): Response {
 		return $this->updateGroupsHandler->handle($groupId);
@@ -143,6 +166,10 @@ class AppApiController extends ApiController {
 		$user = $this->userManager->get($userId);
 		if ($user === null) {
 			return new JSONResponse(['error' => 'user not found'], 404);
+		}
+		// protect against last admin deletion !
+		if ($group->getGID() === 'admin' && $user->getUID() === $this->userSession->getUser()->getUID()) {
+			return new JSONResponse(['error' => 'you can remove yourself from admin group'], 400);
 		}
 		$group->removeUser($user);
 		return new JSONResponse([]);

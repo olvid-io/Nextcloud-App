@@ -61,6 +61,9 @@
 							:key="group.id"
 							:name="group.displayName"
 							compact>
+							<template #icon>
+								<OlvidAvatar :display-name="group.displayName" :is-no-user="true" :use-olvid="group.enabled" />
+							</template>
 							<template #subname>
 								{{ group.id }}
 							</template>
