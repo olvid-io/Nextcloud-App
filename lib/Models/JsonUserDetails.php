@@ -16,17 +16,17 @@ class JsonUserDetails implements JsonSerializable {
 	#[JsonField(Constants::DETAILS_KEY_ID)]
 	public String $id;
 	#[JsonField(Constants::DETAILS_KEY_IDENTITY)]
-    public ?String $identity;
+	public ?String $identity;
 	#[JsonField(Constants::DETAILS_KEY_FIRST_NAME)]
-    public String $firstname;
+	public String $firstname;
 	#[JsonField(Constants::DETAILS_KEY_LAST_NAME)]
-    public String $lastname;
+	public String $lastname;
 	#[JsonField(Constants::DETAILS_KEY_POSITION)]
-    public ?String $position;
+	public ?String $position;
 	#[JsonField(Constants::DETAILS_KEY_COMPANY)]
-    public ?String $company;
+	public ?String $company;
 	#[JsonField(Constants::DETAILS_KEY_TIMESTAMP)]
-    public int $timestamp;
+	public int $timestamp;
 
 	// TODO what if details expired ? check java version
 	// get signed details in db or compute them
@@ -34,29 +34,25 @@ class JsonUserDetails implements JsonSerializable {
 		$signedDetails = $olvidUserConfig->getSignedDetails($user->getUID());
 		if ($signedDetails) {
 			return $signedDetails;
-		}
-		else {
+		} else {
 			$details = JsonUserDetails::computeDetails($user, $olvidUserConfig);
 			return $details->sign($olvidUserConfig, $olvidAppConfig);
 		}
 	}
-
 
 	public static function computeDetails(IUser $user, OlvidUserConfigManager $olvidUserConfig) : JsonUserDetails {
 		// prepare details
 		$id = $user->getUID();
 
 		// get user details from attributes
-		$firstname = $olvidUserConfig->getFirstname($user->getUID()) ?? '';
-		$lastname  = $olvidUserConfig->getLastname($user->getUID()) ?? '';
-		$position  = $olvidUserConfig->getPosition($user->getUID()) ?? '';
-		$company   = $olvidUserConfig->getCompany($user->getUID()) ?? '';
+		$firstname = trim($olvidUserConfig->getFirstname($user->getUID()) ?? '');
+		$lastname = trim($olvidUserConfig->getLastname($user->getUID()) ?? '');
+		$position = trim($olvidUserConfig->getPosition($user->getUID()) ?? '');
+		$company = trim($olvidUserConfig->getCompany($user->getUID()) ?? '');
 
-		// fallback: if user does not set any field we use display name as a first name
-		if (!$firstname && !$lastname && !$position && !$company) {
+		// fallback: if user does not set any of firstname and lastname we use display name as a first name
+		if (!$firstname && !$lastname) {
 			$firstname = $user->getDisplayName();
-			// TODO keep ?
-//			$userConfig->setFirstname($user->getUID(), $firstname);
 		}
 
 		$identity = $olvidUserConfig->getIdentity($user->getUID());
@@ -76,8 +72,7 @@ class JsonUserDetails implements JsonSerializable {
 	}
 
 	// compute UserDetails signature, save it in database and return it
-	public function sign(OlvidUserConfigManager $olvidUserConfig, OlvidAppConfigManager $olvidAppConfig): String
-	{
+	public function sign(OlvidUserConfigManager $olvidUserConfig, OlvidAppConfigManager $olvidAppConfig): String {
 		// get signature key
 		$keyId = $olvidAppConfig->getJwkKeyId();
 		$keyType = $olvidAppConfig->getJwkKeyType();
@@ -96,7 +91,7 @@ class JsonUserDetails implements JsonSerializable {
 			return null;
 		}
 
-		$encodedDetails = explode(".", $signedDetails)[1];
+		$encodedDetails = explode('.', $signedDetails)[1];
 		$jsonDetailsString = base64_decode($encodedDetails);
 		if (!$jsonDetailsString) {
 			return null;
@@ -105,16 +100,17 @@ class JsonUserDetails implements JsonSerializable {
 		if (!is_array($jsonDetailsArray)) {
 			return null;
 		}
-		return JsonUserDetails::fromArray($jsonDetailsArray);	}
+		return JsonUserDetails::fromArray($jsonDetailsArray);
+	}
 
 	public function computeFullSearchString(): String {
-        return JsonUserDetails::unAccent($this->firstname == null ? "" : $this->firstname) . " " .
-			($this->lastname == null ? "": $this->lastname) . " " .
-			($this->position == null ? "": $this->position) . " " .
-			($this->company == null ? "": $this->company);
-    }
+		return JsonUserDetails::unAccent($this->firstname == null ? '' : $this->firstname) . ' '
+			. ($this->lastname == null ? '': $this->lastname) . ' '
+			. ($this->position == null ? '': $this->position) . ' '
+			. ($this->company == null ? '': $this->company);
+	}
 
- 	public function updateFullSearchString(String $userId, OlvidUserConfigManager $userConfig): String {
+	public function updateFullSearchString(String $userId, OlvidUserConfigManager $userConfig): String {
 		// set or update full search string attributes
 		$fullSearchString = $this->computeFullSearchString();
 		if ($fullSearchString !== $userConfig->getFullSearchField($userId)) {

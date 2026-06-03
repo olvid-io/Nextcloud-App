@@ -2,13 +2,10 @@
 
 namespace OCA\Olvid\Api\App;
 
-use Firebase\JWT\JWT;
 use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Db\OlvidGroup;
-use OCA\Olvid\Db\OlvidGroupDeletion;
 use OCA\Olvid\Db\OlvidGroupMapper;
 use OCA\Olvid\Models\JsonGroupBlob;
-use OCA\Olvid\Models\JsonGroupDeletionData;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\OlvidServer\OlvidServer;
@@ -22,7 +19,7 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
-class UpdateGroups {
+class GroupsUpdate {
 	public function __construct(
 		IRequest $request,
 		private readonly LoggerInterface $logger,
@@ -85,7 +82,7 @@ class UpdateGroups {
 						$olvidGroup->setPushTopic($this->olvidServer->requestNewPushTopic());
 						$newlyCreatedPushTopic = true;
 					} catch (OlvidServerException|InvalidConfigurationException $exception) {
-						$this->logger->error('UpdateGroups: cannot create new push topic: ' . $exception->getMessage());
+						$this->logger->error('GroupsUpdate: cannot create new push topic: ' . $exception->getMessage());
 					}
 				}
 				// group have been disabled, create or update a group deletion in database
@@ -124,7 +121,7 @@ class UpdateGroups {
 					$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
 				}
 			} catch (OlvidServerException|InvalidConfigurationException $exception) {
-				$this->logger->error('UpdateGroups: cannot send notifications: ' . $exception->getMessage());
+				$this->logger->error('GroupsUpdate: cannot send notifications: ' . $exception->getMessage());
 			}
 
 			return new JSONResponse($olvidGroup);
