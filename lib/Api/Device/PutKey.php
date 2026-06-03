@@ -8,7 +8,6 @@ use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\JsonUserDetails;
-use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -20,7 +19,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 		try {
 			$identity = isset($jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY]) ? (string)$jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY] : null;
 		} catch (Exception $e) {
-			$this->logger->warning('putKey: parse error: ' . $e->getMessage());
+			$this->logger->warning('putKey: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();
 		}
 
@@ -52,7 +51,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					try {
 						$this->olvidServer->revokeApiKey($previousApiKey);
 					} catch (Exception $e) {
-						$this->logger->error('putKey: cannot revoke previous api key: ' . $e->getMessage());
+						$this->logger->error('putKey: cannot revoke previous api key: ', ['exception' => $e]);
 					}
 				}
 
@@ -63,7 +62,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
 				} catch (Exception $e) {
 					// TODO if cannot set attribute return an error
-					$this->logger->warning('putKey: cannot create new api key: ' . $e->getMessage());
+					$this->logger->warning('putKey: cannot create new api key: ', ['exception' => $e]);
 				}
 
 				// set user identity
@@ -83,7 +82,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 						$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
 					} catch (Exception $e) {
 						// TODO if cannot set attribute return an error
-						$this->logger->warning('putKey: cannot create new api key: ' . $e->getMessage());
+						$this->logger->warning('putKey: cannot create new api key: ', ['exception' => $e]);
 					}
 				}
 
@@ -98,7 +97,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					try {
 						$this->olvidServer->revokeApiKey($previousApiKey);
 					} catch (Exception $e) {
-						$this->logger->error('putKey: cannot revoke previous api key: ' . $e->getMessage());
+						$this->logger->error('putKey: cannot revoke previous api key: ', ['exception' => $e]);
 					}
 				}
 
@@ -117,7 +116,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
 				} catch (Exception $e) {
 					// TODO if cannot set attribute return an error
-					$this->logger->warning('putKey: cannot create new api key: ' . $e->getMessage());
+					$this->logger->warning('putKey: cannot create new api key: ', ['exception' => $e]);
 				}
 
 				// we can now set new identity

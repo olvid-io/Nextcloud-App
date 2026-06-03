@@ -30,7 +30,7 @@ class GetMagicSession extends AbstractDeviceApiHandler {
                 throw new Exception('Missing username or token');
             }
         } catch (Exception $e) {
-            $this->logger->warning('getMagicSession: parse error: ' . $e->getMessage());
+            $this->logger->warning('getMagicSession: parse error: ', ['exception' => $e]);
             return $this->invalidRequest();
         }
 

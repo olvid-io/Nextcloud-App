@@ -40,7 +40,7 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 			$publicKey = $this->olvidAppConfig->getJwkKeyPublicKey();
 			$decoded = JWT::decode($token, new Key($publicKey, 'ES256'));
 		} catch (Exception $e) {
-			$this->logger->error('Bearer token is invalid: ' . $e->getMessage());
+			$this->logger->error('Bearer token is invalid: ', ['exception' => $e]);
 			return null;
 		}
 

@@ -16,7 +16,7 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 		try {
 			$filter = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (string)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
 		} catch (Exception $e) {
-			$this->logger->warning('search: parse error: ' . $e->getMessage());
+			$this->logger->warning('search: parse error: ', ["exception" => $e]);
 			return $this->invalidRequest();
 		}
 

@@ -20,7 +20,7 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		try {
 			$requestTimestamp = array_key_exists(Constants::GROUPS_REQUEST_TIMESTAMP, $jsonParameters) ? $jsonParameters[Constants::GROUPS_REQUEST_TIMESTAMP] : null;
 		} catch (Exception $e) {
-			$this->logger->warning('groups: parse error: ' . $e->getMessage());
+			$this->logger->warning('groups: parse error: ', ['exception' => $e]);
 		}
 
 		$currentTimestamp = TimeUtil::currentTimeMillis();

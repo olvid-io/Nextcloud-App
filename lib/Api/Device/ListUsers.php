@@ -17,7 +17,7 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 		try {
 			$timestamp = (int)($jsonParameters[Constants::LIST_USERS_REQUEST_TIMESTAMP] ?? 0);
 		} catch (Exception $e) {
-			$this->logger->warning('listUsers: parse error: ' . $e->getMessage());
+			$this->logger->warning('listUsers: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();
 		}
 

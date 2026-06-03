@@ -19,7 +19,7 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 				return $this->invalidRequest();
 			}
 		} catch (Exception $e) {
-			$this->logger->warning('getKey: parse error: ' . $e->getMessage());
+			$this->logger->warning('getKey: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();
 		}
 

@@ -23,59 +23,59 @@ use OCA\Olvid\Utils\RandomUtil;
  * a subsequent /getSession call can verify the signed response.
  */
 class RequestChallenge extends AbstractEngineApiHandler {
-    private const CACHE_TTL = 60;
+	private const CACHE_TTL = 60;
 
-    protected function handler(string $rawInput): BinaryResponse {
-        // --- 1. Parse ---
-        try {
-            $items = Encoded::decodeList($rawInput);
-            if (count($items) < 2) {
-                throw new Exception('Not enough list items');
-            }
-            $userId = Encoded::decodeString($items[0]);
-            $nonce  = Encoded::decodeBytes($items[1]);
-            if (strlen($nonce) !== Constants::ENGINE_NONCE_LENGTH) {
-                throw new Exception('Invalid nonce length');
-            }
-        } catch (Exception $e) {
-            $this->logger->warning('requestChallenge: parse error: ' . $e->getMessage());
-            return $this->parsingError();
-        }
+	protected function handler(string $rawInput): BinaryResponse {
+		// --- 1. Parse ---
+		try {
+			$items = Encoded::decodeList($rawInput);
+			if (count($items) < 2) {
+				throw new Exception('Not enough list items');
+			}
+			$userId = Encoded::decodeString($items[0]);
+			$nonce = Encoded::decodeBytes($items[1]);
+			if (strlen($nonce) !== Constants::ENGINE_NONCE_LENGTH) {
+				throw new Exception('Invalid nonce length');
+			}
+		} catch (Exception $e) {
+			$this->logger->warning('requestChallenge: parse error: ', ['exception' => $e]);
+			return $this->parsingError();
+		}
 
-        // --- 2. Generate challenge (always, even for unknown users, to avoid leaking existence) ---
-        try {
-            $challenge = RandomUtil::random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
-        } catch (Exception $e) {
-            $this->logger->error('requestChallenge: cannot generate random bytes: ' . $e->getMessage());
-            return $this->generalError();
-        }
+		// --- 2. Generate challenge (always, even for unknown users, to avoid leaking existence) ---
+		try {
+			$challenge = RandomUtil::random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
+		} catch (Exception $e) {
+			$this->logger->error('requestChallenge: cannot generate random bytes: ', ['exception' => $e]);
+			return $this->generalError();
+		}
 
-        $response = new BinaryResponse(Encoded::encodeList([
-            Encoded::encodeBytes(self::STATUS_OK),
-            Encoded::encodeBytes($challenge),
-            Encoded::encodeBytes($nonce),
-        ]));
+		$response = new BinaryResponse(Encoded::encodeList([
+			Encoded::encodeBytes(self::STATUS_OK),
+			Encoded::encodeBytes($challenge),
+			Encoded::encodeBytes($nonce),
+		]));
 
-        // --- 3. Look up user and cache challenge only when user has an identity ---
-        $user = $this->userManager->get($userId);
-        if ($user === null) {
-            $this->logger->warning('requestChallenge: user not found');
-            return $response;
-        }
+		// --- 3. Look up user and cache challenge only when user has an identity ---
+		$user = $this->userManager->get($userId);
+		if ($user === null) {
+			$this->logger->warning('requestChallenge: user not found');
+			return $response;
+		}
 
-        $identity = $this->userConfig->getIdentity($user->getUID());
-        if ($identity === null) {
-            $this->logger->warning('requestChallenge: user has no Olvid identity');
-            return $response;
-        }
+		$identity = $this->userConfig->getIdentity($user->getUID());
+		if ($identity === null) {
+			$this->logger->warning('requestChallenge: user has no Olvid identity');
+			return $response;
+		}
 
-        $cacheKey   = 'challenge-' . base64_encode($nonce);
-        $cacheValue = base64_encode(Encoded::encodeList([
-            Encoded::encodeString($userId),
-            Encoded::encodeBytes($challenge),
-        ]));
-        $this->cache->set($cacheKey, $cacheValue, self::CACHE_TTL);
+		$cacheKey = 'challenge-' . base64_encode($nonce);
+		$cacheValue = base64_encode(Encoded::encodeList([
+			Encoded::encodeString($userId),
+			Encoded::encodeBytes($challenge),
+		]));
+		$this->cache->set($cacheKey, $cacheValue, self::CACHE_TTL);
 
-        return $response;
-    }
+		return $response;
+	}
 }

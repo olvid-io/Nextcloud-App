@@ -21,7 +21,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
 			$timestamp = (int)($jsonParameters[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
 		} catch (Exception $e) {
-			$this->logger->warning('me: parse error: ' . $e->getMessage());
+			$this->logger->warning('me: parse error: ', ['exception' => $e]);
 		}
 
 		// TODO feature revocation
@@ -71,7 +71,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 				$globalPushTopic = $this->olvidServer->requestNewPushTopic();
 				$this->olvidAppConfig->setGlobalPushTopic($globalPushTopic);
 			} catch (Exception $e) {
-				$this->logger->error('Me: cannot create global push topic: ' . $e->getMessage());
+				$this->logger->error('Me: cannot create global push topic: ', ['exception' => $e]);
 			}
 		}
 		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : [];
