@@ -3,7 +3,6 @@
 		:name="form.customName || group.name"
 		:subname="form.customName ? group.name : ''"
 		@close="$emit('close')">
-
 		<!-- Details tab -->
 		<NcAppSidebarTab id="details" :name="t('olvid', 'Details')" :order="0">
 			<div class="group-sidebar__fields">
@@ -32,8 +31,12 @@
 						rows="4"
 						:placeholder="t('olvid', 'Group description in Olvid')" />
 				</div>
-				<p v-if="saveError" class="group-sidebar__error">{{ saveError }}</p>
-				<p v-if="saveSuccess" class="group-sidebar__success">{{ t('olvid', 'Saved.') }}</p>
+				<p v-if="saveError" class="group-sidebar__error">
+					{{ saveError }}
+				</p>
+				<p v-if="saveSuccess" class="group-sidebar__success">
+					{{ t('olvid', 'Saved.') }}
+				</p>
 				<NcButton :disabled="saving" @click="save">
 					{{ t('olvid', 'Save') }}
 				</NcButton>
@@ -54,15 +57,14 @@
 							v-for="user in searchResults"
 							:key="user.id"
 							:name="user.name"
-							:force-display-actions="true"
 							compact>
 							<template #subname>
 								{{ user.id }}
 							</template>
-							<template #actions>
-								<NcActionButton @click="addMember(user)">
+							<template #extra-actions>
+								<NcButton size="small" @click="addMember(user)">
 									{{ t('olvid', 'Add') }}
-								</NcActionButton>
+								</NcButton>
 							</template>
 						</NcListItem>
 					</ul>
@@ -74,7 +76,6 @@
 						v-for="member in members"
 						:key="member.id"
 						:name="member.name"
-						:force-display-actions="true"
 						compact>
 						<template #subname>
 							<span v-if="member.useOlvid" class="group-sidebar__olvid-badge">
@@ -82,10 +83,10 @@
 							</span>
 							{{ member.id }}
 						</template>
-						<template #actions>
-							<NcActionButton @click="removeMember(member)">
+						<template #extra-actions>
+							<NcButton size="small" @click="removeMember(member)">
 								{{ t('olvid', 'Remove') }}
-							</NcActionButton>
+							</NcButton>
 						</template>
 					</NcListItem>
 					<li v-if="!members.length" class="group-sidebar__empty">
@@ -100,7 +101,6 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
 import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar.js'
 import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
@@ -110,7 +110,7 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwit
 
 export default {
 	name: 'GroupDetailsSidebar',
-	components: { NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcActionButton },
+	components: { NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
 
 	props: {
 		group: {
@@ -201,7 +201,7 @@ export default {
 				this.searchResults = this.searchResults.filter(u => u.id !== user.id)
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
-				// silently ignore
+				console.error('addMember failed', e)
 			}
 		},
 
@@ -211,7 +211,7 @@ export default {
 				this.members = this.members.filter(m => m.id !== member.id)
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
-				// silently ignore
+				console.error('removeMember failed', e)
 			}
 		},
 	},
