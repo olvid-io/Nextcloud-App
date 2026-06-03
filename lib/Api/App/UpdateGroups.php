@@ -90,31 +90,7 @@ class UpdateGroups {
 				}
 				// group have been disabled, create or update a group deletion in database
 				else {
-					// get signature key
-					$keyId = $this->olvidAppConfig->getJwkKeyId();
-					$keyType = $this->olvidAppConfig->getJwkKeyType();
-					$privateKey = $this->olvidAppConfig->getJwkKeyPrivateKey();
-
-					// sign deletion
-					$currentTimestamp = TimeUtil::currentTimeMillis();
-					$deletionData = new JsonGroupDeletionData();
-					$deletionData->groupUid = $olvidGroup->getGroupUid(); // Olvid group Uid (not nextcloud id)
-					$deletionData->timestamp = $currentTimestamp;
-					$signedDeletionData = JWT::encode($deletionData->jsonSerialize(), $privateKey, $keyType, $keyId);
-
-					$groupDeletion = $this->db->groupDeletion->getByGroupIdOrNull($groupId);
-
-					// create a new deletion
-					if ($groupDeletion === null) {
-						$groupDeletion = OlvidGroupDeletion::create($groupId, $currentTimestamp, $signedDeletionData);
-						$this->db->groupDeletion->insert($groupDeletion);
-					}
-					// update existing deletion
-					else {
-						$groupDeletion->setSignature($signedDeletionData);
-						$groupDeletion->setTimestamp($currentTimestamp);
-						$this->db->groupDeletion->update($groupDeletion);
-					}
+					$this->db->groupDeletion->computeAndSaveGroupDeletion($this->olvidAppConfig, $olvidGroup);
 				}
 			}
 
@@ -124,6 +100,7 @@ class UpdateGroups {
 			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
 			$signedBlob = $blob->sign($this->olvidAppConfig);
 			$olvidGroup->setSignedGroupBlob($signedBlob);
+			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 			$olvidGroup = $this->insertOrUpdateOlvidGroup($olvidGroup);
 
 			/*

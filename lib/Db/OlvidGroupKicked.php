@@ -20,6 +20,15 @@ class OlvidGroupKicked extends Entity {
 		$this->addType('signature', Types::TEXT);
 	}
 
+	public static function create(string $getGroupId, string $userId, int $currentTimestamp, string $signedKickData): OlvidGroupKicked {
+		$groupKick = new OlvidGroupKicked();
+		$groupKick->setGroupId($getGroupId);
+		$groupKick->setUserId($userId);
+		$groupKick->setTimestamp($currentTimestamp);
+		$groupKick->setSignature($signedKickData);
+		return $groupKick;
+	}
+
 	public function getGroupId(): string {
 		return $this->groupId;
 	}
