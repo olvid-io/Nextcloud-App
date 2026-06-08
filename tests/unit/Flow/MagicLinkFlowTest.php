@@ -9,7 +9,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use OCA\Olvid\Api\App\UserGetMagicLink;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Device\GetMagicSession;
+use OCA\Olvid\Api\Directory\GetMagicSession;
 use OCA\Olvid\Tests\Unit\Api\Olvid\ApiHandlerTestCase;
 use OCA\Olvid\Utils\TimeUtil;
 
@@ -106,7 +106,7 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		], null);
 
 		// Expired token must be rejected with an error in the body (all handlers return HTTP 200)
-		$this->assertErrorResponse($response, \OCA\Olvid\Api\Device\BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
+		$this->assertErrorResponse($response, \OCA\Olvid\Api\Directory\BaseJsonResponse::ERROR_CODE_INVALID_REQUEST);
 	}
 
 	// GetMagicSession uses the AbstractDeviceApiHandler constructor

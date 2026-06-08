@@ -61,7 +61,7 @@ class UserGetMagicLink {
 	 */
 	private function buildLink(string $userId, string $token): string {
 		$serverUrl = $this->appConfig->getOlvidServerUrl() ?? '';
-		$nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('') . '/apps/olvid';
+		$nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('olvid.ocs.olvid');
 
 		$payload = [
 			'server' => $serverUrl,

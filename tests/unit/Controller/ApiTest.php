@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Tests\Unit\Controller;
 
-use OCA\OIDCIdentityProvider\Util\DiscoveryGenerator;
-use OCA\Olvid\Api\Device\GetKey;
-use OCA\Olvid\Api\Device\GetMagicSession;
-use OCA\Olvid\Api\Device\Groups;
-use OCA\Olvid\Api\Device\ListUsers;
-use OCA\Olvid\Api\Device\Me;
-use OCA\Olvid\Api\Device\PutKey;
-use OCA\Olvid\Api\Device\Search;
+use OCA\Olvid\Api\Directory\GetKey;
+use OCA\Olvid\Api\Directory\GetMagicSession;
+use OCA\Olvid\Api\Directory\Groups;
+use OCA\Olvid\Api\Directory\ListUsers;
+use OCA\Olvid\Api\Directory\Me;
+use OCA\Olvid\Api\Directory\PutKey;
+use OCA\Olvid\Api\Directory\Search;
 use OCA\Olvid\Api\Engine\GetSession;
 use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\Verify;
@@ -42,7 +41,6 @@ class ApiTest extends TestCase {
 			Application::APP_ID,
 			$this->createMock(IRequest::class),
 			$olvidAppConfig,
-			$this->createMock(DiscoveryGenerator::class),
 			$urlGenerator,
 			$this->createMock(Me::class),
 			$this->createMock(PutKey::class),

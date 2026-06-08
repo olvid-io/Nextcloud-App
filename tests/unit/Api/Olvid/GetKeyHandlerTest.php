@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Device\BaseJsonResponse;
-use OCA\Olvid\Api\Device\GetKey;
+use OCA\Olvid\Api\Directory\BaseJsonResponse;
+use OCA\Olvid\Api\Directory\GetKey;
 
 class GetKeyHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsInvalidRequestWhenUserIdMissing(): void {

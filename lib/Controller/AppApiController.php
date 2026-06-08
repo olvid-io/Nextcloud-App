@@ -284,7 +284,7 @@ class AppApiController extends ApiController {
 		}
 
 		$body = json_decode(file_get_contents('php://input'), true) ?? [];
-		return $this->userUpdate->handle($this->userSession->getUser(), $body['firstname'], $body['lastname'], $body['position'], $body['company']);
+		return $this->userUpdate->handle($user, $body['firstname'], $body['lastname'], $body['position'], $body['company']);
 	}
 
 	#[AdminRequired]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
-use OCA\Olvid\Api\Device\BaseJsonResponse;
+use OCA\Olvid\Api\Directory\BaseJsonResponse;
 use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidServer\OlvidServer;

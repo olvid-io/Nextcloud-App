@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Tests\Unit\Api\Olvid;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Api\Device\Me;
+use OCA\Olvid\Api\Directory\Me;
 
 class MeHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerReturnsCachedSignatureWithoutResigning(): void {

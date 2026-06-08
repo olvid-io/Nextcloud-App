@@ -1,6 +1,6 @@
 <?php
 
-namespace OCA\Olvid\Api\Device;
+namespace OCA\Olvid\Api\Directory;
 
 use JsonSerializable;
 

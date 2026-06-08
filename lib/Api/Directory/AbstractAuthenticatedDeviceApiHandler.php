@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Api\Device;
+namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use Firebase\JWT\JWT;
