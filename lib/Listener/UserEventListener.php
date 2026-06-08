@@ -24,7 +24,6 @@ use Psr\Log\LoggerInterface;
 class UserEventListener implements IEventListener {
 	public function __construct(
 		private readonly LoggerInterface $logger,
-		private readonly OlvidUserConfigManager $userConfig,
 		private readonly OlvidDatabase $db,
 		private readonly OlvidServer $olvidServer,
 		private readonly OlvidAppConfigManager $olvidAppConfig,
@@ -80,7 +79,7 @@ class UserEventListener implements IEventListener {
 		}
 
 		// TODO is this necessary ?
-		$this->userConfig->deleteUserConfig($event->getUser()->getUID());
+		$this->olvidUserConfig->deleteUserConfig($event->getUser()->getUID());
 	}
 
 	public function userChangedHandler(UserChangedEvent $event): void {

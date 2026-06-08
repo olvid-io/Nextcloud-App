@@ -10,17 +10,20 @@ use OCP\IAppConfig;
 
 class OlvidAppConfigManager {
 	// Olvid Server
-	public const APP_CONFIG_OLVID_SERVER_URL = "olvid-server-url";
-	public const APP_CONFIG_OLVID_SERVER_API_KEY = "olvid-server-api-key";
-	public const APP_CONFIG_GLOBAL_PUSH_TOPIC = "olvid-global-push-topic";
+	public const APP_CONFIG_OLVID_SERVER_URL = 'olvid-server-url';
+	public const APP_CONFIG_OLVID_SERVER_API_KEY = 'olvid-server-api-key';
+	public const APP_CONFIG_GLOBAL_PUSH_TOPIC = 'olvid-global-push-topic';
+
+	// App options
+	public const APP_CONFIG_ENABLE_EVERYONE_GROUP = 'olvid-enable-everyone-group';
 
 	// json web key
-	private const APP_CONFIG_JWK_KEY_ID = "olvid-jwk-key-id";
-	private const APP_CONFIG_JWK_KEY_TYPE = "olvid-jwk-key-type";
-	private const APP_CONFIG_JWK_PRIVATE_KEY = "olvid-jwk-private-key";
-	private const APP_CONFIG_JWK_PUBLIC_KEY = "olvid-jwk-public-key";
-	private const APP_CONFIG_JWK_PUBLIC_KEY_X = "olvid-jwk-public-key-x";
-	private const APP_CONFIG_JWK_PUBLIC_KEY_Y = "olvid-jwk-public-key-y";
+	private const APP_CONFIG_JWK_KEY_ID = 'olvid-jwk-key-id';
+	private const APP_CONFIG_JWK_KEY_TYPE = 'olvid-jwk-key-type';
+	private const APP_CONFIG_JWK_PRIVATE_KEY = 'olvid-jwk-private-key';
+	private const APP_CONFIG_JWK_PUBLIC_KEY = 'olvid-jwk-public-key';
+	private const APP_CONFIG_JWK_PUBLIC_KEY_X = 'olvid-jwk-public-key-x';
+	private const APP_CONFIG_JWK_PUBLIC_KEY_Y = 'olvid-jwk-public-key-y';
 
 	private const ALL_KEYS = [
 		self::APP_CONFIG_OLVID_SERVER_URL,
@@ -32,9 +35,13 @@ class OlvidAppConfigManager {
 		self::APP_CONFIG_JWK_PUBLIC_KEY,
 		self::APP_CONFIG_JWK_PUBLIC_KEY_X,
 		self::APP_CONFIG_JWK_PUBLIC_KEY_Y,
+		self::APP_CONFIG_ENABLE_EVERYONE_GROUP
 	];
 
-	public function __construct(private readonly IAppConfig $appConfig) {}
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+	) {
+	}
 
 	private function getStringOrNull(string $key): ?string {
 		$value = $this->appConfig->getValueString(Application::APP_ID, $key);
@@ -58,6 +65,17 @@ class OlvidAppConfigManager {
 	}
 	public function setGlobalPushTopic(string $value): void {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_GLOBAL_PUSH_TOPIC, $value);
+	}
+
+	/*
+	 * Application options
+	 */
+	// enable everyone group (set in settings)
+	public function isEveryoneGroupEnabled(): ?bool {
+//		return $this->appConfig->getValueBool(Application::APP_ID, self::APP_CONFIG_ENABLE_EVERYONE_GROUP);
+		// TODO use boolean value when checkbox are fixed
+		$value =  $this->getStringOrNull(self::APP_CONFIG_ENABLE_EVERYONE_GROUP);
+		return !($value === null || $value === "false");
 	}
 
 	/*
