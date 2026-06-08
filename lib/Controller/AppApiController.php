@@ -74,16 +74,31 @@ class AppApiController extends ApiController {
 	}
 
 	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/app/me/revokeIdentity')]
-	public function meRevokeIdentity(): JSONResponse {
-		// TODO: implement full revocation flow
-		// TODO feature revocation
+	#[ApiRoute(verb: 'DELETE', url: '/app/me/identity')]
+	public function meIdentityDelete(): JSONResponse {
+		// TODO: implement full Olvid revocation protocol (notify Olvid server, create revocation record in olvid_revocation table)
 		return new JSONResponse();
 	}
 
-	// ── Group endpoints (admin) ──────────────────────────────────────────────
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/app/me/groups')]
+	public function meGroups(): JSONResponse {
+		$user = $this->userSession->getUser();
+		$groups = $this->groupManager->getUserGroups($user);
+		$result = [];
+		foreach ($groups as $group) {
+			$gid = $group->getGID();
+			$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($gid);
+			$result[] = [
+				'id' => $gid,
+				'displayName' => $group->getDisplayName(),
+				'olvidEnabled' => $olvidGroup?->getEnabled() ?? false,
+			];
+		}
+		return new JSONResponse(['groups' => $result]);
+	}
 
-	#[AdminRequired]
+	// ── Group endpoints (admin) ──────────────────────────────────────────────
 	#[ApiRoute(verb: 'GET', url: '/app/groups')]
 	public function groupsGet(): JSONResponse {
 		$groups = $this->groupManager->search('', null);
@@ -112,7 +127,6 @@ class AppApiController extends ApiController {
 		return new JSONResponse($response);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/app/groups')]
 	public function groupsPost(): JSONResponse {
 		$body = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -135,13 +149,11 @@ class AppApiController extends ApiController {
 		]);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
 	public function groupsPut(string $groupId): Response {
 		return $this->updateGroupsHandler->handle($groupId);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/app/groups/{groupId}/members/{userId}')]
 	public function groupsMemberPost(string $groupId, string $userId): JSONResponse {
 		$group = $this->groupManager->get($groupId);
@@ -156,7 +168,6 @@ class AppApiController extends ApiController {
 		return new JSONResponse([]);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'DELETE', url: '/app/groups/{groupId}/members/{userId}')]
 	public function groupsMemberDelete(string $groupId, string $userId): JSONResponse {
 		$group = $this->groupManager->get($groupId);
@@ -176,7 +187,6 @@ class AppApiController extends ApiController {
 	}
 
 	// ── User search (admin, used by groups sidebar) ──────────────────────────
-	#[AdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/users/search')]
 	public function usersSearch(): JSONResponse {
 		$query = $this->request->getParam('query', '');
@@ -195,7 +205,6 @@ class AppApiController extends ApiController {
 
 	// ── User management endpoints (admin only) ───────────────────────────────
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/users')]
 	public function usersGet(): JSONResponse {
 		$users = $this->userManager->search('', null);
@@ -216,7 +225,6 @@ class AppApiController extends ApiController {
 		return new JSONResponse(['users' => $result]);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/app/users')]
 	public function usersPost(): JSONResponse {
 		$body = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -265,7 +273,6 @@ class AppApiController extends ApiController {
 		]);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/magicLink')]
 	public function usersGetMagicLink(string $userId): JSONResponse {
 		$user = $this->userManager->get($userId);
@@ -275,7 +282,6 @@ class AppApiController extends ApiController {
 		return $this->userGetMagicLink->handle($userId);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'PUT', url: '/app/users/{userId}')]
 	public function updateUser(string $userId): JSONResponse {
 		$user = $this->userManager->get($userId);
@@ -287,7 +293,6 @@ class AppApiController extends ApiController {
 		return $this->userUpdate->handle($user, $body['firstname'], $body['lastname'], $body['position'], $body['company']);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}')]
 	public function deleteUser(string $userId): JSONResponse {
 		if ($userId === $this->userId) {
@@ -301,7 +306,6 @@ class AppApiController extends ApiController {
 		return new JSONResponse([]);
 	}
 
-	#[AdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/groups')]
 	public function getUserGroups(string $userId): JSONResponse {
 		$user = $this->userManager->get($userId);
