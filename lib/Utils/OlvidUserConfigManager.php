@@ -162,6 +162,11 @@ class OlvidUserConfigManager {
 		$this->setString($uid, self::USER_CONFIG_MAGIC_TOKEN_EXPIRATION, (string)$value);
 	}
 
+	public function clearMagicToken(string $uid): void {
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_MAGIC_TOKEN);
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_MAGIC_TOKEN_EXPIRATION);
+	}
+
 	// session revoked before
 	public function getSessionRevokedBefore(string $uid): ?int {
 		$value = $this->getStringOrNull($uid, self::USER_CONFIG_SESSION_REVOKED_BEFORE);

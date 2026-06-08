@@ -22,42 +22,44 @@ use OCP\IUser;
 class GetMagicSession extends AbstractDeviceApiHandler {
 	// unauthenticated entrypoint, argument $user is null
 	public function handler(array $jsonParameters, ?IUser $user): JSONResponse {
-        // --- 1. Parse request ---
-        try {
-            $user = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
-            $token    = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_TOKEN]    ?? null;
-            if ($user === null || $token === null) {
-                throw new Exception('Missing username or token');
-            }
-        } catch (Exception $e) {
-            $this->logger->warning('getMagicSession: parse error: ', ['exception' => $e]);
-            return $this->invalidRequest();
-        }
+		// --- 1. Parse request ---
+		try {
+			$user = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
+			$token = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_TOKEN] ?? null;
+			if ($user === null || $token === null) {
+				throw new Exception('Missing username or token');
+			}
+		} catch (Exception $e) {
+			$this->logger->warning('getMagicSession: parse error: ', ['exception' => $e]);
+			return $this->invalidRequest();
+		}
 
-        // --- 2. Look up user (always return same error to avoid leaking whether user exists) ---
-        $targetUser = $this->userManager->get($user);
-        if ($targetUser === null) {
-            $this->logger->warning('getMagicSession: user not found: ' . $user);
-            return $this->invalidRequest();
-        }
+		// --- 2. Look up user (always return same error to avoid leaking whether user exists) ---
+		$targetUser = $this->userManager->get($user);
+		if ($targetUser === null) {
+			$this->logger->warning('getMagicSession: user not found: ' . $user);
+			return $this->invalidRequest();
+		}
 
-        // --- 3. Validate magic token ---
+		// --- 3. Validate magic token ---
 		$magicToken = $this->olvidUserConfig->getMagicToken($targetUser->getUID());
 		if ($magicToken === null || $token !== $magicToken) {
 			$this->logger->warning('getMagicSession: invalid magic token: ' . $user);
 			return $this->invalidRequest();
 		}
 
-        // Check magic token expiration
+		// Check magic token expiration
 		$magicTokenExpiration = $this->olvidUserConfig->getMagicTokenExpiration($targetUser->getUID());
-        if ($magicTokenExpiration === null || $magicTokenExpiration < TimeUtil::currentTimeMillis()) {
+		if ($magicTokenExpiration === null || $magicTokenExpiration < TimeUtil::currentTimeMillis()) {
 			$this->logger->warning('getMagicSession: expired magic token for user');
+			// delete expired token
+			$this->olvidUserConfig->clearMagicToken($targetUser->getUID());
 			return $this->invalidRequest();
-        }
+		}
 
-        // --- 4. Generate session JWT ---
+		// --- 4. Generate session JWT ---
 		$privateKeyPem = $this->olvidAppConfig->getJwkKeyPrivateKey();
-		$keyId         = $this->olvidAppConfig->getJwkKeyId();
+		$keyId = $this->olvidAppConfig->getJwkKeyId();
 		if ($privateKeyPem === null) {
 			$this->logger->error('getMagicSession: JWK private key not configured — run occ maintenance:repair');
 			return $this->internalError();
@@ -68,7 +70,7 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 			return $this->internalError();
 		}
 		// timestamp in jwt must be in seconds
-		$now       = TimeUtil::currentTimeS();
+		$now = TimeUtil::currentTimeS();
 		$expiresIn = Constants::MAGIC_SESSION_DURATION_S;
 
 		$accessToken = JWT::encode([
@@ -79,11 +81,13 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 			'type' => 'session'
 		], $privateKey, 'ES256', $keyId);
 
+		// magic token is deleted in /putKey when process is finished
+
 		return new JSONResponse([
-			'access_token'  => $accessToken,
-			'expires_in'    => $expiresIn,
-			'token_type'    => 'Bearer',
+			'access_token' => $accessToken,
+			'expires_in' => $expiresIn,
+			'token_type' => 'Bearer',
 			'refresh_token' => null,
 		]);
-    }
+	}
 }

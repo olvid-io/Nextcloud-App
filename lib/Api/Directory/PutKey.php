@@ -127,6 +127,9 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 
+			// delete any magic token for this user
+			$this->olvidUserConfig->clearMagicToken($user->getUID());
+
 			return $this->success();
 		} finally {
 			$this->lockingProvider->releaseLock($lockKey, ILockingProvider::LOCK_EXCLUSIVE);
