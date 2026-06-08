@@ -178,11 +178,15 @@ class OlvidUserConfigManager {
 	}
 
 	/*
-	 * Clean method
+	 * Clean methods
 	 */
 	public function deleteUserConfig(string $uid): void {
 		foreach (self::ALL_KEYS as $key) {
 			$this->config->deleteUserValue($uid, Application::APP_ID, $key);
 		}
+	}
+
+	public function removeIdentity(string $uid): void {
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_IDENTITY);
 	}
 }

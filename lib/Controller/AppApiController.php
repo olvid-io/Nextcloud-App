@@ -77,6 +77,7 @@ class AppApiController extends ApiController {
 	#[ApiRoute(verb: 'DELETE', url: '/app/me/identity')]
 	public function meIdentityDelete(): JSONResponse {
 		// TODO: implement full Olvid revocation protocol (notify Olvid server, create revocation record in olvid_revocation table)
+		$this->olvidUserConfig->clearIdentity($this->userId);
 		return new JSONResponse();
 	}
 
