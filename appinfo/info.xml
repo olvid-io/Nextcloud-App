@@ -3,17 +3,36 @@
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>olvid</id>
 	<name>Olvid</name>
-	<summary>Olvid integration</summary>
-	<description>Olvid integration</description>
-	<version>1.0.0</version>
+	<version>0.0.0-alpha.2</version>
+	<summary>Use Nextcloud as an Olvid directory.</summary>
+	<description>Use your Nextcloud instance as an Olvid directory.
+
+- 🪄 Magic Links: easily bind you Olvid identity to your Nextcloud account
+- 📑 Directory: Start an Olvid discussion whith any other Nextcloud user in one click
+- 👥 Groups: associate an Olvid discussion with a Nextcloud group
+- ✉️ Security: your messages are steal exchanged using Olvid cryptographic protocols, your Nextcloud server do not store it.
+	</description>
 	<licence>agpl</licence>
-	<author mail="bot@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<namespace>Olvid</namespace>
+	<category>integration</category>
 	<category>social</category>
-	<bugs>https://olvid.io/faq</bugs>
 	<dependencies>
 		<nextcloud min-version="30" max-version="33"/>
 	</dependencies>
+	
+	<author mail="bot@olvid.io" homepage="https://olvid.io">Olvid</author>
+	<website>https://olvid.io</website>
+	<bugs>https://github.com/olvid-io/Nextcloud-App/issues</bugs>
+        <repository type="git">https://github.com/olvid-io/Nextcloud-App</repository>
+	<documentation>
+	  <user>https://github.com/olvid-io/Nextcloud-App</user>
+	  <developer>https://github.com/olvid-io/Nextcloud-App</developer>
+	</documentation>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-profile.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-groups.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-users.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-onboarding.png</screenshot>
+	
 	<navigations>
 		<navigation>
 			<id>olvid</id>
