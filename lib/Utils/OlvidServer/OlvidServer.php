@@ -2,7 +2,6 @@
 
 namespace OCA\Olvid\Utils\OlvidServer;
 
-use JsonSerializable;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use Psr\Log\LoggerInterface;
 
@@ -62,11 +61,11 @@ class OlvidServer {
 	 */
 	public function revokePushTopic(String $pushTopic): void {
 		// TODO TODEL ?not implemented server side
-//		$query = new JsonOlvidServerRequest();
-//		$query->q = JsonOlvidServerRequest::QUERY_DELETE_PUSH_TOPIC;
-//		$query->pushTopic = $pushTopic;
-//		$this->serverApiRequest($query);
-//		$this->logger->info('OlvidServer:: revokePushTopic');
+		//		$query = new JsonOlvidServerRequest();
+		//		$query->q = JsonOlvidServerRequest::QUERY_DELETE_PUSH_TOPIC;
+		//		$query->pushTopic = $pushTopic;
+		//		$this->serverApiRequest($query);
+		//		$this->logger->info('OlvidServer:: revokePushTopic');
 	}
 
 	/**

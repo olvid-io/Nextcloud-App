@@ -31,10 +31,10 @@ class JsonGroupMemberAndPermissions implements JsonSerializable {
 		array $permissions = [],
 		?string $groupInvitationNonce = null,
 	) {
-		$this->keycloakUserId      = $keycloakUserId;
-		$this->identityString      = $identityString;
-		$this->signedUserDetails   = $signedUserDetails;
-		$this->permissions         = $permissions;
+		$this->keycloakUserId = $keycloakUserId;
+		$this->identityString = $identityString;
+		$this->signedUserDetails = $signedUserDetails;
+		$this->permissions = $permissions;
 		$this->groupInvitationNonce = $groupInvitationNonce;
 	}
 

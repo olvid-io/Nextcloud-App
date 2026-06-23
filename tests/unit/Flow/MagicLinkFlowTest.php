@@ -19,10 +19,8 @@ use OCA\Olvid\Utils\TimeUtil;
  *   2. Device extracts token from the URL and calls getMagicSession → gets a bearer JWT
  *   3. Device uses the JWT on subsequent calls (validated manually here)
  */
-class MagicLinkFlowTest extends ApiHandlerTestCase
-{
-	public function testFullMagicLinkFlow(): void
-	{
+class MagicLinkFlowTest extends ApiHandlerTestCase {
+	public function testFullMagicLinkFlow(): void {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 		$this->userManager->method('get')->with('alice')->willReturn($user);
 		$this->configureAppConfigWithKeys();
@@ -81,17 +79,16 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 		$this->assertSame('Bearer', $sessionData['token_type']);
 
 		// --- Step 4: verify the JWT is valid and contains the right claims ---
-		$keyResource  = openssl_pkey_get_private(self::$testPrivateKey);
+		$keyResource = openssl_pkey_get_private(self::$testPrivateKey);
 		$publicKeyPem = openssl_pkey_get_details($keyResource)['key'];
-		$decoded      = JWT::decode($sessionData['access_token'], new Key($publicKeyPem, 'ES256'));
+		$decoded = JWT::decode($sessionData['access_token'], new Key($publicKeyPem, 'ES256'));
 
 		$this->assertSame('alice', $decoded->sub);
 		$this->assertSame('session', $decoded->type);
 		$this->assertGreaterThan(TimeUtil::currentTimeS(), $decoded->exp);
 	}
 
-	public function testMagicSessionFailsWithExpiredToken(): void
-	{
+	public function testMagicSessionFailsWithExpiredToken(): void {
 		$user = $this->mockUser('alice');
 		$this->userManager->method('get')->with('alice')->willReturn($user);
 
@@ -110,8 +107,7 @@ class MagicLinkFlowTest extends ApiHandlerTestCase
 	}
 
 	// GetMagicSession uses the AbstractDeviceApiHandler constructor
-	private function makeGetMagicSessionHandler(): GetMagicSession
-	{
+	private function makeGetMagicSessionHandler(): GetMagicSession {
 		return new GetMagicSession(
 			$this->request,
 			$this->logger,

@@ -15,8 +15,9 @@ class OlvidProfileLinkAction implements ILinkAction {
 
 	public function __construct(
 		private readonly OlvidUserConfigManager $userConfig,
-		private readonly IURLGenerator          $urlGenerator,
-	) {}
+		private readonly IURLGenerator $urlGenerator,
+	) {
+	}
 
 	public function preload(IUser $targetUser): void {
 		$this->hasIdentity = $this->userConfig->hasIdentity($targetUser->getUID());
@@ -49,6 +50,6 @@ class OlvidProfileLinkAction implements ILinkAction {
 	}
 
 	public function getTarget(): ?string {
-		return $this->hasIdentity ? "" : null;
+		return $this->hasIdentity ? '' : null;
 	}
 }

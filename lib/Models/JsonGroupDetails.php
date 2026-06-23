@@ -16,7 +16,7 @@ class JsonGroupDetails implements JsonSerializable {
 	public ?string $description = null;
 
 	public function __construct(?string $name = null, ?string $description = null) {
-		$this->name        = self::nullOrTrim($name);
+		$this->name = self::nullOrTrim($name);
 		$this->description = self::nullOrTrim($description);
 	}
 

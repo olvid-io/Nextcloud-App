@@ -18,7 +18,7 @@ class AdminSection implements IIconSection {
 	}
 
 	public function getName() {
-		return "Olvid";
+		return 'Olvid';
 	}
 
 	public function getPriority() {

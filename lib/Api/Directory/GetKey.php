@@ -33,5 +33,5 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $this->olvidUserConfig->getSignedDetails($otherUser->getUID());
 
 		return new JSONResponse($response);
-    }
+	}
 }

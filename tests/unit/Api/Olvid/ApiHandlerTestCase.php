@@ -20,9 +20,9 @@ use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use OCP\Lock\ILockingProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use OCP\Lock\ILockingProvider;
 
 /**
  * Base class for handler unit tests.

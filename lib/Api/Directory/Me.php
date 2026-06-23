@@ -7,7 +7,6 @@ namespace OCA\Olvid\Api\Directory;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\JsonUserDetails;
-use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;

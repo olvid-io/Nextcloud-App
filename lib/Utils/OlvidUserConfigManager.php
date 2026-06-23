@@ -8,18 +8,18 @@ use OCA\Olvid\AppInfo\Application;
 use OCP\IConfig;
 
 class OlvidUserConfigManager {
-	private const USER_CONFIG_FIRSTNAME            = 'olvid-firstname';
-	private const USER_CONFIG_LASTNAME             = 'olvid-lastname';
-	private const USER_CONFIG_COMPANY              = 'olvid-company';
-	private const USER_CONFIG_POSITION             = 'olvid-position';
-	private const USER_CONFIG_IDENTITY             = 'olvid-identity';
-	private const USER_CONFIG_API_KEY              = 'olvid-api-key';
-	private const USER_CONFIG_NONCE                = 'olvid-nonce';
-	private const USER_CONFIG_SIGNED_DETAILS       = 'olvid-signed-details';
-	private const USER_CONFIG_ROLE                 = 'olvid-role';
-	private const USER_CONFIG_FULL_SEARCH_FIELD    = 'olvid-search';
-	private const USER_CONFIG_IS_BOT               = 'olvid-is-bot';
-	private const USER_CONFIG_MAGIC_TOKEN          = 'olvid-magic-token';
+	private const USER_CONFIG_FIRSTNAME = 'olvid-firstname';
+	private const USER_CONFIG_LASTNAME = 'olvid-lastname';
+	private const USER_CONFIG_COMPANY = 'olvid-company';
+	private const USER_CONFIG_POSITION = 'olvid-position';
+	private const USER_CONFIG_IDENTITY = 'olvid-identity';
+	private const USER_CONFIG_API_KEY = 'olvid-api-key';
+	private const USER_CONFIG_NONCE = 'olvid-nonce';
+	private const USER_CONFIG_SIGNED_DETAILS = 'olvid-signed-details';
+	private const USER_CONFIG_ROLE = 'olvid-role';
+	private const USER_CONFIG_FULL_SEARCH_FIELD = 'olvid-search';
+	private const USER_CONFIG_IS_BOT = 'olvid-is-bot';
+	private const USER_CONFIG_MAGIC_TOKEN = 'olvid-magic-token';
 	private const USER_CONFIG_MAGIC_TOKEN_EXPIRATION = 'olvid-magic-token-expiration';
 	private const USER_CONFIG_SESSION_REVOKED_BEFORE = 'olvid-session-revoked-before';
 
@@ -39,7 +39,10 @@ class OlvidUserConfigManager {
 		self::USER_CONFIG_SESSION_REVOKED_BEFORE,
 	];
 
-	public function __construct(private readonly IConfig $config) {}
+	public function __construct(
+		private readonly IConfig $config,
+	) {
+	}
 
 	private function getStringOrNull(string $uid, string $key): ?string {
 		$value = $this->config->getUserValue($uid, Application::APP_ID, $key);
@@ -138,10 +141,10 @@ class OlvidUserConfigManager {
 
 	// is bot
 	public function getIsBot(string $uid): bool {
-		return $this->getStringOrNull($uid, self::USER_CONFIG_IS_BOT) === "1";
+		return $this->getStringOrNull($uid, self::USER_CONFIG_IS_BOT) === '1';
 	}
 	public function setIsBot(string $uid, bool $value): void {
-		$this->setString($uid, self::USER_CONFIG_IS_BOT, $value ? "1" : "0");
+		$this->setString($uid, self::USER_CONFIG_IS_BOT, $value ? '1' : '0');
 	}
 
 	// magic token

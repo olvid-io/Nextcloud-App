@@ -43,10 +43,10 @@ class SearchHandlerTest extends ApiHandlerTestCase {
 		$aliceFakeJwt = "header.{$alicePayload}.sig";
 
 		$this->olvidUserConfig->method('hasIdentity')->willReturnCallback(
-			fn(string $uid) => $uid === 'alice'
+			fn (string $uid) => $uid === 'alice'
 		);
 		$this->olvidUserConfig->method('getSignedDetails')->willReturnCallback(
-			fn(string $uid) => $uid === 'alice' ? $aliceFakeJwt : null
+			fn (string $uid) => $uid === 'alice' ? $aliceFakeJwt : null
 		);
 
 		$handler = $this->makeHandler(Search::class);

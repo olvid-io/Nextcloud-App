@@ -26,14 +26,14 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 	}
 
 	private function requiresAuth(): ?IUser {
-		if (!$this->request->getHeader("Authorization")) {
+		if (!$this->request->getHeader('Authorization')) {
 			$this->logger->error('Missing authentication header');
 			return null;
 		}
 
 		// parse token
-		$rawHeader = $this->request->getHeader("Authorization");
-		$token = str_starts_with(strtolower($rawHeader), "bearer ") ? trim(substr($rawHeader, 7)) : $rawHeader;
+		$rawHeader = $this->request->getHeader('Authorization');
+		$token = str_starts_with(strtolower($rawHeader), 'bearer ') ? trim(substr($rawHeader, 7)) : $rawHeader;
 
 		// parse token
 		try {
@@ -44,8 +44,8 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 			return null;
 		}
 
-		if ($decoded->type !== "session") {
-			$this->logger->error("Invalid JWK key type: " . $decoded->type);
+		if ($decoded->type !== 'session') {
+			$this->logger->error('Invalid JWK key type: ' . $decoded->type);
 			return null;
 		}
 

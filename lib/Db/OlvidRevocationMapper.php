@@ -32,13 +32,13 @@ class OlvidRevocationMapper extends QBMapper {
 	public function eraseUserData(int $id): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
-			->set('firstname',           $qb->createNamedParameter(null))
-			->set('lastname',            $qb->createNamedParameter(null))
-			->set('mail',                $qb->createNamedParameter(null))
-			->set('position',            $qb->createNamedParameter(null))
-			->set('company',             $qb->createNamedParameter(null))
-			->set('username',            $qb->createNamedParameter(null))
-			->set('full_search_string',  $qb->createNamedParameter(null))
+			->set('firstname', $qb->createNamedParameter(null))
+			->set('lastname', $qb->createNamedParameter(null))
+			->set('mail', $qb->createNamedParameter(null))
+			->set('position', $qb->createNamedParameter(null))
+			->set('company', $qb->createNamedParameter(null))
+			->set('username', $qb->createNamedParameter(null))
+			->set('full_search_string', $qb->createNamedParameter(null))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id, Types::BIGINT)));
 		$qb->executeStatement();
 	}

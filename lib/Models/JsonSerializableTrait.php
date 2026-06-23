@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace OCA\Olvid\Models;
 
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
+use ReflectionType;
 
 trait JsonSerializableTrait {
 
@@ -29,10 +31,16 @@ trait JsonSerializableTrait {
 		return $result;
 	}
 
+	/**
+	 * @throws ReflectionException
+	 */
 	public static function fromArray(array $data): static {
 		return static::hydrateFromArray($data);
 	}
 
+	/**
+	 * @throws ReflectionException
+	 */
 	protected static function hydrateFromArray(array $data): static {
 		$ref = new ReflectionClass(static::class);
 		$instance = $ref->newInstanceWithoutConstructor();
@@ -95,17 +103,17 @@ trait JsonSerializableTrait {
 		return $value;
 	}
 
-	private static function typeDefault(?\ReflectionType $type): mixed {
+	private static function typeDefault(?ReflectionType $type): mixed {
 		if ($type === null || $type->allowsNull()) {
 			return null;
 		}
 		if ($type instanceof ReflectionNamedType) {
 			return match ($type->getName()) {
 				'int', 'float' => 0,
-				'bool'         => false,
-				'array'        => [],
-				'string'       => '',
-				default        => null,
+				'bool' => false,
+				'array' => [],
+				'string' => '',
+				default => null,
 			};
 		}
 		return null;

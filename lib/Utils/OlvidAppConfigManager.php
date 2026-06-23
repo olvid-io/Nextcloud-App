@@ -72,10 +72,10 @@ class OlvidAppConfigManager {
 	 */
 	// enable everyone group (set in settings)
 	public function isEveryoneGroupEnabled(): ?bool {
-//		return $this->appConfig->getValueBool(Application::APP_ID, self::APP_CONFIG_ENABLE_EVERYONE_GROUP);
+		//		return $this->appConfig->getValueBool(Application::APP_ID, self::APP_CONFIG_ENABLE_EVERYONE_GROUP);
 		// TODO use boolean value when checkbox are fixed
-		$value =  $this->getStringOrNull(self::APP_CONFIG_ENABLE_EVERYONE_GROUP);
-		return !($value === null || $value === "false");
+		$value = $this->getStringOrNull(self::APP_CONFIG_ENABLE_EVERYONE_GROUP);
+		return !($value === null || $value === 'false');
 	}
 
 	/*

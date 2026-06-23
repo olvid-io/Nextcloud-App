@@ -27,7 +27,7 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 		$response = [
 			Constants::LIST_USERS_RESPONSE_USERS => [],
 		];
-		$users = $this->userManager->search("");
+		$users = $this->userManager->search('');
 		foreach ($users as $user) {
 			// only add users with a valid identity on server
 			if ($this->olvidUserConfig->hasIdentity($user->getUID())) {
@@ -39,5 +39,5 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 		$response[Constants::LIST_USERS_RESPONSE_TIMESTAMP] = TimeUtil::currentTimeMillis();
 
 		return new JSONResponse($response);
-    }
+	}
 }

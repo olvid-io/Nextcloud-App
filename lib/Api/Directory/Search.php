@@ -16,7 +16,7 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 		try {
 			$filter = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (string)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
 		} catch (Exception $e) {
-			$this->logger->warning('search: parse error: ', ["exception" => $e]);
+			$this->logger->warning('search: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();
 		}
 
@@ -31,7 +31,7 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 			Constants::SEARCH_RESPONSE_COUNT_UNACTIVATED_USERS => 0,
 		];
 
-		$users = $this->userManager->search("");
+		$users = $this->userManager->search('');
 		foreach ($users as $user) {
 			// only add users with a valid identity on server
 			if ($this->olvidUserConfig->hasIdentity($user->getUID())) {
@@ -40,5 +40,5 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		return new JSONResponse($response);
-    }
+	}
 }

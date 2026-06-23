@@ -1,6 +1,7 @@
 <?php
+
 return [
-	"routes" => [
+	'routes' => [
 		[
 			'name' => 'app#home',
 			'url' => '/',

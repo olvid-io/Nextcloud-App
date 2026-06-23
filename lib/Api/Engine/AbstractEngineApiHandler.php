@@ -28,61 +28,66 @@ use Psr\Log\LoggerInterface;
  * standard failure responses without repeating the Encoded framing boilerplate.
  */
 abstract class AbstractEngineApiHandler {
-    // Status bytes shared across all engine endpoints (from AbstractEngineEntryPoint)
-    protected const STATUS_OK               = "\x00";
-    protected const STATUS_PERMISSION_DENIED = "\x0e";
-    protected const STATUS_PARSING_ERROR    = "\xfe";
-    protected const STATUS_GENERAL_ERROR    = "\xff";
+	// Status bytes shared across all engine endpoints (from AbstractEngineEntryPoint)
+	protected const STATUS_OK = "\x00";
+	protected const STATUS_NOT_FOUND = "\x09";
+	protected const STATUS_PERMISSION_DENIED = "\x0e";
+	protected const STATUS_PARSING_ERROR = "\xfe";
+	protected const STATUS_GENERAL_ERROR = "\xff";
 
-    protected readonly ICache $cache;
+	protected readonly ICache $cache;
 
-    public function __construct(
-        protected readonly IConfig          $config,
-        protected readonly IAppConfig       $appConfig,
-        protected readonly IUserManager     $userManager,
-        ICacheFactory                       $cacheFactory,
-        protected readonly LoggerInterface  $logger,
-        protected readonly OlvidUserConfigManager $userConfig,
-        protected readonly OlvidAppConfigManager  $olvidAppConfig,
-    ) {
-        $this->cache = $cacheFactory->createDistributed(Application::APP_ID);
-    }
+	public function __construct(
+		protected readonly IConfig $config,
+		protected readonly IAppConfig $appConfig,
+		protected readonly IUserManager $userManager,
+		ICacheFactory $cacheFactory,
+		protected readonly LoggerInterface $logger,
+		protected readonly OlvidUserConfigManager $userConfig,
+		protected readonly OlvidAppConfigManager $olvidAppConfig,
+	) {
+		$this->cache = $cacheFactory->createDistributed(Application::APP_ID);
+	}
 
-    /**
-     * Entry point called by the controller. Reads the raw request body and
-     * dispatches to handler(), wrapping any unhandled exception as a general error.
-     */
-    public function handle(): BinaryResponse {
-        $rawInput = (string) file_get_contents('php://input');
-        try {
-            return $this->handler($rawInput);
-        } catch (Exception $exception) {
-            $this->logger->error(get_class($this) . ': unexpected exception', ["exception" => $exception]);
-            return $this->generalError();
-        }
-    }
+	/**
+	 * Entry point called by the controller. Reads the raw request body and
+	 * dispatches to handler(), wrapping any unhandled exception as a general error.
+	 */
+	public function handle(): BinaryResponse {
+		$rawInput = (string)file_get_contents('php://input');
+		try {
+			return $this->handler($rawInput);
+		} catch (Exception $exception) {
+			$this->logger->error(get_class($this) . ': unexpected exception', ['exception' => $exception]);
+			return $this->generalError();
+		}
+	}
 
-    abstract protected function handler(string $rawInput): BinaryResponse;
+	abstract protected function handler(string $rawInput): BinaryResponse;
 
-    // -------------------------------------------------------------------------
-    // Error response helpers
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	// Error response helpers
+	// -------------------------------------------------------------------------
 
-    protected function parsingError(): BinaryResponse {
-        return $this->statusResponse(self::STATUS_PARSING_ERROR);
-    }
+	protected function notFound(): BinaryResponse {
+		return $this->statusResponse(self::STATUS_NOT_FOUND);
+	}
 
-    protected function permissionDenied(): BinaryResponse {
-        return $this->statusResponse(self::STATUS_PERMISSION_DENIED);
-    }
+	protected function parsingError(): BinaryResponse {
+		return $this->statusResponse(self::STATUS_PARSING_ERROR);
+	}
 
-    protected function generalError(): BinaryResponse {
-        return $this->statusResponse(self::STATUS_GENERAL_ERROR);
-    }
+	protected function permissionDenied(): BinaryResponse {
+		return $this->statusResponse(self::STATUS_PERMISSION_DENIED);
+	}
 
-    private function statusResponse(string $status): BinaryResponse {
-        return new BinaryResponse(Encoded::encodeList([
-            Encoded::encodeBytes($status),
-        ]));
-    }
+	protected function generalError(): BinaryResponse {
+		return $this->statusResponse(self::STATUS_GENERAL_ERROR);
+	}
+
+	private function statusResponse(string $status): BinaryResponse {
+		return new BinaryResponse(Encoded::encodeList([
+			Encoded::encodeBytes($status),
+		]));
+	}
 }

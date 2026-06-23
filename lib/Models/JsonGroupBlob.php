@@ -77,7 +77,7 @@ class JsonGroupBlob implements JsonSerializable {
 				$permissions = $previousMembers[$member->getUID()]->permissions;
 				$invitationNonce = $previousMembers[$member->getUID()]->groupInvitationNonce;
 			} else {
-				$permissions = ["eo", "sm"]; // TODO improve default set
+				$permissions = ['eo', 'sm']; // TODO improve default set
 				$invitationNonce = RandomUtil::random_bytes(Constants::GROUP_INVITATION_NONCE_SIZE);
 			}
 			$groupMembersAndPermissions[] = new JsonGroupMemberAndPermissions(

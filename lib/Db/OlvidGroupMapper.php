@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace OCA\Olvid\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
-use OCP\DB\Exception;
 use OCP\DB\Types;
 use OCP\IDBConnection;
-use function PHPUnit\Framework\throwException;
 
 /** @template-extends QBMapper<OlvidGroup> */
 class OlvidGroupMapper extends QBMapper {
