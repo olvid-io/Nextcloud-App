@@ -143,7 +143,7 @@
 
 				<!-- Section: groups ────────────────────────────────────────── -->
 				<section class="profile-view__section">
-					<h2>{{ t('olvid', 'Groups') }}</h2>
+					<h2>{{ t('olvid', 'My Groups') }}</h2>
 
 					<NcLoadingIcon v-if="groupsLoading" :size="32" />
 

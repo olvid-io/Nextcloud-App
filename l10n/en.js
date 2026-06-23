@@ -36,7 +36,7 @@ OC.L10N.register(
         "Group ID": "Group ID",
         "Group description in Olvid": "Group description in Olvid",
         "Groups ({n})": "Groups ({n})",
-        "Groups": "Groups",
+        "My Groups": "My Groups",
         "I already have Olvid →": "I already have Olvid →",
         "Identity linked!": "Identity linked!",
         "If Olvid is installed on this computer, click the button below to open it directly:": "If Olvid is installed on this computer, click the button below to open it directly:",
