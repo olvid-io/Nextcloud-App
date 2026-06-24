@@ -156,7 +156,8 @@
 						<NcListItem
 							v-for="group in groups"
 							:key="group.id"
-							:name="group.displayName">
+							:name="group.displayName"
+							@click="isAdmin && $emit('open-group-sidebar', group)">
 							<template #icon>
 								<OlvidAvatar
 									:display-name="group.displayName"
@@ -193,6 +194,8 @@ export default {
 	name: 'ProfileView',
 	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay },
 
+	emits: ['open-group-sidebar'],
+
 	data() {
 		return {
 			loading: true,
@@ -222,6 +225,7 @@ export default {
 			// registered step — groups
 			groups: [],
 			groupsLoading: false,
+			isAdmin: false,
 		}
 	},
 
@@ -237,6 +241,7 @@ export default {
 	async mounted() {
 		try {
 			const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
+			this.isAdmin = res.data.isAdmin ?? false
 			this.form = {
 				firstname: res.data.firstname ?? '',
 				lastname: res.data.lastname ?? '',
