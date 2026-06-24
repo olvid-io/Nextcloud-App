@@ -5,19 +5,18 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use Exception;
+use OCA\Olvid\Api\App\GroupAvatarGet;
+use OCA\Olvid\Api\App\GroupAvatarUpload;
 use OCA\Olvid\Api\App\GroupsUpdate;
 use OCA\Olvid\Api\App\UserGetMagicLink;
 use OCA\Olvid\Api\App\UserUpdate;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Attribute\AdminRequired;
-use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Db\OlvidGroupMapper;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IGroupManager;
@@ -33,15 +32,14 @@ class AppApiController extends ApiController {
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
 		private readonly OlvidGroupMapper $olvidGroupMapper,
-		private readonly OlvidDatabase $db,
-		private readonly OlvidServer $olvidServer,
 		private readonly IUserManager $userManager,
 		private readonly OlvidUserConfigManager $olvidUserConfig,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
 		private readonly ?string $userId,
 		private readonly UserGetMagicLink $userGetMagicLink,
 		private readonly GroupsUpdate $updateGroupsHandler,
 		private readonly UserUpdate $userUpdate,
+		private readonly GroupAvatarGet $avatarGet,
+		private readonly GroupAvatarUpload $avatarUpload,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -77,7 +75,7 @@ class AppApiController extends ApiController {
 	#[ApiRoute(verb: 'DELETE', url: '/app/me/identity')]
 	public function meIdentityDelete(): JSONResponse {
 		// TODO: implement full Olvid revocation protocol (notify Olvid server, create revocation record in olvid_revocation table)
-		$this->olvidUserConfig->clearIdentity($this->userId);
+		$this->olvidUserConfig->removeIdentity($this->userId);
 		return new JSONResponse();
 	}
 
@@ -90,10 +88,12 @@ class AppApiController extends ApiController {
 		foreach ($groups as $group) {
 			$gid = $group->getGID();
 			$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($gid);
+			$photoUidBytes = $olvidGroup?->getGroupPhotoUid();
 			$result[] = [
 				'id' => $gid,
 				'displayName' => $group->getDisplayName(),
-				'olvidEnabled' => $olvidGroup?->getEnabled() ?? false,
+				'enabled' => $olvidGroup?->getEnabled() ?? false,
+				'photoUid' => $photoUidBytes !== null ? base64_encode($photoUidBytes) : null,
 			];
 		}
 		return new JSONResponse(['groups' => $result]);
@@ -116,12 +116,15 @@ class AppApiController extends ApiController {
 					'useOlvid' => $this->olvidUserConfig->hasIdentity($member->getUID()),
 				];
 			}
+			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
+			$photoUidBytes = $olvidGroup?->getGroupPhotoUid();
 			$response['groups'][] = [
 				'id' => $gid,
 				'displayName' => $group->getDisplayName(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'customName' => $olvidGroup?->getDiscussionName() ?? null,
 				'description' => $olvidGroup?->getDiscussionDescription() ?? '',
+				'photoUid' => $photoUidBytes !== null ? base64_encode($photoUidBytes) : null,
 				'members' => $members,
 			];
 		}
@@ -153,6 +156,21 @@ class AppApiController extends ApiController {
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
 	public function groupsPut(string $groupId): Response {
 		return $this->updateGroupsHandler->handle($groupId);
+	}
+
+	# disable CSRF verification for static read only resources
+	# do not need to be admin to access a group image
+	# We expect a valid photoUid query parameter to be passed
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/app/groups/{groupId}/avatar')]
+	public function groupsAvatarGet(string $groupId): Response {
+		return $this->avatarGet->handle($groupId, $this->request->getParam("photoUid"));
+	}
+
+	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
+	public function groupsAvatarPut(string $groupId): JSONResponse {
+		return $this->avatarUpload->handle($groupId);
 	}
 
 	#[ApiRoute(verb: 'POST', url: '/app/groups/{groupId}/members/{userId}')]

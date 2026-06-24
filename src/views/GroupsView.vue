@@ -25,7 +25,11 @@
 					@click="$emit('open-group-sidebar', group)">
 
 					<template #icon>
-						<OlvidAvatar :display-name="group.displayName" :is-no-user="true" :use-olvid="group.enabled" />
+						<OlvidAvatar
+							:display-name="group.displayName"
+							:is-no-user="true"
+							:use-olvid="group.enabled"
+							:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 					</template>
 
 					<template #subname>
@@ -138,6 +142,10 @@ export default {
 
 		onGroupCreated(group) {
 			this.groups.push(group)
+		},
+
+		buildGroupAvatarUrl(group) {
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`);
 		},
 	},
 }

@@ -6,6 +6,19 @@
 		<!-- Details tab -->
 		<NcAppSidebarTab id="details" :name="t('olvid', 'Details')" :order="0">
 			<div class="group-sidebar__fields">
+				<!-- Group avatar picker: uploads immediately on selection -->
+				<div class="group-sidebar__avatar">
+					<AvatarPicker
+						:current-url="currentAvatarUrl"
+						:display-name="group.displayName"
+						:size="96"
+						@change="handleAvatarChange" />
+					<p v-if="avatarUploading" class="group-sidebar__hint">
+						{{ t('olvid', 'Uploading…') }}
+					</p>
+					<p v-if="avatarError" class="group-sidebar__error">{{ avatarError }}</p>
+				</div>
+
 				<NcCheckboxRadioSwitch
 					:id="`group-enabled-${group.id}`"
 					:checked="group.enabled"
@@ -106,11 +119,12 @@ import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import AvatarPicker from './AvatarPicker.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
 
 export default {
 	name: 'GroupDetailsSidebar',
-	components: { OlvidAvatar, NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
+	components: { AvatarPicker, OlvidAvatar, NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
 
 	props: {
 		group: {
@@ -134,7 +148,21 @@ export default {
 			searchQuery: '',
 			searchResults: [],
 			searchTimer: null,
+			// Avatar upload state (separate from the main Save flow)
+			avatarUploading: false,
+			avatarError: null,
 		}
+	},
+
+	computed: {
+		/**
+		 * The ?photoUid= query parameter contains the photoUid so the browser fetches a
+		 * fresh image whenever the avatar changes (cache-busting).
+		 */
+		currentAvatarUrl() {
+			if (!this.group.photoUid) return null
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar?photoUid=${encodeURIComponent(this.group.photoUid)}`);
+		},
 	},
 
 	watch: {
@@ -154,6 +182,28 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Called by AvatarPicker when the user selects a new image.
+		 * Uploads immediately — no need to click the Save button for the avatar.
+		 */
+		async handleAvatarChange(dataUrl) {
+			this.avatarUploading = true
+			this.avatarError = null
+			try {
+				const res = await axios.put(
+					generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar`),
+					{ photoData: dataUrl },
+				)
+				// Propagate the new photoUid so the parent updates the group object
+				// (which changes currentAvatarUrl and clears AvatarPicker's pending preview)
+				this.$emit('updated', { id: this.group.id, photoUid: res.data.photoUid })
+			} catch (e) {
+				this.avatarError = e.response?.data?.error ?? e.message
+			} finally {
+				this.avatarUploading = false
+			}
+		},
+
 		async save() {
 			this.saving = true
 			this.saveError = null
@@ -225,6 +275,22 @@ export default {
 		flex-direction: column;
 		gap: 12px;
 		padding: 8px 0;
+	}
+
+	&__avatar {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		padding-bottom: 4px;
+		border-bottom: 1px solid var(--color-border);
+		margin-bottom: 4px;
+	}
+
+	&__hint {
+		color: var(--color-text-maxcontrast);
+		font-size: 0.85rem;
+		margin: 0;
 	}
 
 	&__field {

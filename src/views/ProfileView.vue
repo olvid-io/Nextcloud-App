@@ -161,10 +161,11 @@
 								<OlvidAvatar
 									:display-name="group.displayName"
 									:is-no-user="true"
-									:use-olvid="group.olvidEnabled" />
+									:use-olvid="group.enabled"
+									:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 							</template>
 							<template #subname>
-								{{ group.olvidEnabled ? t('olvid', 'Olvid discussion active') : t('olvid', 'No Olvid discussion') }}
+								{{ group.enabled ? t('olvid', 'Olvid discussion active') : t('olvid', 'No Olvid discussion') }}
 							</template>
 						</NcListItem>
 					</ul>
@@ -365,6 +366,10 @@ export default {
 			} finally {
 				this.groupsLoading = false
 			}
+		},
+
+		buildGroupAvatarUrl(group) {
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`);
 		},
 	},
 }
