@@ -12,6 +12,7 @@ use OCA\Olvid\Api\Directory\ListUsers;
 use OCA\Olvid\Api\Directory\Me;
 use OCA\Olvid\Api\Directory\PutKey;
 use OCA\Olvid\Api\Directory\Search;
+use OCA\Olvid\Api\Engine\GetData;
 use OCA\Olvid\Api\Engine\GetSession;
 use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\Verify;
@@ -47,6 +48,7 @@ class DirectoryApiController extends IApiController {
 		private readonly Verify $verifyHandler,
 		private readonly RequestChallenge $requestChallengeHandler,
 		private readonly GetSession $getSessionHandler,
+		private readonly GetData $getDataHandler,
 		private readonly GetMagicSession $getMagicSessionHandler,
 	) {
 		parent::__construct($appName, $request);
@@ -154,6 +156,14 @@ class DirectoryApiController extends IApiController {
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getSession')]
 	public function getSession(): Response {
 		return $this->getSessionHandler->handle();
+	}
+
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/getData')]
+	public function getData(): Response {
+		return $this->getDataHandler->handle();
 	}
 
 	/*

@@ -101,12 +101,137 @@ class Encoded {
 		return substr($encoded, 5);
 	}
 
-    /**
-     * Decode a UTF-8 string from an encoded byte-array element.
-     *
-     * @throws Exception On type mismatch or malformed data.
-     */
-    public static function decodeString(string $encoded): string {
-        return self::decodeBytes($encoded);
-    }
+	/**
+	 * Decode a UTF-8 string from an encoded byte-array element.
+	 *
+	 * @throws Exception On type mismatch or malformed data.
+	 */
+	public static function decodeString(string $encoded): string {
+		return self::decodeBytes($encoded);
+	}
+
+	// region Dictionary / symmetric key
+
+	/**
+	 * Encode a dictionary. Each entry is a string key name mapped to raw bytes (the value
+	 * will be wrapped in encodeBytes). Order is preserved from the array.
+	 *
+	 * Wire layout per entry: Encoded.of(key_name_utf8) || Encoded.of(value_bytes)
+	 *
+	 * @param array<string, string> $entries key name → raw bytes
+	 */
+	public static function encodeDictionary(array $entries): string {
+		$body = '';
+		foreach ($entries as $keyName => $valueBytes) {
+			$body .= self::encodeBytes($keyName);
+			$body .= self::encodeBytes($valueBytes);
+		}
+		return self::TYPE_DICTIONARY . pack('N', strlen($body)) . $body;
+	}
+
+	/**
+	 * Decode a dictionary. Returns an associative array of key name → raw bytes.
+	 *
+	 * @return array<string, string>
+	 * @throws Exception
+	 */
+	public static function decodeDictionary(string $encoded): array {
+		if (strlen($encoded) < 5 || $encoded[0] !== self::TYPE_DICTIONARY) {
+			throw new Exception('Expected dictionary type');
+		}
+		['length' => $bodyLen] = unpack('Nlength', substr($encoded, 1, 4));
+		if (strlen($encoded) !== 5 + $bodyLen) {
+			throw new Exception('Dictionary length mismatch');
+		}
+
+		$result = [];
+		$offset = 5;
+		$end = strlen($encoded);
+		while ($offset < $end) {
+			if ($offset + 5 > $end) {
+				throw new Exception('Truncated dict key header');
+			}
+			['length' => $kLen] = unpack('Nlength', substr($encoded, $offset + 1, 4));
+			if ($offset + 5 + $kLen > $end) {
+				throw new Exception('Dict key overflows buffer');
+			}
+			$keyName = self::decodeBytes(substr($encoded, $offset, 5 + $kLen));
+			$offset += 5 + $kLen;
+
+			if ($offset + 5 > $end) {
+				throw new Exception('Truncated dict value header');
+			}
+			['length' => $vLen] = unpack('Nlength', substr($encoded, $offset + 1, 4));
+			if ($offset + 5 + $vLen > $end) {
+				throw new Exception('Dict value overflows buffer');
+			}
+			$result[$keyName] = self::decodeBytes(substr($encoded, $offset, 5 + $vLen));
+			$offset += 5 + $vLen;
+		}
+		return $result;
+	}
+
+	/**
+	 * Encode an Olvid symmetric key (type 0x90).
+	 *
+	 * Layout: [0x90][4-byte len] [Encoded.of([algoClass, algoImpl])] [Encoded dict]
+	 *
+	 * @param int $algoClass e.g. 0x02 for authenticated symmetric encryption
+	 * @param int $algoImpl e.g. 0x00 for AES-256-CTR + HMAC-SHA256
+	 * @param array<string, string> $dict key name → raw bytes
+	 */
+	public static function encodeSymmetricKey(int $algoClass, int $algoImpl, array $dict): string {
+		$keyType = self::encodeBytes(chr($algoClass) . chr($algoImpl));
+		$encodedDict = self::encodeDictionary($dict);
+		$payload = $keyType . $encodedDict;
+		return self::TYPE_SYM_KEY . pack('N', strlen($payload)) . $payload;
+	}
+
+	/**
+	 * Decode an Olvid symmetric key (type 0x90).
+	 *
+	 * @return array{algoClass: int, algoImpl: int, dict: array<string, string>}
+	 * @throws Exception
+	 */
+	public static function decodeSymmetricKey(string $encoded): array {
+		if (strlen($encoded) < 5 || $encoded[0] !== self::TYPE_SYM_KEY) {
+			throw new Exception('Expected symmetric key type (0x90)');
+		}
+		['length' => $bodyLen] = unpack('Nlength', substr($encoded, 1, 4));
+		if (strlen($encoded) !== 5 + $bodyLen) {
+			throw new Exception('Symmetric key length mismatch');
+		}
+
+		// Unpack exactly two child items: keyType then dict
+		$items = [];
+		$offset = 5;
+		$end = strlen($encoded);
+		while ($offset < $end) {
+			if ($offset + 5 > $end) {
+				throw new Exception('Truncated child item header');
+			}
+			['length' => $itemLen] = unpack('Nlength', substr($encoded, $offset + 1, 4));
+			if ($offset + 5 + $itemLen > $end) {
+				throw new Exception('Child item overflows buffer');
+			}
+			$items[] = substr($encoded, $offset, 5 + $itemLen);
+			$offset += 5 + $itemLen;
+		}
+		if (count($items) !== 2) {
+			throw new Exception('Symmetric key must have exactly 2 child items');
+		}
+
+		$algoBytes = self::decodeBytes($items[0]);
+		if (strlen($algoBytes) !== 2) {
+			throw new Exception('Invalid algo bytes length');
+		}
+
+		return [
+			'algoClass' => ord($algoBytes[0]),
+			'algoImpl' => ord($algoBytes[1]),
+			'dict' => self::decodeDictionary($items[1]),
+		];
+	}
+
+	// endregion
 }
