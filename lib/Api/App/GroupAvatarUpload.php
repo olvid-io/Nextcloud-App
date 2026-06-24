@@ -118,11 +118,13 @@ class GroupAvatarUpload {
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 			$this->db->group->update($olvidGroup);
 
-			// send notifications if group is enabled
+			// send notifications if group is enabled and have a push topic
 			try {
 				if ($olvidGroup->getEnabled()) {
-					if ($olvidGroup->getGroupPhotoUid() !== null) {
+					if ($olvidGroup->getPushTopic() !== null) {
 						$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
+					} else {
+						$this->logger->warning("GroupAvatarUpload: no push topic to notify group members");
 					}
 				}
 			} catch (OlvidServerException|InvalidConfigurationException $exception) {
