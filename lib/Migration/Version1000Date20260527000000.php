@@ -22,8 +22,11 @@ class Version1000Date20260527000000 extends SimpleMigrationStep {
 			$t->addColumn('group_uid', Types::BLOB, ['notnull' => false, 'length' => 255]);
 			$t->addColumn('last_modification_timestamp', Types::BIGINT, ['notnull' => true, 'default' => 0]);
 			$t->addColumn('push_topic', Types::STRING, ['notnull' => false, 'length' => 255]);
+			// TODO: replace by ?
+			// $t->addColumn('group_photo_uid', Types::TEXT, ['notnull' => false, 'length' => 64]);
 			$t->addColumn('group_photo_uid', Types::BLOB, ['notnull' => false, 'length' => 255]);
 			$t->addColumn('serialized_shared_settings', Types::TEXT, ['notnull' => false]);
+			// TODO why is this text while uid is blob ? ...
 			$t->addColumn('signed_group_blob', Types::TEXT, ['notnull' => true]);
 			$t->addColumn('enabled', Types::BOOLEAN, ['notnull' => false, 'default' => false]);
 			$t->addColumn('discussion_name', Types::TEXT, ['notnull' => false]);
