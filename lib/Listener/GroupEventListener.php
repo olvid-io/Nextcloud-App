@@ -60,7 +60,7 @@ class GroupEventListener implements IEventListener {
 		// if group have no custom name we must change it, update blob and notify members
 		if ($olvidGroup->getEnabled()) {
 			if ($olvidGroup->getDiscussionName() === null || trim($olvidGroup->getDiscussionName()) === '') {
-				$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
+				$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
 				$signedBlob = $blob->sign($this->olvidAppConfig);
 				$olvidGroup->setSignedGroupBlob($signedBlob);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -113,7 +113,7 @@ class GroupEventListener implements IEventListener {
 		}
 
 		// update group blob
-		$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
+		$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
 		$signedBlob = $blob->sign($this->olvidAppConfig);
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -153,7 +153,7 @@ class GroupEventListener implements IEventListener {
 		$this->db->groupKicked->computeAndSaveGroupKick($this->olvidAppConfig, $olvidGroup, $event->getUser()->getUID(), $userIdentity);
 
 		// update group blob
-		$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
+		$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
 		$signedBlob = $blob->sign($this->olvidAppConfig);
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

@@ -9,6 +9,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use JsonSerializable;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Db\OlvidGroup;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
@@ -45,19 +46,19 @@ class JsonGroupBlob implements JsonSerializable {
 	#[JsonField('timestamp')]
 	public int $timestamp = 0;
 
-	public static function fromArray(string $groupId, array $data): self {
+	public static function fromArray(array $data, string $groupId): self {
 		$instance = static::hydrateFromArray($data);
 		$instance->groupId = $groupId;
 		return $instance;
 	}
 
-	public static function computeBlob(OlvidGroup $olvidGroup, String $defaultName, array $groupMembers, OlvidAppConfigManager $olvidAppConfigManager, OlvidUserConfigManager $olvidUserConfigManager): JsonGroupBlob {
+	public static function computeBlob(OlvidGroup $olvidGroup, String $defaultName, array $groupMembers, OlvidAppConfigManager $olvidAppConfigManager, OlvidUserConfigManager $olvidUserConfigManager, OlvidDatabase $db): JsonGroupBlob {
 		$previousMembers = [];
 		if ($olvidGroup->getSignedGroupBlob()) {
 			try {
 				$publicKeyPem = $olvidAppConfigManager->getJwkKeyPublicKey();
 				$decoded = JWT::decode($olvidGroup->getSignedGroupBlob(), new Key($publicKeyPem, 'ES256'));
-				$originalBlob = JsonGroupBlob::fromArray($olvidGroup->getGroupId(), (array)$decoded);
+				$originalBlob = JsonGroupBlob::fromArray((array)$decoded, $olvidGroup->getGroupId());
 				foreach ($originalBlob->groupMembersAndPermissions as $prev) {
 					if ($prev->keycloakUserId !== null) {
 						$previousMembers[$prev->keycloakUserId] = $prev;
@@ -95,6 +96,13 @@ class JsonGroupBlob implements JsonSerializable {
 		$blob = new JsonGroupBlob();
 		$blob->groupId = $olvidGroup->getGroupId();
 		$blob->bytesGroupUid = $olvidGroup->getGroupUid();
+		$blob->photoUid = $olvidGroup->getGroupPhotoUid();
+		if ($blob->photoUid !== null) {
+			$olvidData = $db->dataMapper->getByUidOrNull(base64_encode($blob->photoUid));
+			if ($olvidData !== null) {
+				$blob->encodedPhotoKey = $olvidData->getEncodedDataKey();
+			}
+		}
 		$blob->groupDetails = new JsonGroupDetails($blobGroupName, $olvidGroup->getDiscussionDescription());
 		$blob->pushTopic = $olvidGroup->getPushTopic();
 		$blob->groupMembersAndPermissions = $groupMembersAndPermissions;

@@ -161,13 +161,14 @@ class DebugApiController extends ApiController {
 				'groupUid' => $olvidGroup?->getGroupUid() !== null ? base64_encode($olvidGroup?->getGroupUid()) : null,
 				'lastModificationTimestamp' => $olvidGroup?->getLastModificationTimestamp(),
 				'pushTopic' => $olvidGroup?->getPushTopic(),
-				'groupPhotoUid' => $olvidGroup?->getGroupPhotoUid(),
+				// TODO change this: this field is supposed to be already base64encoded, as it is in olvid_data table
+				'groupPhotoUid' => base64_encode($olvidGroup?->getGroupPhotoUid() ?? ""),
 				'serializedSharedSettings' => $olvidGroup?->getSerializedSharedSettings(),
 				'signedGroupBlob' => $olvidGroup?->getSignedGroupBlob(),
 				'enabled' => $olvidGroup?->getEnabled(),
 				'discussionName' => $olvidGroup?->getDiscussionName(),
 				'discussionDescription' => $olvidGroup?->getDiscussionDescription(),
-				'blob' => $olvidGroup !== null ? JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig) : null,
+				'blob' => $olvidGroup !== null ? JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db) : null,
 			];
 		}
 

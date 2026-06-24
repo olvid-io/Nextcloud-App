@@ -61,7 +61,7 @@ class UserEventListener implements IEventListener {
 			$this->db->groupKicked->computeAndSaveGroupKick($this->olvidAppConfig, $olvidGroup, $event->getUser()->getUID(), $userIdentity);
 
 			// update group blob
-			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
+			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
 			$signedBlob = $blob->sign($this->olvidAppConfig);
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

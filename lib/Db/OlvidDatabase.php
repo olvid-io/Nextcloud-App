@@ -10,6 +10,7 @@ class OlvidDatabase {
 		public readonly OlvidRevocationMapper $revocation,
 		public readonly OlvidGroupKickedMapper $groupKicked,
 		public readonly OlvidGroupDeletionMapper $groupDeletion,
+		public readonly OlvidDataMapper $dataMapper,
 	) {
 	}
 }

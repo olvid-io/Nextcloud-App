@@ -94,7 +94,7 @@ class GroupsUpdate {
 			/*
 			 * we can now recompute blob and store it database
 			 */
-			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig);
+			$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
 			$signedBlob = $blob->sign($this->olvidAppConfig);
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
