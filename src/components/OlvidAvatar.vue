@@ -51,7 +51,7 @@ export default {
 	&__badge {
 		position: absolute;
 		top: -3px;
-		right: -3px;
+		inset-inline-end: -3px;
 		border-radius: 3px;
 	}
 }
