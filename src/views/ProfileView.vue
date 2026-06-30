@@ -117,27 +117,37 @@
 						</NcButton>
 					</div>
 
-					<!-- Revoke identity ───────────────────────────────────── -->
+					<!-- Unlink/Revoke identity ───────────────────────────────────── -->
 					<div class="profile-view__revoke">
-						<template v-if="!revokeConfirm">
-							<NcButton type="error" @click="revokeConfirm = true">
-								{{ t('olvid', 'Revoke my identity') }}
-							</NcButton>
-						</template>
-						<template v-else>
-							<p class="profile-view__revoke-warning">
-								{{ t('olvid', 'This will unlink your Olvid identity from your Nextcloud account. You will need to enroll again.') }}
+						<NcButton type="error" @click="unlinkDialogOpen = true">
+							{{ t('olvid', 'I no longer have access to my Olvid profile') }}
+						</NcButton>
+
+						<NcDialog
+							:open.sync="unlinkDialogOpen"
+							:name="t('olvid', 'I no longer have access to my Olvid profile')"
+							@update:open="closeUnlinkDialog">
+							<p class="profile-view__desc">
+								{{ t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.') }}
 							</p>
-							<p v-if="revokeError" class="profile-view__error">{{ revokeError }}</p>
-							<div class="profile-view__actions">
-								<NcButton @click="revokeConfirm = false">
+							<NcCheckboxRadioSwitch
+								:checked.sync="unlinkRevoke"
+								class="profile-view__revoke-checkbox">
+								{{ t('olvid', 'My Olvid profile was lost or replaced') }}
+							</NcCheckboxRadioSwitch>
+							<p class="profile-view__revoke-checkbox-desc">
+								{{ t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.') }}
+							</p>
+							<p v-if="unlinkError" class="profile-view__error">{{ unlinkError }}</p>
+							<template #actions>
+								<NcButton @click="closeUnlinkDialog">
 									{{ t('olvid', 'Cancel') }}
 								</NcButton>
-								<NcButton type="error" :disabled="revoking" @click="revokeIdentity">
-									{{ revoking ? t('olvid', 'Revoking…') : t('olvid', 'Confirm revocation') }}
+								<NcButton type="error" :disabled="unlinking" @click="unlinkIdentity">
+									{{ unlinking ? t('olvid', 'Unlinking…') : (unlinkRevoke ? t('olvid', 'Unlink and block') : t('olvid', 'Unlink')) }}
 								</NcButton>
-							</div>
-						</template>
+							</template>
+						</NcDialog>
 					</div>
 				</section>
 
@@ -183,6 +193,8 @@ import axios from '@nextcloud/axios'
 import { generateFilePath, generateOcsUrl } from '@nextcloud/router'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
@@ -192,7 +204,7 @@ import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
 
 export default {
 	name: 'ProfileView',
-	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay },
+	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay },
 
 	emits: ['open-group-sidebar'],
 
@@ -217,10 +229,11 @@ export default {
 			saveError: null,
 			saveSuccess: false,
 
-			// registered step — revoke
-			revokeConfirm: false,
-			revoking: false,
-			revokeError: null,
+			// registered step — unlink/revoke identity
+			unlinkDialogOpen: false,
+			unlinkRevoke: false,
+			unlinking: false,
+			unlinkError: null,
 
 			// registered step — groups
 			groups: [],
@@ -343,20 +356,25 @@ export default {
 			}
 		},
 
-		// ── registered — revoke ────────────────────────────────────────────────
-		async revokeIdentity() {
-			this.revoking = true
-			this.revokeError = null
+		// ── registered — unlink ────────────────────────────────────────────────
+		closeUnlinkDialog() {
+			this.unlinkDialogOpen = false
+			this.unlinkRevoke = false
+			this.unlinkError = null
+		},
+
+		async unlinkIdentity() {
+			this.unlinking = true
+			this.unlinkError = null
 			try {
-				// TODO: implement full Olvid revocation protocol (notify Olvid server, create revocation record)
-				await axios.delete(generateOcsUrl('/apps/olvid/app/me/identity'))
-				this.revokeConfirm = false
+				await axios.delete(generateOcsUrl('/apps/olvid/app/me/identity'), { data: { revoke: this.unlinkRevoke } })
+				this.closeUnlinkDialog()
 				this.magicLink = null
 				this.step = 'install'
 			} catch (e) {
-				this.revokeError = t('olvid', 'Could not revoke identity: {error}', { error: e.response?.data?.error ?? e.message })
+				this.unlinkError = t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
 			} finally {
-				this.revoking = false
+				this.unlinking = false
 			}
 		},
 
@@ -494,9 +512,16 @@ export default {
 		border-top: 1px solid var(--color-border);
 	}
 
-	&__revoke-warning {
-		margin: 0 0 12px;
+	&__revoke-checkbox {
+		margin-top: 12px;
+	}
+
+	&__revoke-checkbox-desc {
+		margin: 4px 0 0;
+		padding-inline-start: 28px;
 		color: var(--color-text-maxcontrast);
+		font-size: 0.875em;
+		line-height: 1.4;
 	}
 
 	&__groups-list {
