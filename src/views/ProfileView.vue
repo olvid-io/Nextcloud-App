@@ -12,7 +12,7 @@
 					<img :src="appLogoUrl" class="profile-view__logo" alt="Olvid" aria-hidden="true" />
 					<h2>{{ t('olvid', 'Link your Olvid identity') }}</h2>
 					<p class="profile-view__desc">
-						{{ t('olvid', 'Olvid is an ultra-secure messaging application. Link your Olvid identity to your Nextcloud account to appear in the directory and be part of Olvid discussions.') }}
+						{{ t('olvid', 'Olvid is a privacy friendly and secure messaging application. Link your Olvid profile to your Nextcloud account to appear in the directory and be part of Olvid discussions.') }}
 					</p>
 					<p class="profile-view__desc">
 						{{ t('olvid', 'If you do not have Olvid yet, download it first:') }}

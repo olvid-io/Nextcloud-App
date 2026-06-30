@@ -27,7 +27,7 @@ class Admin implements IDeclarativeSettingsForm {
 			'section_id' => 'olvid', // existing section id or your custom section id
 			'storage_type' => DeclarativeSettingsTypes::STORAGE_TYPE_INTERNAL, // external, internal (handled by core to store in appconfig and preferences)
 			'title' => 'Olvid', // NcSettingsSection name
-			'description' => $this->l->t(''),
+			'description' => $this->l->t('Configure Olvid application.'),
 			'doc_url' => '', // NcSettingsSection doc_url for documentation or help page, empty string if not needed
 			'fields' => [
 				[

@@ -11,7 +11,11 @@
     "dev": "vite --mode development build",
     "watch": "vite --mode development build --watch",
     "lint": "eslint src",
-    "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css"
+    "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
+    "l10n:auto": "npm run l10n:extract && npm run l10n:translate && npm run l10n:generate",
+    "l10n:extract": "./translation/scripts/1_extract.sh",
+    "l10n:translate": "./translation/scripts/2_translate.sh",
+    "l10n:generate": "./translation/scripts/3_convert.sh"
   },
   "type": "module",
   "browserslist": [
