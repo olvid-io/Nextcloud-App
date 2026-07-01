@@ -8,10 +8,11 @@ use Exception;
 use OCA\Olvid\Api\App\GroupAvatarGet;
 use OCA\Olvid\Api\App\GroupAvatarUpload;
 use OCA\Olvid\Api\App\GroupsUpdate;
+use OCA\Olvid\Api\App\UserDeleteIdentity;
 use OCA\Olvid\Api\App\UserGetMagicLink;
 use OCA\Olvid\Api\App\UserUpdate;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Db\OlvidGroupMapper;
+use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -31,11 +32,12 @@ class AppApiController extends ApiController {
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly OlvidGroupMapper $olvidGroupMapper,
+		private readonly OlvidDatabase $db,
 		private readonly IUserManager $userManager,
 		private readonly OlvidUserConfigManager $olvidUserConfig,
 		private readonly ?string $userId,
 		private readonly UserGetMagicLink $userGetMagicLink,
+		private readonly UserDeleteIdentity $userDeleteIdentity,
 		private readonly GroupsUpdate $updateGroupsHandler,
 		private readonly UserUpdate $userUpdate,
 		private readonly GroupAvatarGet $avatarGet,
@@ -71,12 +73,14 @@ class AppApiController extends ApiController {
 		return $this->userGetMagicLink->handle($this->userId);
 	}
 
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'DELETE', url: '/app/me/identity')]
 	public function meIdentityDelete(): JSONResponse {
-		// TODO: implement full Olvid revocation protocol (notify Olvid server, create revocation record in olvid_revocation table)
-		$this->olvidUserConfig->removeIdentity($this->userId);
-		return new JSONResponse();
+		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
+		return $this->userDeleteIdentity->handle($this->userId, $jsonParameters['revoke'] ?? false);
 	}
 
 	#[NoAdminRequired]
@@ -87,7 +91,7 @@ class AppApiController extends ApiController {
 		$result = [];
 		foreach ($groups as $group) {
 			$gid = $group->getGID();
-			$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($gid);
+			$olvidGroup = $this->db->group->findByGroupIdOrNull($gid);
 			$photoUidBytes = $olvidGroup?->getGroupPhotoUid();
 			$result[] = [
 				'id' => $gid,
@@ -107,7 +111,7 @@ class AppApiController extends ApiController {
 		$response = ['groups' => []];
 		foreach ($groups as $group) {
 			$gid = $group->getGID();
-			$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($gid);
+			$olvidGroup = $this->db->group->findByGroupIdOrNull($gid);
 			$members = [];
 			foreach ($group->getUsers() as $member) {
 				$members[] = [
@@ -165,7 +169,7 @@ class AppApiController extends ApiController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/groups/{groupId}/avatar')]
 	public function groupsAvatarGet(string $groupId): Response {
-		return $this->avatarGet->handle($groupId, $this->request->getParam("photoUid"));
+		return $this->avatarGet->handle($groupId, $this->request->getParam('photoUid'));
 	}
 
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
@@ -292,15 +296,6 @@ class AppApiController extends ApiController {
 		]);
 	}
 
-	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/magicLink')]
-	public function usersGetMagicLink(string $userId): JSONResponse {
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
-			return new JSONResponse(['error' => 'user not found'], 404);
-		}
-		return $this->userGetMagicLink->handle($userId);
-	}
-
 	#[ApiRoute(verb: 'PUT', url: '/app/users/{userId}')]
 	public function updateUser(string $userId): JSONResponse {
 		$user = $this->userManager->get($userId);
@@ -340,5 +335,24 @@ class AppApiController extends ApiController {
 			];
 		}
 		return new JSONResponse(['groups' => $result]);
+	}
+
+	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/magicLink')]
+	public function usersGetMagicLink(string $userId): JSONResponse {
+		$user = $this->userManager->get($userId);
+		if ($user === null) {
+			return new JSONResponse(['error' => 'user not found'], 404);
+		}
+		return $this->userGetMagicLink->handle($userId);
+	}
+
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}/identity')]
+	public function usersIdentityDelete(string $userId): JSONResponse {
+		$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
+		return $this->userDeleteIdentity->handle($userId, $jsonParameters['revoke'] ?? false);
 	}
 }

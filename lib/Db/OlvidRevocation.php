@@ -21,10 +21,13 @@ class OlvidRevocation extends Entity {
 	protected ?string $fullSearchString = null;
 
 	public function __construct() {
+		// TODO : this field is olvid identity, rename to identity ? change to blob ?
 		$this->addType('olvidId', Types::STRING);
 		$this->addType('timestamp', Types::BIGINT);
 		$this->addType('revocationType', Types::INTEGER);
 		$this->addType('signature', Types::TEXT);
+		// TODO no need to store those info (only used to display revocation history)
+		// TODO we can keep username but rename it to userId
 		$this->addType('username', Types::STRING);
 		$this->addType('firstname', Types::STRING);
 		$this->addType('lastname', Types::STRING);
@@ -32,6 +35,16 @@ class OlvidRevocation extends Entity {
 		$this->addType('position', Types::STRING);
 		$this->addType('company', Types::STRING);
 		$this->addType('fullSearchString', Types::STRING);
+	}
+
+	public static function create(string $identity, int $timestamp, int $revocationType, string $signedRevocationData, string $userId): OlvidRevocation {
+		$revocation = new OlvidRevocation();
+		$revocation->setOlvidId($identity);
+		$revocation->setTimestamp($timestamp);
+		$revocation->setRevocationType($revocationType);
+		$revocation->setSignature($signedRevocationData);
+		$revocation->setUsername($userId);
+		return $revocation;
 	}
 
 	public function getOlvidId(): string {

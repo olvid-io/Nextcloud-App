@@ -16,6 +16,7 @@ class OlvidUserConfigManager {
 	private const USER_CONFIG_API_KEY = 'olvid-api-key';
 	private const USER_CONFIG_NONCE = 'olvid-nonce';
 	private const USER_CONFIG_SIGNED_DETAILS = 'olvid-signed-details';
+	// TODO TODEL ?
 	private const USER_CONFIG_ROLE = 'olvid-role';
 	private const USER_CONFIG_FULL_SEARCH_FIELD = 'olvid-search';
 	private const USER_CONFIG_IS_BOT = 'olvid-is-bot';
@@ -98,6 +99,9 @@ class OlvidUserConfigManager {
 	public function hasIdentity(string $uid): bool {
 		return $this->getIdentity($uid) !== null;
 	}
+	public function unsetIdentity(string $uid): void {
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_IDENTITY);
+	}
 
 	// api key
 	public function getApiKey(string $uid): ?string {
@@ -105,6 +109,9 @@ class OlvidUserConfigManager {
 	}
 	public function setApiKey(string $uid, string $value): void {
 		$this->setString($uid, self::USER_CONFIG_API_KEY, $value);
+	}
+	public function unsetApiKey(string $uid): void {
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_API_KEY);
 	}
 
 	// nonce
@@ -114,6 +121,9 @@ class OlvidUserConfigManager {
 	public function setNonce(string $uid, string $value): void {
 		$this->setString($uid, self::USER_CONFIG_NONCE, $value);
 	}
+	public function unsetNonce(string $uid): void {
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_NONCE);
+	}
 
 	// signed details
 	public function getSignedDetails(string $uid): ?string {
@@ -121,6 +131,9 @@ class OlvidUserConfigManager {
 	}
 	public function setSignedDetails(string $uid, string $value): void {
 		$this->setString($uid, self::USER_CONFIG_SIGNED_DETAILS, $value);
+	}
+	public function unsetSignedDetails(string $uid): void {
+		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_SIGNED_DETAILS);
 	}
 
 	// role
@@ -187,9 +200,5 @@ class OlvidUserConfigManager {
 		foreach (self::ALL_KEYS as $key) {
 			$this->config->deleteUserValue($uid, Application::APP_ID, $key);
 		}
-	}
-
-	public function removeIdentity(string $uid): void {
-		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_IDENTITY);
 	}
 }

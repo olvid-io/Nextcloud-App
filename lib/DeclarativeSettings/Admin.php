@@ -19,7 +19,6 @@ class Admin implements IDeclarativeSettingsForm {
 	}
 
 	public function getSchema(): array {
-		// TODO translation: add strings in translation files
 		return [
 			'id' => 'olvid', // unique form id
 			'priority' => 10, // declarative section priority (ordering)
