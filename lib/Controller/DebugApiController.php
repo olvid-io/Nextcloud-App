@@ -84,6 +84,24 @@ class DebugApiController extends ApiController {
 
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/debug/users')]
+	public function users(): JSONResponse {
+		$users = [];
+		foreach ($this->userManager->search("") as $user) {
+			try {
+				$users[$user->getUID()] = $this->config->getAllUserValues($user->getUID())[Application::APP_ID];
+			} catch (Exception $e) {
+				$this->logger->error('debug: Cannot compute user fields: ' . $e);
+			}
+		}
+
+		return new JSONResponse([
+			'users' => $users,
+		], 200);
+	}
+
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/db')]
 	public function db(): JSONResponse {
 		$response = [];
@@ -144,6 +162,16 @@ class DebugApiController extends ApiController {
 			];
 		}
 
+		$response['data'] = [];
+		$entities = $this->db->data->findAll();
+		foreach ($entities as $entity) {
+			$response['data'][] = [
+				'encodedDataKey' => base64_encode($entity->getEncodedDataKey()),
+				'dataUid' => $entity->getDataUid(),
+				'data' => base64_encode($entity->getData()),
+			];
+		}
+
 		return new JSONResponse($response);
 	}
 
@@ -162,7 +190,7 @@ class DebugApiController extends ApiController {
 				'lastModificationTimestamp' => $olvidGroup?->getLastModificationTimestamp(),
 				'pushTopic' => $olvidGroup?->getPushTopic(),
 				// TODO change this: this field is supposed to be already base64encoded, as it is in olvid_data table
-				'groupPhotoUid' => base64_encode($olvidGroup?->getGroupPhotoUid() ?? ""),
+				'groupPhotoUid' => base64_encode($olvidGroup?->getGroupPhotoUid() ?? ''),
 				'serializedSharedSettings' => $olvidGroup?->getSerializedSharedSettings(),
 				'signedGroupBlob' => $olvidGroup?->getSignedGroupBlob(),
 				'enabled' => $olvidGroup?->getEnabled(),
@@ -182,11 +210,15 @@ class DebugApiController extends ApiController {
 		return new JSONResponse($response);
 	}
 
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/groupsReset')]
 	public function groupsReset(): JSONResponse {
 		$this->db->group->deleteAll();
 		$this->db->groupDeletion->deleteAll();
+		$this->db->groupKicked->deleteAll();
 		return new JSONResponse('Done');
 	}
 
@@ -202,11 +234,15 @@ class DebugApiController extends ApiController {
 		}
 	}
 
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/resetAll')]
 	public function resetAll(): JSONResponse {
+		// do not reset app config, it's painful and not useful
 		// reset app data
-		$this->olvidAppConfig->deleteAppConfig();
+		// $this->olvidAppConfig->deleteAppConfig();
 
 		// reset users data
 		$users = $this->userManager->search('');
@@ -218,6 +254,9 @@ class DebugApiController extends ApiController {
 		$groups = $this->db->group->findAll();
 		$this->db->group->deleteAll();
 		$this->db->groupDeletion->deleteAll();
+		$this->db->groupKicked->deleteAll();
+		$this->db->revocation->deleteAll();
+		$this->db->data->deleteAll();
 
 		return new JSONResponse([
 			'success' => true,
@@ -225,5 +264,16 @@ class DebugApiController extends ApiController {
 			'cleaned-users' => count($users),
 			'cleaned-groups' => count($groups),
 		]);
+	}
+
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
+	#[NoCSRFRequired]
+	#[ApiRoute(verb: 'GET', url: '/debug/resetRevocations')]
+	public function resetRevocations(): JSONResponse {
+		$revocations = $this->db->revocation->findAll();
+		$this->db->revocation->deleteAll();
+		return new JSONResponse(['deletedRevocations' => array_map(function ($revocation) { return $revocation->getUsername(); }, $revocations)]);
 	}
 }
