@@ -7,7 +7,9 @@ namespace OCA\Olvid\Api\Directory;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Models\JsonUserDetails;
+use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -29,8 +31,12 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 		// TODO: also check that identity is a valid Olvid identity
 
-		// TODO feature revocation
-		// TODO feature allow self revocation
+		// check if this identity have not been revoked
+		$revocations = $this->db->revocation->findRevokeByIdentityOrNull($identity);
+		if ($revocations !== null && sizeof($revocations) > 0) {
+			$this->logger->warning('putKey: rejected for user: ' . $nextcloudUser->getUID() . ', revocation date: ' . $revocations[0]->getTimestamp());
+			return self::identityWasRevoked();
+		}
 
 		// prevent concurrent executions of this task for a same user
 		$lockKey = Application::APP_ID . '/olvid-rest/putKey/' . $nextcloudUser->getUID();
@@ -71,6 +77,36 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				// sign user details and store them
 				$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
+
+				// recompute all groups blob for this user enabled groups
+				$nextcloudGroups = $this->groupManager->getUserGroups($nextcloudUser);
+				foreach ($nextcloudGroups as $nextcloudGroup) {
+					// check group exists / is enabled
+					$olvidGroup = $this->db->group->findByGroupIdOrNull($nextcloudGroup->getGID());
+					if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
+						continue;
+					}
+
+					try {
+						// get olvid group
+						// re-compute blob and save in db
+						$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
+						$signedBlob = $blob->sign($this->olvidAppConfig);
+						$olvidGroup->setSignedGroupBlob($signedBlob);
+						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+						$this->db->group->update($olvidGroup);
+					} catch (Exception) {
+						$this->logger->error('putKey: cannot update group blob: ' . $nextcloudGroup->getGID(), ['exception' => $e]);
+						continue;
+					}
+					// notify group members
+					try {
+						$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
+					} catch (Exception) {
+						$this->logger->warning('putKey: send group update notification: ' . $nextcloudGroup->getGID());
+						continue;
+					}
+				}
 			}
 			// trying to put the same identity
 			elseif ($previousIdentity === $identity) {

@@ -85,8 +85,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			$response[Constants::ME_RESPONSE_NONCE] = $nonce;
 		}
 
-		// TODO feature revocations
-		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = [];
+		// list every revocation since timestamp passed in request
+		$signedRevocations = $this->db->revocation->findSignedRevocationsSinceTimestampOrNull($timestamp);
+
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) { return $revocation->getSignature(); }, $signedRevocations ?? []);
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;
 

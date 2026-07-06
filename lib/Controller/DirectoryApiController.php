@@ -15,6 +15,7 @@ use OCA\Olvid\Api\Directory\Search;
 use OCA\Olvid\Api\Engine\GetData;
 use OCA\Olvid\Api\Engine\GetSession;
 use OCA\Olvid\Api\Engine\RequestChallenge;
+use OCA\Olvid\Api\Engine\RevocationTest;
 use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\AppFramework\ApiController as IApiController;
@@ -45,6 +46,7 @@ class DirectoryApiController extends IApiController {
 		private readonly Search $searchHandler,
 		private readonly ListUsers $listUsersHandler,
 		private readonly Groups $groupsHandler,
+		private readonly RevocationTest $revocationTest,
 		private readonly Verify $verifyHandler,
 		private readonly RequestChallenge $requestChallengeHandler,
 		private readonly GetSession $getSessionHandler,
@@ -244,5 +246,13 @@ class DirectoryApiController extends IApiController {
 	#[ApiRoute(verb: 'POST', url: '/olvid-rest/groups')]
 	public function groups(): Response {
 		return $this->groupsHandler->handle();
+	}
+
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'POST', url: '/olvid-rest/revocationTest')]
+	public function revocationTest(): Response {
+		return $this->revocationTest->handle();
 	}
 }

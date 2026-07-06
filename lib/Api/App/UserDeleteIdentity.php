@@ -88,17 +88,12 @@ class UserDeleteIdentity {
 			}
 		}
 
-		// delete user identity, nonce and signed details
-		$this->olvidUserConfig->unsetIdentity($userId);
-		$this->olvidUserConfig->unsetNonce($userId);
-		$this->olvidUserConfig->unsetSignedDetails($userId);
-
 		// revoke identity
 		try {
-			if (!$revoke) {
-				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getIdentity($userId), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->olvidAppConfig);
+			if ($revoke) {
+				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_REVOKE_ID, $this->olvidAppConfig);
 			} else {
-				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getIdentity($userId), JsonRevocationData::REVOCATION_TYPE_REVOKE_ID, $this->olvidAppConfig);
+				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->olvidAppConfig);
 			}
 		} catch (Exception $exception) {
 			$this->logger->error('UserDeleteIdentity: cannot create revocation', ['exception' => $exception]);
@@ -110,6 +105,11 @@ class UserDeleteIdentity {
 		} catch (Exception $exception) {
 			$this->logger->error('UserDeleteIdentity: cannot revoke session', ['exception' => $exception]);
 		}
+
+		// delete user identity, nonce and signed details
+		$this->olvidUserConfig->unsetIdentity($userId);
+		$this->olvidUserConfig->unsetNonce($userId);
+		$this->olvidUserConfig->unsetSignedDetails($userId);
 
 		// notify every user (ignore exception)
 		try {

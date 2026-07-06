@@ -50,13 +50,18 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 		}
 
 		$user = $this->userManager->get($decoded->sub);
+		// user might have been deleted
+		if ($user === null) {
+			return null;
+		}
 
 		// check token was not revoked
 		$sessionsRevokedBefore = $this->olvidUserConfig->getSessionRevokedBefore($user->getUID());
 		if ($sessionsRevokedBefore !== null) {
 			// if token was issued before last revocation ignore it
-			if ($decoded->iat <= $sessionsRevokedBefore) {
-				$this->logger->debug($decoded->sub . ' token expired');
+			// WARN iat is in seconds, while sessionRevokedBefore is in ms
+			if ($decoded->iat * 1000 <= $sessionsRevokedBefore) {
+				$this->logger->debug($decoded->sub . ' session was revoked');
 				return null;
 			}
 		}
