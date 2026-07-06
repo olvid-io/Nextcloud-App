@@ -55,7 +55,7 @@ class JsonUserDetails implements JsonSerializable {
 			$firstname = $user->getDisplayName();
 		}
 
-		$identity = $olvidUserConfig->getIdentity($user->getUID());
+		$identity = $olvidUserConfig->getB64Identity($user->getUID());
 		// set identity to null and not to an empty string, else android think we already have an identity on server ...
 		if (!$identity) {
 			$identity = null;

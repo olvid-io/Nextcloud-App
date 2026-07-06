@@ -24,10 +24,10 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = [];
-		$this->olvidUserConfig->method('getIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('getB64Identity')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
 		);
-		$this->olvidUserConfig->method('setIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('setB64Identity')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['identity'] = $value !== '' ? $value : null;
 			}
@@ -78,10 +78,10 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = ['identity' => 'same-identity'];
-		$this->olvidUserConfig->method('getIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('getB64Identity')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
 		);
-		$this->olvidUserConfig->method('setIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('setB64Identity')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['identity'] = $value !== '' ? $value : null;
 			}
@@ -125,10 +125,10 @@ class PutKeyHandlerTest extends ApiHandlerTestCase {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 
 		$store = ['identity' => 'old-identity'];
-		$this->olvidUserConfig->method('getIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('getB64Identity')->willReturnCallback(
 			function (string $uid) use (&$store) { return $store['identity'] ?? null; }
 		);
-		$this->olvidUserConfig->method('setIdentity')->willReturnCallback(
+		$this->olvidUserConfig->method('setB64Identity')->willReturnCallback(
 			function (string $uid, string $value) use (&$store): void {
 				$store['identity'] = $value !== '' ? $value : null;
 			}

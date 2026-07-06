@@ -122,7 +122,7 @@ class OlvidUserDetailsTest extends TestCase {
 		$userConfig->method('getLastname')->with($uid)->willReturn($userDetails['lastname'] ?? null);
 		$userConfig->method('getPosition')->with($uid)->willReturn($userDetails['position'] ?? null);
 		$userConfig->method('getCompany')->with($uid)->willReturn($userDetails['company'] ?? null);
-		$userConfig->method('getIdentity')->with($uid)->willReturn($userDetails['identity'] ?? null);
+		$userConfig->method('getB64Identity')->with($uid)->willReturn($userDetails['identity'] ?? null);
 		$userConfig->method('getFullSearchField')->willReturn(null);
 
 		$appConfig = $this->createMock(OlvidAppConfigManager::class);

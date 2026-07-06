@@ -24,7 +24,6 @@ class GroupsUpdate {
 		IRequest $request,
 		private readonly LoggerInterface $logger,
 		private readonly IGroupManager $groupManager,
-		private readonly OlvidGroupMapper $olvidGroupMapper,
 		private readonly OlvidUserConfigManager $olvidUserConfig,
 		private readonly OlvidAppConfigManager $olvidAppConfig,
 		private readonly OlvidDatabase $db,
@@ -45,7 +44,7 @@ class GroupsUpdate {
 			}
 
 			// get or create OlvidGroup entity in database
-			$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($groupId);
+			$olvidGroup = $this->db->group->findByGroupIdOrNull($groupId);
 			if ($olvidGroup === null) {
 				$olvidGroup = OlvidGroup::create($groupId);
 			}
@@ -110,7 +109,7 @@ class GroupsUpdate {
 				// notify users individually
 				if ($newlyCreatedPushTopic || $olvidGroup->getPushTopic() === null) {
 					foreach ($nextcloudGroup->getUsers() as $user) {
-						$userIdentity = $this->olvidUserConfig->getIdentity($user->getUID());
+						$userIdentity = $this->olvidUserConfig->getB64Identity($user->getUID());
 						if ($userIdentity !== null) {
 							$this->olvidServer->sendSingleUserNotification($userIdentity);
 						}

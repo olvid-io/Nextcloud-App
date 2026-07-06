@@ -15,7 +15,7 @@ use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 
 class PutKey extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $user): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		try {
 			$identity = isset($jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY]) ? (string)$jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY] : null;
 		} catch (Exception $e) {
@@ -33,7 +33,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 		// TODO feature allow self revocation
 
 		// prevent concurrent executions of this task for a same user
-		$lockKey = Application::APP_ID . '/olvid-rest/putKey/' . $user->getUID();
+		$lockKey = Application::APP_ID . '/olvid-rest/putKey/' . $nextcloudUser->getUID();
 		try {
 			$this->lockingProvider->acquireLock($lockKey, ILockingProvider::LOCK_EXCLUSIVE);
 		} catch (LockedException) {
@@ -41,8 +41,8 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		try {
-			$previousIdentity = $this->olvidUserConfig->getIdentity($user->getUID());
-			$previousApiKey = $this->olvidUserConfig->getApiKey($user->getUID());
+			$previousIdentity = $this->olvidUserConfig->getB64Identity($nextcloudUser->getUID());
+			$previousApiKey = $this->olvidUserConfig->getApiKey($nextcloudUser->getUID());
 
 			// no identity already registered
 			if (!$previousIdentity) {
@@ -59,17 +59,17 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				// this might fail if an olvid server api have not been set
 				try {
 					$newApiKey = $this->olvidServer->requestNewApiKey();
-					$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
+					$this->olvidUserConfig->setApiKey($nextcloudUser->getUID(), $newApiKey);
 				} catch (Exception $e) {
 					// TODO if cannot set attribute return an error
 					$this->logger->warning('putKey: cannot create new api key: ', ['exception' => $e]);
 				}
 
 				// set user identity
-				$this->olvidUserConfig->setIdentity($user->getUID(), $identity);
+				$this->olvidUserConfig->setB64Identity($nextcloudUser->getUID(), $identity);
 
 				// sign user details and store them
-				$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 			// trying to put the same identity
@@ -79,7 +79,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					// this might fail if an olvid server api have not been set
 					try {
 						$newApiKey = $this->olvidServer->requestNewApiKey();
-						$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
+						$this->olvidUserConfig->setApiKey($nextcloudUser->getUID(), $newApiKey);
 					} catch (Exception $e) {
 						// TODO if cannot set attribute return an error
 						$this->logger->warning('putKey: cannot create new api key: ', ['exception' => $e]);
@@ -87,10 +87,10 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				}
 
 				// sign user details and store them
-				$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
-			// trying to override previous identity
+			// trying to override previous identity: we always allow self revocation, just erase previous identity
 			elseif ($previousIdentity !== $identity) {
 				// revoke current api key if there is one
 				if ($previousApiKey) {
@@ -102,33 +102,33 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				}
 
 				// clear old identity
-				$this->olvidUserConfig->setIdentity($user->getUID(), '');
-				// clear the nonce so that any identity enrolled with this user is automatically unbound from keycloak
-				$this->olvidUserConfig->setNonce($user->getUID(), '');
+				$this->olvidUserConfig->unsetIdentity($nextcloudUser->getUID());
+				// re-generate the nonce so that any identity enrolled with this user is automatically unbound from keycloak
+				$this->olvidUserConfig->setNonce($nextcloudUser->getUID(), RandomUtil::uuid_create());
 
 				// sign out the user: set revoked_before to mark any token signed before now to be revoked
-				$this->olvidUserConfig->setSessionRevokedBefore($user->getUID(), TimeUtil::currentTimeMillis());
+				$this->olvidUserConfig->setSessionRevokedBefore($nextcloudUser->getUID(), TimeUtil::currentTimeMillis());
 
 				// create and set new api key
 				// this might fail if an olvid server api have not been set
 				try {
 					$newApiKey = $this->olvidServer->requestNewApiKey();
-					$this->olvidUserConfig->setApiKey($user->getUID(), $newApiKey);
+					$this->olvidUserConfig->setApiKey($nextcloudUser->getUID(), $newApiKey);
 				} catch (Exception $e) {
 					// TODO if cannot set attribute return an error
 					$this->logger->warning('putKey: cannot create new api key: ', ['exception' => $e]);
 				}
 
 				// we can now set new identity
-				$this->olvidUserConfig->setIdentity($user->getUID(), $identity);
+				$this->olvidUserConfig->setB64Identity($nextcloudUser->getUID(), $identity);
 
 				// sign user details and store them
-				$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
+				$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 			}
 
 			// delete any magic token for this user
-			$this->olvidUserConfig->clearMagicToken($user->getUID());
+			$this->olvidUserConfig->clearMagicToken($nextcloudUser->getUID());
 
 			return $this->success();
 		} finally {

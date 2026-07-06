@@ -24,6 +24,23 @@ class OlvidDataMapper extends QBMapper {
 		parent::__construct($db, 'olvid_data', OlvidData::class);
 	}
 
+	/** @return OlvidData[]
+	 * @throws Exception
+	 */
+	public function findAll(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
+	/**
+	 * @throws Exception
+	 */
+	public function deleteAll(): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName());
+		$qb->executeStatement();
+	}
+
 	/**
 	 * Find a data row by its base64-encoded UID.
 	 *

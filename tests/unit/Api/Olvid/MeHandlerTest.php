@@ -26,7 +26,7 @@ class MeHandlerTest extends ApiHandlerTestCase {
 	public function testHandlerSignsAndReturnsDetailsWhenNoCacheExists(): void {
 		$user = $this->mockUser('alice', 'Alice Wonder');
 		$this->olvidUserConfig->method('getSignedDetails')->with('alice')->willReturn(null);
-		$this->olvidUserConfig->method('getIdentity')->with('alice')->willReturn('alice-olvid-identity');
+		$this->olvidUserConfig->method('getB64Identity')->with('alice')->willReturn('alice-olvid-identity');
 		$this->olvidUserConfig->method('getApiKey')->with('alice')->willReturn('stored-api-key');
 		$this->configureAppConfigWithKeys();
 

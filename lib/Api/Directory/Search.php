@@ -12,7 +12,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Search extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $user): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		try {
 			$filter = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (string)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
 		} catch (Exception $e) {
@@ -32,10 +32,10 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 		];
 
 		$users = $this->userManager->search('');
-		foreach ($users as $user) {
+		foreach ($users as $nextcloudUser) {
 			// only add users with a valid identity on server
-			if ($this->olvidUserConfig->hasIdentity($user->getUID())) {
-				$response[Constants::SEARCH_RESPONSE_RESULTS][] = JsonUserDetails::parseSignedDetails($user, $this->olvidUserConfig);
+			if ($this->olvidUserConfig->hasIdentity($nextcloudUser->getUID())) {
+				$response[Constants::SEARCH_RESPONSE_RESULTS][] = JsonUserDetails::parseSignedDetails($nextcloudUser, $this->olvidUserConfig);
 			}
 		}
 

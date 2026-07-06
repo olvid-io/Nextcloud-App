@@ -129,7 +129,7 @@ class GroupEventListener implements IEventListener {
 			}
 			// notify new member individually
 			try {
-				$this->olvidServer->sendSingleUserNotification($this->olvidUserConfig->getIdentity($event->getUser()->getUID()));
+				$this->olvidServer->sendSingleUserNotification($this->olvidUserConfig->getB64Identity($event->getUser()->getUID()));
 			} catch (OlvidServerException|InvalidConfigurationException $exception) {
 				$this->logger->error('GroupEventListener: userAddedHandler: cannot send new user notification: ' . $exception->getMessage());
 			}
@@ -144,7 +144,7 @@ class GroupEventListener implements IEventListener {
 		}
 
 		// check user use Olvid
-		$userIdentity = $this->olvidUserConfig->getIdentity($event->getUser()->getUID());
+		$userIdentity = $this->olvidUserConfig->getB64Identity($event->getUser()->getUID());
 		if ($userIdentity === null) {
 			return;
 		}

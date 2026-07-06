@@ -83,7 +83,7 @@ class JsonGroupBlob implements JsonSerializable {
 			}
 			$groupMembersAndPermissions[] = new JsonGroupMemberAndPermissions(
 				$member->getUID(),
-				$olvidUserConfigManager->getIdentity($member->getUID()),
+				$olvidUserConfigManager->getB64Identity($member->getUID()),
 				JsonUserDetails::getSignedDetails($member, $olvidUserConfigManager, $olvidAppConfigManager),
 				$permissions,
 				$invitationNonce
@@ -98,7 +98,7 @@ class JsonGroupBlob implements JsonSerializable {
 		$blob->bytesGroupUid = $olvidGroup->getGroupUid();
 		$blob->photoUid = $olvidGroup->getGroupPhotoUid();
 		if ($blob->photoUid !== null) {
-			$olvidData = $db->dataMapper->getByUidOrNull(base64_encode($blob->photoUid));
+			$olvidData = $db->data->getByUidOrNull(base64_encode($blob->photoUid));
 			if ($olvidData !== null) {
 				$blob->encodedPhotoKey = $olvidData->getEncodedDataKey();
 			}

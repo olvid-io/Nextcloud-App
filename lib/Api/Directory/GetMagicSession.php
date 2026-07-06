@@ -21,12 +21,12 @@ use OCP\IUser;
  */
 class GetMagicSession extends AbstractDeviceApiHandler {
 	// unauthenticated entrypoint, argument $user is null
-	public function handler(array $jsonParameters, ?IUser $user): JSONResponse {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// --- 1. Parse request ---
 		try {
-			$user = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
+			$nextcloudUser = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
 			$token = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_TOKEN] ?? null;
-			if ($user === null || $token === null) {
+			if ($nextcloudUser === null || $token === null) {
 				throw new Exception('Missing username or token');
 			}
 		} catch (Exception $e) {
@@ -35,16 +35,16 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 		}
 
 		// --- 2. Look up user (always return same error to avoid leaking whether user exists) ---
-		$targetUser = $this->userManager->get($user);
+		$targetUser = $this->userManager->get($nextcloudUser);
 		if ($targetUser === null) {
-			$this->logger->warning('getMagicSession: user not found: ' . $user);
+			$this->logger->warning('getMagicSession: user not found: ' . $nextcloudUser);
 			return $this->invalidRequest();
 		}
 
 		// --- 3. Validate magic token ---
 		$magicToken = $this->olvidUserConfig->getMagicToken($targetUser->getUID());
 		if ($magicToken === null || $token !== $magicToken) {
-			$this->logger->warning('getMagicSession: invalid magic token: ' . $user);
+			$this->logger->warning('getMagicSession: invalid magic token: ' . $nextcloudUser);
 			return $this->invalidRequest();
 		}
 

@@ -58,7 +58,7 @@ abstract class AbstractDeviceApiHandler {
 	}
 
 	// $user is passed only for authenticated handlers
-	abstract public function handler(array $jsonParameters, ?IUser $user): Response;
+	abstract public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// standard responses

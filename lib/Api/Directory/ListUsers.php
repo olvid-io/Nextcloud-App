@@ -13,7 +13,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $user): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		try {
 			$timestamp = (int)($jsonParameters[Constants::LIST_USERS_REQUEST_TIMESTAMP] ?? 0);
 		} catch (Exception $e) {
@@ -28,10 +28,10 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 			Constants::LIST_USERS_RESPONSE_USERS => [],
 		];
 		$users = $this->userManager->search('');
-		foreach ($users as $user) {
+		foreach ($users as $nextcloudUser) {
 			// only add users with a valid identity on server
-			if ($this->olvidUserConfig->hasIdentity($user->getUID())) {
-				$response[Constants::LIST_USERS_RESPONSE_USERS][] = JsonUserDetails::parseSignedDetails($user, $this->olvidUserConfig);
+			if ($this->olvidUserConfig->hasIdentity($nextcloudUser->getUID())) {
+				$response[Constants::LIST_USERS_RESPONSE_USERS][] = JsonUserDetails::parseSignedDetails($nextcloudUser, $this->olvidUserConfig);
 			}
 		}
 

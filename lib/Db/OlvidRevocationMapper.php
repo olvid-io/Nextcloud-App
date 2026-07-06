@@ -23,11 +23,22 @@ class OlvidRevocationMapper extends QBMapper {
 		parent::__construct($db, 'olvid_revocation', OlvidRevocation::class);
 	}
 
-	/** @return OlvidRevocation[] */
+	/** @return OlvidRevocation[]
+	 * @throws \OCP\DB\Exception
+	 */
 	public function findAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
+	public function deleteAll(): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName());
+		$qb->executeStatement();
 	}
 
 	/**

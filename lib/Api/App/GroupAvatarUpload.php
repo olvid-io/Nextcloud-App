@@ -94,7 +94,7 @@ class GroupAvatarUpload {
 			$olvidData->setDataUid(base64_encode($photoUid));
 			$olvidData->setEncodedDataKey($encodedKey);
 			$olvidData->setData($jpegBytes);
-			$this->db->dataMapper->insert($olvidData);
+			$this->db->data->insert($olvidData);
 
 			// Get-or-create OlvidGroup and update group_photo_uid
 			$olvidGroup = $this->db->group->findByGroupIdOrNull($groupId);

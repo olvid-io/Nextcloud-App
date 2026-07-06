@@ -26,7 +26,7 @@ class Verify extends AbstractEngineApiHandler {
 	protected function handler(string $rawInput): BinaryResponse {
 		// --- 1. Parse request ---
 		try {
-			$json = json_decode($rawInput, true, 512, JSON_THROW_ON_ERROR);
+			$json = json_decode($rawInput, true);
 			$signature = $json[Constants::VERIFY_REQUEST_SIGNATURE] ?? null;
 			if ($signature === null) {
 				throw new Exception('Missing signature field');
@@ -86,7 +86,7 @@ class Verify extends AbstractEngineApiHandler {
 				return $this->binaryResult(false);
 			}
 
-			$storedIdentity = $this->userConfig->getIdentity($user->getUID());
+			$storedIdentity = $this->userConfig->getB64Identity($user->getUID());
 			if ($storedIdentity === null || $storedIdentity !== $identity) {
 				$this->logger->debug('verify: identity mismatch for user ' . $userId);
 				return $this->binaryResult(false);

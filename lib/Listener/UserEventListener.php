@@ -59,7 +59,7 @@ class UserEventListener implements IEventListener {
 		}
 
 		// check user use Olvid
-		$userIdentity = $this->olvidUserConfig->getIdentity($userId);
+		$userIdentity = $this->olvidUserConfig->getB64Identity($userId);
 		if ($userIdentity === null) {
 			return;
 		}
@@ -102,7 +102,7 @@ class UserEventListener implements IEventListener {
 
 		// revoke identity
 		try {
-			$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getIdentity($userId), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->olvidAppConfig);
+			$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->olvidAppConfig);
 		} catch (Exception $exception) {
 			$this->logger->error('GroupEventListener: userRemovedHandler: cannot create revocation', ['exception' => $exception]);
 		}
@@ -130,7 +130,7 @@ class UserEventListener implements IEventListener {
 
 		if ($event->getFeature() == 'displayName') {
 			// check user use Olvid
-			$userIdentity = $this->olvidUserConfig->getIdentity($userId);
+			$userIdentity = $this->olvidUserConfig->getB64Identity($userId);
 			if ($userIdentity === null) {
 				return;
 			}

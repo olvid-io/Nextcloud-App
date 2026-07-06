@@ -22,6 +22,7 @@ class OlvidUserConfigManager {
 	private const USER_CONFIG_IS_BOT = 'olvid-is-bot';
 	private const USER_CONFIG_MAGIC_TOKEN = 'olvid-magic-token';
 	private const USER_CONFIG_MAGIC_TOKEN_EXPIRATION = 'olvid-magic-token-expiration';
+	// timestamp in ms
 	private const USER_CONFIG_SESSION_REVOKED_BEFORE = 'olvid-session-revoked-before';
 
 	private const ALL_KEYS = [
@@ -90,14 +91,14 @@ class OlvidUserConfigManager {
 	}
 
 	// identity
-	public function getIdentity(string $uid): ?string {
+	public function getB64Identity(string $uid): ?string {
 		return $this->getStringOrNull($uid, self::USER_CONFIG_IDENTITY);
 	}
-	public function setIdentity(string $uid, string $value): void {
+	public function setB64Identity(string $uid, string $value): void {
 		$this->setString($uid, self::USER_CONFIG_IDENTITY, $value);
 	}
 	public function hasIdentity(string $uid): bool {
-		return $this->getIdentity($uid) !== null;
+		return $this->getB64Identity($uid) !== null;
 	}
 	public function unsetIdentity(string $uid): void {
 		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_IDENTITY);
@@ -123,6 +124,13 @@ class OlvidUserConfigManager {
 	}
 	public function unsetNonce(string $uid): void {
 		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_NONCE);
+	}
+	/*
+	 * return an array of user id
+	 * @return array[string]
+	 */
+	public function searchNonce(string $nonce): array {
+		return $this->config->getUsersForUserValue(Application::APP_ID, self::USER_CONFIG_NONCE, $nonce);
 	}
 
 	// signed details
@@ -183,7 +191,7 @@ class OlvidUserConfigManager {
 		$this->config->deleteUserValue($uid, Application::APP_ID, self::USER_CONFIG_MAGIC_TOKEN_EXPIRATION);
 	}
 
-	// session revoked before
+	// session revoked before (ms)
 	public function getSessionRevokedBefore(string $uid): ?int {
 		$value = $this->getStringOrNull($uid, self::USER_CONFIG_SESSION_REVOKED_BEFORE);
 		$timestamp = (int)$value;

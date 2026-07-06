@@ -21,18 +21,22 @@ class OlvidGroupKickedMapper extends QBMapper {
 		parent::__construct($db, 'olvid_group_kicked', OlvidGroupKicked::class);
 	}
 
-	public function expungeOlderThan(int $timestamp): void {
-		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName())
-			->where($qb->expr()->lt('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
-		$qb->executeStatement();
-	}
-
-	/** @return OlvidGroupKicked[] */
+	/** @return OlvidGroupKicked[]
+	 * @throws Exception
+	 */
 	public function findAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function deleteAll(): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName());
+		$qb->executeStatement();
 	}
 
 	/**
@@ -60,7 +64,9 @@ class OlvidGroupKickedMapper extends QBMapper {
 		}
 	}
 
-	/** @return OlvidGroupKicked[] */
+	/** @return OlvidGroupKicked[]
+	 * @throws Exception
+	 */
 	public function getSignatureAfterTimestamp(String $userId, int $earliestRevocationTimestamp) : array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('signature')->from($this->getTableName())

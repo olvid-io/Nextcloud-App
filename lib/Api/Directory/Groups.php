@@ -15,7 +15,7 @@ use OCP\IUser;
  * POST /olvid-rest/groups
  */
 class Groups extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $user): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// parse request (don't fail on parse error)
 		try {
 			$requestTimestamp = array_key_exists(Constants::GROUPS_REQUEST_TIMESTAMP, $jsonParameters) ? $jsonParameters[Constants::GROUPS_REQUEST_TIMESTAMP] : null;
@@ -28,7 +28,7 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		// signed blobs
 		// first get all user groups and return those updated recently enough
 		$signedGroupBlobs = [];
-		$userGroups = $this->groupManager->getUserGroups($user);
+		$userGroups = $this->groupManager->getUserGroups($nextcloudUser);
 		foreach ($userGroups as $group) {
 			// get associated olvid group
 			$olvidGroup = $this->db->group->findByGroupIdOrNull($group->getGID());
@@ -50,7 +50,7 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		$signedGroupDeletions = $this->db->groupDeletion->getSignatureAfterTimestamp($earliestRevocationTimestamp);
 
 		// get all groups user was removed from
-		$signedGroupKicks = $this->db->groupKicked->getSignatureAfterTimestamp($user->getUID(), $earliestRevocationTimestamp);
+		$signedGroupKicks = $this->db->groupKicked->getSignatureAfterTimestamp($nextcloudUser->getUID(), $earliestRevocationTimestamp);
 
 		$response = [
 			Constants::GROUPS_RESPONSE_SIGNED_GROUP_BLOBS => count($signedGroupBlobs) ? $signedGroupBlobs : [],

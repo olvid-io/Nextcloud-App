@@ -83,7 +83,7 @@ class GetSession extends AbstractEngineApiHandler {
 		}
 
 		// --- 5. Get user Olvid identity -----------------------------------------
-		$identityB64 = $this->userConfig->getIdentity($user->getUID());
+		$identityB64 = $this->userConfig->getB64Identity($user->getUID());
 		if ($identityB64 === null) {
 			$this->logger->warning('getSession: user has no Olvid identity');
 			return $this->permissionDenied();

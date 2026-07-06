@@ -63,7 +63,7 @@ class RequestChallenge extends AbstractEngineApiHandler {
 			return $response;
 		}
 
-		$identity = $this->userConfig->getIdentity($user->getUID());
+		$identity = $this->userConfig->getB64Identity($user->getUID());
 		if ($identity === null) {
 			$this->logger->warning('requestChallenge: user has no Olvid identity');
 			return $response;

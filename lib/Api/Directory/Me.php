@@ -14,7 +14,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Me extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $user): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// parse request (don't fail on parse error)
 		try {
 			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
@@ -23,29 +23,29 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			$this->logger->warning('me: parse error: ', ['exception' => $e]);
 		}
 
-		// TODO feature revocation
+		$currentTimestamp = TimeUtil::currentTimeMillis();
 
 		// compute user details
-		$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
+		$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
 
 		// set or update full search string attributes
-		$userDetails->updateFullSearchString($user->getUID(), $this->olvidUserConfig);
+		$userDetails->updateFullSearchString($nextcloudUser->getUID(), $this->olvidUserConfig);
 
 		// set signature (compute if necessary)
-		$signature = $this->olvidUserConfig->getSignedDetails($user->getUID());
+		$signature = $this->olvidUserConfig->getSignedDetails($nextcloudUser->getUID());
 		if (!$signature) {
 			$signature = $userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
 		}
 		$response[Constants::ME_RESPONSE_SIGNATURE] = $signature;
 
 		// get current api  key, create a new one if there is an identity and no associated api key (fallback)
-		$apiKey = $this->olvidUserConfig->getApiKey($user->getUID());
-		$identity = $this->olvidUserConfig->getIdentity($user->getUID());
+		$apiKey = $this->olvidUserConfig->getApiKey($nextcloudUser->getUID());
+		$identity = $this->olvidUserConfig->getB64Identity($nextcloudUser->getUID());
 		if ($identity && !$apiKey) {
 			// this might fail if an olvid server api have not been set
 			try {
 				$apiKey = $this->olvidServer->requestNewApiKey();
-				$this->olvidUserConfig->setApiKey($user->getUID(), $apiKey);
+				$this->olvidUserConfig->setApiKey($nextcloudUser->getUID(), $apiKey);
 			} catch (Exception $e) {
 				$this->logger->error('Me: cannot create user api key: ' . $e);
 			}
@@ -77,10 +77,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
 		if ($userDetails->identity) {
-			$nonce = $this->olvidUserConfig->getNonce($user->getUID());
+			$nonce = $this->olvidUserConfig->getNonce($nextcloudUser->getUID());
 			if (!$nonce) {
 				$nonce = RandomUtil::uuid_create();
-				$this->olvidUserConfig->setNonce($user->getUID(), $nonce);
+				$this->olvidUserConfig->setNonce($nextcloudUser->getUID(), $nonce);
 			}
 			$response[Constants::ME_RESPONSE_NONCE] = $nonce;
 		}
@@ -88,7 +88,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// TODO feature revocations
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = [];
 
-		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = TimeUtil::currentTimeMillis();
+		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;
 
 		return new JSONResponse($response, 200);
 	}

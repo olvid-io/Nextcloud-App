@@ -11,11 +11,11 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class GetKey extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $user): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// Parse request
 		try {
-			$user = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
-			if (!$user) {
+			$nextcloudUser = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
+			if (!$nextcloudUser) {
 				return $this->invalidRequest();
 			}
 		} catch (Exception $e) {
@@ -24,7 +24,7 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		// get user in database
-		$otherUser = $this->userManager->get($user);
+		$otherUser = $this->userManager->get($nextcloudUser);
 		if (!$otherUser) {
 			return $this->invalidRequest();
 		}

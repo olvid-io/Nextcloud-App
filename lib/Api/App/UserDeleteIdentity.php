@@ -50,7 +50,7 @@ class UserDeleteIdentity {
 		}
 
 		// check user use Olvid
-		$userIdentity = $this->olvidUserConfig->getIdentity($userId);
+		$userIdentity = $this->olvidUserConfig->getB64Identity($userId);
 		if ($userIdentity === null) {
 			return new JSONResponse([], 400);
 		}
