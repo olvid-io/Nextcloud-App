@@ -20,6 +20,6 @@ class JsonRevocationData implements JsonSerializable {
 	#[JsonField('timestamp')]
 	public int $timestamp = 0;
 
-	#[JsonField('revocationType')]
+	#[JsonField('type')]
 	public int $revocationType = 0;
 }
