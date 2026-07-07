@@ -81,7 +81,7 @@ class DirectoryApiController extends IApiController {
 			'authorization_endpoint' => '',
 			'token_endpoint' => '',
 			'userinfo_endpoint' => '',
-			'jwks_uri' => $this->urlGenerator->linkToOCSRouteAbsolute('olvid.wellKnown.jwks'),
+			'jwks_uri' => $this->urlGenerator->linkToOCSRouteAbsolute('olvid.directoryApi.jwks'),
 			'scopes_supported' => [],
 			'response_types_supported' => [],
 			'response_modes_supported' => [],
