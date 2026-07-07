@@ -40,11 +40,11 @@ class RevocationTest extends AbstractEngineApiHandler {
 
 		// get user associated with this nonce
 		$userIdsForNonce = $this->userConfig->searchNonce($nonce);
-		if (sizeof($userIdsForNonce) === 0) {
+		if (count($userIdsForNonce) === 0) {
 			$this->logger->error('revocationTest: nonce not found');
 			return new BinaryResponse("\x01");
 		}
-		if (sizeof($userIdsForNonce) > 1) {
+		if (count($userIdsForNonce) > 1) {
 			$this->logger->error('revocationTest: found more than one user with the same nonce');
 			return new BinaryResponse("\x01");
 		}
