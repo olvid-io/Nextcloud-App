@@ -71,7 +71,7 @@ class DirectoryApiController extends OCSController {
 	// ── Public utility ───────────────────────────────────────────────────────
 
 	/**
-	 * @return TextPlainResponse<Http::STATUS_OK, string, array{}>
+	 * @return TextPlainResponse<Http::STATUS_OK, string>
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

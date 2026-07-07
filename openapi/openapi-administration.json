@@ -20,7 +20,7 @@
             }
         },
         "schemas": {
-            "Group": {
+            "GroupFull": {
                 "type": "object",
                 "required": [
                     "id",
@@ -46,7 +46,8 @@
                         "nullable": true
                     },
                     "description": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     },
                     "photoUid": {
                         "type": "string",
@@ -55,7 +56,7 @@
                     "members": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Member"
+                            "$ref": "#/components/schemas/User"
                         }
                     }
                 }
@@ -72,25 +73,6 @@
                     },
                     "displayName": {
                         "type": "string"
-                    }
-                }
-            },
-            "Member": {
-                "type": "object",
-                "required": [
-                    "id",
-                    "displayName",
-                    "useOlvid"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "displayName": {
-                        "type": "string"
-                    },
-                    "useOlvid": {
-                        "type": "boolean"
                     }
                 }
             },
@@ -119,6 +101,25 @@
                 }
             },
             "User": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "displayName",
+                    "useOlvid"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "useOlvid": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "UserFull": {
                 "type": "object",
                 "required": [
                     "id",
@@ -160,7 +161,7 @@
             "get": {
                 "operationId": "app_api-groups-get",
                 "summary": "Returns all Nextcloud groups with their Olvid discussion configuration and member list",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -214,7 +215,7 @@
                                                         "groups": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/components/schemas/Group"
+                                                                "$ref": "#/components/schemas/GroupFull"
                                                             }
                                                         }
                                                     }
@@ -287,7 +288,7 @@
             "post": {
                 "operationId": "app_api-groups-post",
                 "summary": "Creates a new Nextcloud group",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -352,21 +353,11 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "$ref": "#/components/schemas/Group"
+                                                    "$ref": "#/components/schemas/GroupFull"
                                                 }
                                             }
                                         }
                                     }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
                                 }
                             }
                         }
@@ -434,7 +425,7 @@
             "put": {
                 "operationId": "app_api-groups-put",
                 "summary": "Updates a group's Olvid discussion settings (enabled flag, custom name, description)",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -516,7 +507,7 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "$ref": "#/components/schemas/Group"
+                                                    "$ref": "#/components/schemas/GroupFull"
                                                 }
                                             }
                                         }
@@ -626,7 +617,7 @@
             "put": {
                 "operationId": "app_api-groups-avatar-put",
                 "summary": "Uploads or replaces the avatar image for a group",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -894,7 +885,7 @@
             "post": {
                 "operationId": "app_api-groups-member-post",
                 "summary": "Adds a user to a group",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -1066,7 +1057,7 @@
             "delete": {
                 "operationId": "app_api-groups-member-delete",
                 "summary": "Removes a user from a group",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -1278,7 +1269,7 @@
             "get": {
                 "operationId": "app_api-users-search",
                 "summary": "Searches for users by display name or uid. Returns up to 20 results",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -1300,135 +1291,6 @@
                             "default": ""
                         }
                     },
-                    {
-                        "name": "OCS-APIRequest",
-                        "in": "header",
-                        "description": "Required to be true for the API request to pass",
-                        "required": true,
-                        "schema": {
-                            "type": "boolean",
-                            "default": true
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "users"
-                                                    ],
-                                                    "properties": {
-                                                        "users": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "$ref": "#/components/schemas/Member"
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Current user is not logged in",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Logged in account must be an admin",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/ocs/v2.php/apps/olvid/app/users": {
-            "get": {
-                "operationId": "app_api-users-get",
-                "summary": "Returns all Nextcloud users with their Olvid profile fields",
-                "description": "This endpoint requires admin access",
-                "tags": [
-                    "app_api"
-                ],
-                "security": [
-                    {
-                        "bearer_auth": []
-                    },
-                    {
-                        "basic_auth": []
-                    }
-                ],
-                "parameters": [
                     {
                         "name": "OCS-APIRequest",
                         "in": "header",
@@ -1539,11 +1401,140 @@
                         }
                     }
                 }
+            }
+        },
+        "/ocs/v2.php/apps/olvid/app/users": {
+            "get": {
+                "operationId": "app_api-users-get",
+                "summary": "Returns all Nextcloud users with their Olvid profile fields",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "app_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "users"
+                                                    ],
+                                                    "properties": {
+                                                        "users": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/UserFull"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             },
             "post": {
                 "operationId": "app_api-users-post",
                 "summary": "Creates a new Nextcloud user with optional Olvid profile fields",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -1631,7 +1622,7 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "$ref": "#/components/schemas/User"
+                                                    "$ref": "#/components/schemas/UserFull"
                                                 }
                                             }
                                         }
@@ -1779,7 +1770,7 @@
             "put": {
                 "operationId": "app_api-update-user",
                 "summary": "Updates the Olvid profile fields of a specific user",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -1974,7 +1965,7 @@
             "delete": {
                 "operationId": "app_api-delete-user",
                 "summary": "Deletes a Nextcloud user. Optionally revokes their Olvid identity first Cannot be used to delete the currently authenticated user",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -2200,7 +2191,7 @@
             "get": {
                 "operationId": "app_api-get-user-groups",
                 "summary": "Returns the groups a specific user belongs to",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -2376,7 +2367,7 @@
             "get": {
                 "operationId": "app_api-users-get-magic-link",
                 "summary": "Generates a magic link (configuration URL) to enroll a specific user's Olvid identity",
-                "description": "This endpoint requires admin access",
+                "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
                 ],
@@ -2482,6 +2473,16 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }

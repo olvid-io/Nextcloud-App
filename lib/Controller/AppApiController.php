@@ -13,7 +13,6 @@ use OCA\Olvid\Api\App\UserGetMagicLink;
 use OCA\Olvid\Api\App\UserUpdate;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Db\OlvidDatabase;
-use OCA\Olvid\Db\OlvidGroup;
 use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -34,8 +33,8 @@ use Psr\Log\LoggerInterface;
  * @psalm-import-type OlvidMe from ResponseDefinitions
  * @psalm-import-type OlvidUserFull from ResponseDefinitions
  * @psalm-import-type OlvidUser from ResponseDefinitions
+ * @psalm-import-type OlvidGroupFull from ResponseDefinitions
  * @psalm-import-type OlvidGroup from ResponseDefinitions
- * @psalm-import-type OlvidGroupBasic from ResponseDefinitions
  * @psalm-import-type OlvidGroupRef from ResponseDefinitions
  */
 class AppApiController extends OCSController {
@@ -126,7 +125,7 @@ class AppApiController extends OCSController {
 	/**
 	 * Returns all Nextcloud groups the current user belongs to, with their Olvid discussion status
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupBasic>}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroup>}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[NoAdminRequired]
@@ -154,7 +153,7 @@ class AppApiController extends OCSController {
 	/**
 	 * Returns all Nextcloud groups with their Olvid discussion configuration and member list
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroup>}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupFull>}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/groups')]
@@ -180,7 +179,7 @@ class AppApiController extends OCSController {
 				'displayName' => $group->getDisplayName(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'customName' => $olvidGroup?->getDiscussionName() ?? null,
-				'description' => $olvidGroup?->getDiscussionDescription() ?? '',
+				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
 				'photoUid' => $photoUidBytes !== null ? base64_encode($photoUidBytes) : null,
 				'members' => $members,
 			];
@@ -192,8 +191,7 @@ class AppApiController extends OCSController {
 	 * Creates a new Nextcloud group
 	 *
 	 * @param string $id Group ID (must be unique and non-empty)
-	 * @return DataResponse<Http::STATUS_OK, OlvidGroup, array{}>
-	 * @throws \OCP\DB\Exception
+	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'POST', url: '/app/groups')]
@@ -208,30 +206,17 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'group already exists'], Http::STATUS_BAD_REQUEST);
 		}
 
+		// create nextcloud group
 		$nextcloudGroup = $this->groupManager->createGroup($groupId);
-
-		// create olvid group
-		$olvidGroup = OlvidGroup::create($groupId);
-		$olvidGroup = $this->db->group->insertOrUpdate($olvidGroup);
-
-		$photoUidBytes = $olvidGroup->getGroupPhotoUid();
-		$members = [];
-		foreach ($nextcloudGroup->getUsers() as $member) {
-			$members[] = [
-				'id' => $member->getUID(),
-				'displayName' => $member->getDisplayName(),
-				'useOlvid' => $this->olvidUserConfig->hasIdentity($member->getUID()),
-			];
-		}
 
 		return new DataResponse([
 			'id' => $groupId,
 			'displayName' => $nextcloudGroup->getDisplayName(),
-			'enabled' => $olvidGroup->getEnabled() ?? false,
-			'customName' => $olvidGroup->getDiscussionName() ?? null,
-			'description' => $olvidGroup->getDiscussionDescription() ?? '',
-			'photoUid' => $photoUidBytes !== null ? base64_encode($photoUidBytes) : null,
-			'members' => $members,
+			'enabled' => false,
+			'customName' => null,
+			'description' => null,
+			'photoUid' => null,
+			'members' => [],
 		]);
 	}
 
@@ -242,7 +227,7 @@ class AppApiController extends OCSController {
 	 * @param bool|null $enabled Enable or disable the Olvid discussion for this group
 	 * @param string|null $customName Override the discussion display name (null clears the override)
 	 * @param string|null $description Discussion description
-	 * @return DataResponse<Http::STATUS_OK, OlvidGroup, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]

@@ -17,6 +17,7 @@ namespace OCA\Olvid;
  *   isAdmin: bool,
  * }
  *
+ * TODO is this structure really necessary ? Rename to OlvidUserMinimalist ?
  * @psalm-type OlvidUser = array{
  *   id: string,
  *   displayName: string,
@@ -33,21 +34,22 @@ namespace OCA\Olvid;
  *   company: string,
  * }
  *
+ * TODO is this structure really necessary ? Rename to OlvidGroupMinimalist ?
  * @psalm-type OlvidGroup = array{
+ *    id: string,
+ *    displayName: string,
+ *    enabled: bool,
+ *    photoUid: string|null,
+ *  }
+ *
+ * @psalm-type OlvidGroupFull = array{
  *   id: string,
  *   displayName: string,
  *   enabled: bool,
  *   customName: string|null,
- *   description: string,
+ *   description: string|null,
  *   photoUid: string|null,
  *   members: list<OlvidUser>,
- * }
- *
- * @psalm-type OlvidGroupBasic = array{
- *   id: string,
- *   displayName: string,
- *   enabled: bool,
- *   photoUid: string|null,
  * }
  *
  * @psalm-type OlvidGroupRef = array{

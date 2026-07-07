@@ -67,12 +67,18 @@
 			v-if="deleteTarget"
 			:name="t('olvid', 'Delete user')"
 			:open="!!deleteTarget"
-			@update:open="deleteTarget = null">
+			@update:open="closeDeleteDialog">
 			<p>{{ t('olvid', 'Are you sure you want to delete {name}? This action cannot be undone.', { name: deleteTarget.displayName }) }}</p>
+			<NcCheckboxRadioSwitch :checked.sync="deleteRevoke" class="users-view__revoke-checkbox">
+				{{ t('olvid', 'This Olvid profile was lost or replaced') }}
+			</NcCheckboxRadioSwitch>
+			<p class="users-view__revoke-checkbox-desc">
+				{{ t('olvid', 'Warning: this action is not reversible. The Olvid identity will be blocked for every other users in this directory. They will no longer be able to reach the user through this identity, and it can never be re-registered. He will need to create a new Olvid profile and re-enroll.') }}
+			</p>
 			<template #actions>
-				<NcButton @click="deleteTarget = null">{{ t('olvid', 'Cancel') }}</NcButton>
+				<NcButton @click="closeDeleteDialog">{{ t('olvid', 'Cancel') }}</NcButton>
 				<NcButton type="error" :disabled="deleting" @click="executeDelete">
-					{{ deleting ? t('olvid', 'Deleting…') : t('olvid', 'Delete') }}
+					{{ deleting ? t('olvid', 'Deleting…') : (deleteRevoke ? t('olvid', 'Delete and block') : t('olvid', 'Delete')) }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -85,6 +91,7 @@ import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
@@ -95,7 +102,7 @@ import OlvidAvatar from '../components/OlvidAvatar.vue'
 
 export default {
 	name: 'UsersView',
-	components: { NcAppContent, NcButton, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal },
+	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal },
 
 	emits: ['open-user-sidebar'],
 
@@ -108,6 +115,7 @@ export default {
 			loadingMagicLink: null,
 			showCreateModal: false,
 			deleteTarget: null,
+			deleteRevoke: false,
 			deleting: false,
 		}
 	},
@@ -161,13 +169,18 @@ export default {
 			this.deleteTarget = user
 		},
 
+		closeDeleteDialog() {
+			this.deleteTarget = null
+			this.deleteRevoke = false
+		},
+
 		async executeDelete() {
 			if (!this.deleteTarget) return
 			this.deleting = true
 			try {
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}`))
+				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}`), { data: { revoke: this.deleteRevoke } })
 				this.removeUser(this.deleteTarget.id)
-				this.deleteTarget = null
+				this.closeDeleteDialog()
 			} catch (e) {
 				console.error('Could not delete user', e)
 			} finally {
@@ -213,6 +226,18 @@ export default {
 		list-style: none;
 		padding: 0;
 		margin: 0;
+	}
+
+	&__revoke-checkbox {
+		margin-top: 12px;
+	}
+
+	&__revoke-checkbox-desc {
+		margin: 4px 0 0;
+		padding-inline-start: 28px;
+		color: var(--color-text-maxcontrast);
+		font-size: 0.875em;
+		line-height: 1.4;
 	}
 }
 </style>

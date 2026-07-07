@@ -161,6 +161,36 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				// sign user details and store them
 				$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
 				$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
+
+				// recompute all groups blob for this user enabled groups
+				$nextcloudGroups = $this->groupManager->getUserGroups($nextcloudUser);
+				foreach ($nextcloudGroups as $nextcloudGroup) {
+					// check group exists / is enabled
+					$olvidGroup = $this->db->group->findByGroupIdOrNull($nextcloudGroup->getGID());
+					if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
+						continue;
+					}
+
+					try {
+						// get olvid group
+						// re-compute blob and save in db
+						$blob = JsonGroupBlob::computeBlob($olvidGroup, $nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
+						$signedBlob = $blob->sign($this->olvidAppConfig);
+						$olvidGroup->setSignedGroupBlob($signedBlob);
+						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+						$this->db->group->update($olvidGroup);
+					} catch (Exception $e) {
+						$this->logger->error('putKey: cannot update group blob: ' . $nextcloudGroup->getGID(), ['exception' => $e]);
+						continue;
+					}
+					// notify group members
+					try {
+						$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
+					} catch (Exception) {
+						$this->logger->warning('putKey: send group update notification: ' . $nextcloudGroup->getGID());
+						continue;
+					}
+				}
 			}
 
 			// delete any magic token for this user

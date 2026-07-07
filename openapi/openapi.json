@@ -445,7 +445,7 @@
                     }
                 }
             },
-            "GroupBasic": {
+            "Group": {
                 "type": "object",
                 "required": [
                     "id",
@@ -531,6 +531,7 @@
             "get": {
                 "operationId": "app_api-me-get",
                 "summary": "Returns the current user's Olvid profile fields and admin status",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -618,6 +619,7 @@
             "put": {
                 "operationId": "app_api-me-put",
                 "summary": "Updates the current user's Olvid profile fields",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -739,6 +741,7 @@
             "get": {
                 "operationId": "app_api-me-get-magic-link",
                 "summary": "Generates a magic link (configuration URL) to enroll the current user's Olvid identity",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -801,6 +804,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Current user is not logged in",
                         "content": {
@@ -836,6 +849,7 @@
             "delete": {
                 "operationId": "app_api-me-identity-delete",
                 "summary": "Unlinks the current user's Olvid identity from this directory When $revoke is true the identity is also permanently blocked for all contacts",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -948,6 +962,7 @@
             "get": {
                 "operationId": "app_api-me-groups",
                 "summary": "Returns all Nextcloud groups the current user belongs to, with their Olvid discussion status",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -1001,7 +1016,7 @@
                                                         "groups": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/components/schemas/GroupBasic"
+                                                                "$ref": "#/components/schemas/Group"
                                                             }
                                                         }
                                                     }
@@ -1048,6 +1063,7 @@
             "get": {
                 "operationId": "app_api-groups-avatar-get",
                 "summary": "Returns the avatar image for a group. Requires a valid photoUid query parameter The photoUid acts as a cache-buster; clients should update the URL when it changes",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -1101,6 +1117,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Current user is not logged in",
                         "content": {
@@ -1136,6 +1162,7 @@
             "delete": {
                 "operationId": "app_api-users-identity-delete",
                 "summary": "Unlinks the Olvid identity of a specific user When $revoke is true the identity is also permanently blocked for all contacts",
+                "description": "PhpUnused",
                 "tags": [
                     "app_api"
                 ],
@@ -1322,29 +1349,9 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "text/plain": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    }
+                                    "type": "string"
                                 }
                             }
                         }
@@ -1356,6 +1363,7 @@
             "get": {
                 "operationId": "directory_api-openid",
                 "summary": "Legacy well-known endpoint; only jwks_uri field is actively used by Olvid clients",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
@@ -1418,6 +1426,7 @@
             "get": {
                 "operationId": "directory_api-olvid",
                 "summary": "Olvid directory discovery: supported API version and minimum client build numbers",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
@@ -1480,6 +1489,7 @@
             "get": {
                 "operationId": "directory_api-jwks",
                 "summary": "JWKS endpoint — exposes the server's EC public key for client signature verification",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
@@ -1542,6 +1552,7 @@
             "post": {
                 "operationId": "directory_api-get-magic-session",
                 "summary": "Exchanges a per-user magic token for a short-lived bearer session token (1 hour)",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
@@ -1633,6 +1644,7 @@
             "get": {
                 "operationId": "directory_api-me-get",
                 "summary": "Returns the caller's directory profile, API key, push topics, and pending revocations Used on identity creation (GET variant)",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
@@ -1719,6 +1731,7 @@
             "post": {
                 "operationId": "directory_api-me-post",
                 "summary": "Returns the caller's directory profile, API key, push topics, and pending revocations Used on subsequent syncs (POST variant)",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
@@ -1811,6 +1824,7 @@
             "post": {
                 "operationId": "directory_api-put-key",
                 "summary": "Registers or replaces the caller's Olvid identity (base64-encoded) in the directory",
+                "description": "PhpUnused",
                 "tags": [
                     "directory_api"
                 ],
