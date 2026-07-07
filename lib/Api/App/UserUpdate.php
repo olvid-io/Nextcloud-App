@@ -8,7 +8,7 @@ use OCA\Olvid\Utils\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
-use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\DataResponse;
 use OCP\IRequest;
 use OCP\IUser;
 use Psr\Log\LoggerInterface;
@@ -23,7 +23,7 @@ class UserUpdate {
 	) {
 	}
 
-	public function handle(IUser $user, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): JSONResponse {
+	public function handle(IUser $user, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): DataResponse {
 		$previousUserDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
 
 		// update details
@@ -45,9 +45,9 @@ class UserUpdate {
 			$updated = true;
 		}
 
-		// details did not changed, stop here
+		// details did not change, stop here
 		if (!$updated) {
-			return new JSONResponse([]);
+			return new DataResponse([]);
 		}
 
 		// re-compute details and sign them
@@ -66,6 +66,6 @@ class UserUpdate {
 			}
 		}
 
-		return new JSONResponse();
+		return new DataResponse();
 	}
 }

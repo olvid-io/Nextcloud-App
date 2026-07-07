@@ -95,7 +95,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 						$olvidGroup->setSignedGroupBlob($signedBlob);
 						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 						$this->db->group->update($olvidGroup);
-					} catch (Exception) {
+					} catch (Exception $e) {
 						$this->logger->error('putKey: cannot update group blob: ' . $nextcloudGroup->getGID(), ['exception' => $e]);
 						continue;
 					}

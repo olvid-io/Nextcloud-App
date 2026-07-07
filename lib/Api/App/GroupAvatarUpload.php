@@ -17,7 +17,8 @@ use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
-use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\Exception;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -50,25 +51,18 @@ class GroupAvatarUpload {
 	) {
 	}
 
-	public function handle(string $groupId): JSONResponse {
+	public function handle(string $groupId, $photoData): DataResponse {
 		// Validate the Nextcloud group exists
 		$nextcloudGroup = $this->groupManager->get($groupId);
 		if ($nextcloudGroup === null) {
-			return new JSONResponse(['error' => 'group not found'], 404);
-		}
-
-		// Parse and decode the base64 JPEG data URL
-		$body = json_decode(file_get_contents('php://input'), true) ?? [];
-		$photoData = $body['photoData'] ?? null;
-		if (!is_string($photoData) || $photoData === '') {
-			return new JSONResponse(['error' => 'photoData is required'], 400);
+			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
 
 		// Strip the "data:image/<type>;base64," prefix and decode
 		$base64 = preg_replace('/^data:image\/\w+;base64,/', '', $photoData);
 		$jpegBytes = base64_decode($base64, true);
 		if ($jpegBytes === false || strlen($jpegBytes) === 0) {
-			return new JSONResponse(['error' => 'invalid image data'], 400);
+			return new DataResponse(['error' => 'invalid image data'], Http::STATUS_BAD_REQUEST);
 		}
 
 		// Generate a new UID + AuthEncAES256ThenSHA256 key
@@ -78,7 +72,7 @@ class GroupAvatarUpload {
 		$encKey = RandomUtil::random_bytes(32);
 		if ($photoUid === null || $macKey === null || $encKey === null) {
 			$this->logger->error('GroupAvatarUpload: failed to generate random bytes');
-			return new JSONResponse(['error' => 'server crypto error'], 500);
+			return new DataResponse(['error' => 'server crypto error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		// Encode the key as an Olvid AuthEncAES256ThenSHA256 key (type 0x90) so the
@@ -124,7 +118,7 @@ class GroupAvatarUpload {
 					if ($olvidGroup->getPushTopic() !== null) {
 						$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
 					} else {
-						$this->logger->warning("GroupAvatarUpload: no push topic to notify group members");
+						$this->logger->warning('GroupAvatarUpload: no push topic to notify group members');
 					}
 				}
 			} catch (OlvidServerException|InvalidConfigurationException $exception) {
@@ -132,10 +126,10 @@ class GroupAvatarUpload {
 			}
 		} catch (Exception $e) {
 			$this->logger->error('GroupAvatarUpload: DB error', ['exception' => $e]);
-			return new JSONResponse(['error' => 'database error'], 500);
+			return new DataResponse(['error' => 'database error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		// Return the new photo UID so the frontend can update the ?v= cache-buster
-		return new JSONResponse(['photoUid' => base64_encode($photoUid)]);
+		return new DataResponse(['photoUid' => base64_encode($photoUid)]);
 	}
 }

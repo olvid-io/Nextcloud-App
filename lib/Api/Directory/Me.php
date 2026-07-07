@@ -9,6 +9,7 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -73,7 +74,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 				$this->logger->error('Me: cannot create global push topic: ', ['exception' => $e]);
 			}
 		}
-		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : [];
+		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : null;
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
 		if ($userDetails->identity) {
@@ -89,9 +90,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$signedRevocations = $this->db->revocation->findSignedRevocationsSinceTimestampOrNull($timestamp);
 
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) { return $revocation->getSignature(); }, $signedRevocations ?? []);
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS]) !== 0 ? $response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] : null;
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;
 
-		return new JSONResponse($response, 200);
+		return new JSONResponse($response, Http::STATUS_OK);
 	}
 }

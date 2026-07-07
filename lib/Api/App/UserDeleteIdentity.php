@@ -14,7 +14,8 @@ use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
-use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataResponse;
 use OCP\IGroupManager;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -34,7 +35,7 @@ class UserDeleteIdentity {
 	/**
 	 * @throws \OCP\DB\Exception
 	 */
-	public function handle(string $userId, bool $revoke): JSONResponse {
+	public function handle(string $userId, bool $revoke): DataResponse {
 		$user = $this->userManager->get($userId);
 
 		// delete any cached signed details (ignore exception)
@@ -52,7 +53,7 @@ class UserDeleteIdentity {
 		// check user use Olvid
 		$userIdentity = $this->olvidUserConfig->getB64Identity($userId);
 		if ($userIdentity === null) {
-			return new JSONResponse([], 400);
+			return new DataResponse(null, Http::STATUS_NOT_FOUND);
 		}
 
 		// remove user from Olvid groups (ignore exceptions)
@@ -121,6 +122,6 @@ class UserDeleteIdentity {
 			$this->logger->error('UserDeleteIdentity: cannot revoke session', ['exception' => $exception]);
 		}
 
-		return new JSONResponse([]);
+		return new DataResponse(null, Http::STATUS_OK);
 	}
 }

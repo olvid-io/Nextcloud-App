@@ -12,12 +12,13 @@ use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
-use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
+use OCP\AppFramework\OCSController;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IGroupManager;
@@ -27,7 +28,8 @@ use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 // TODO TODEL
-class DebugApiController extends ApiController {
+#[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
+class DebugApiController extends OCSController {
 	public function __construct(
 		string $appName,
 		IRequest $request,

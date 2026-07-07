@@ -15,6 +15,9 @@ use OCP\IUser;
  * POST /olvid-rest/groups
  */
 class Groups extends AbstractAuthenticatedDeviceApiHandler {
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// parse request (don't fail on parse error)
 		try {

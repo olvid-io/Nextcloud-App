@@ -6,9 +6,10 @@ namespace OCA\Olvid\Api\App;
 
 use OCA\Olvid\Db\OlvidDataMapper;
 use OCA\Olvid\Db\OlvidGroupMapper;
-use OCA\Olvid\Http\ImageResponse;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataDisplayResponse;
+use OCP\DB\Exception;
 
 /**
  * GET /app/groups/{groupId}/avatar?photoUid=
@@ -27,19 +28,23 @@ class GroupAvatarGet {
 	) {
 	}
 
-	public function handle(string $groupId, string $b64PhotoUid): Response {
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
+	public function handle(string $groupId, string $b64PhotoUid): DataDisplayResponse {
 		// Load the OlvidGroup
 		$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($groupId);
 		if ($olvidGroup === null || $olvidGroup->getGroupPhotoUid() === null) {
-			return new JSONResponse(['error' => 'not found'], 404);
+			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
 		}
 
 		// get photo by UID (this checks user got access to the current avatar ID)
 		$olvidData = $this->olvidDataMapper->getByUidOrNull($b64PhotoUid);
 		if ($olvidData === null) {
-			return new JSONResponse(['error' => 'not found'], 404);
+			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
 		}
 
-		return new ImageResponse($olvidData->getData());
+		return new DataDisplayResponse($olvidData->getData(), Http::STATUS_OK);
 	}
 }

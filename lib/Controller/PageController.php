@@ -15,6 +15,7 @@ use OCP\AppFramework\Http\TemplateResponse;
 /**
  * @psalm-suppress UnusedClass
  */
+#[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
 class PageController extends Controller {
 	#[NoCSRFRequired]
 	#[NoAdminRequired]

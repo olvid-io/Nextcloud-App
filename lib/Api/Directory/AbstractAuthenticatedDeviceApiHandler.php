@@ -15,14 +15,14 @@ use OCP\IUser;
  * Authenticate with an Olvid bearer token (jwt)
  */
 abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHandler {
-	public function handle(): Response {
+	public function handle(?array $jsonParameters = null): Response {
 		// check authentication
 		$this->user = $this->requiresAuth();
 		if ($this->user === null) {
 			return AbstractDeviceApiHandler::permissionDenied();
 		}
 
-		return parent::handle();
+		return parent::handle($jsonParameters);
 	}
 
 	private function requiresAuth(): ?IUser {

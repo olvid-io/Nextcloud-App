@@ -40,13 +40,15 @@ abstract class AbstractDeviceApiHandler {
 	) {
 	}
 
-	public function handle(): Response {
-		// parse json payload
-		try {
-			$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
-		} catch (Exception $exception) {
-			$this->logger->error(get_class($this) . ': cannot parse request: ', ['exception' => $exception]);
-			return $this->internalError();
+	public function handle(?array $jsonParameters = null): Response {
+		// parse json payload from php://input when no params injected by the controller
+		if ($jsonParameters === null) {
+			try {
+				$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
+			} catch (Exception $exception) {
+				$this->logger->error(get_class($this) . ': cannot parse request: ', ['exception' => $exception]);
+				return $this->internalError();
+			}
 		}
 
 		try {
@@ -64,7 +66,7 @@ abstract class AbstractDeviceApiHandler {
 	// standard responses
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	public static function success(): JSONResponse {
-		return new JSONResponse(['status' => BaseJsonResponse::STATUS_SUCCESS], 200);
+		return new JSONResponse(['status' => BaseJsonResponse::STATUS_SUCCESS], Http::STATUS_OK);
 	}
 
 	// error responses for devices
@@ -97,6 +99,6 @@ abstract class AbstractDeviceApiHandler {
 		$response->message = $message;
 		$response->error = $errorCode;
 		$response->status = BaseJsonResponse::STATUS_ERROR;
-		return new JSONResponse($response, 200);
+		return new JSONResponse($response, Http::STATUS_OK);
 	}
 }

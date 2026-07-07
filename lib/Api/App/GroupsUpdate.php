@@ -4,7 +4,6 @@ namespace OCA\Olvid\Api\App;
 
 use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Db\OlvidGroup;
-use OCA\Olvid\Db\OlvidGroupMapper;
 use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\OlvidServer\InvalidConfigurationException;
@@ -12,8 +11,8 @@ use OCA\Olvid\Utils\OlvidServer\OlvidServer;
 use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\OlvidUserConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
-use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\Exception;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -31,7 +30,7 @@ class GroupsUpdate {
 	) {
 	}
 
-	public function handle(string $groupId): Response {
+	public function handle(string $groupId, ?bool $enabled, ?string $customName, ?string $description): DataResponse {
 		// group status (enable/disabled) have been changed in this update
 		$enableStatusChanged = false;
 		// if the push topic is new we notify users individually, as they do not had time to register to it
@@ -40,7 +39,7 @@ class GroupsUpdate {
 		try {
 			$nextcloudGroup = $this->groupManager->get($groupId);
 			if ($nextcloudGroup === null) {
-				return new JSONResponse(['error' => 'group not found'], 404);
+				return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 			}
 
 			// get or create OlvidGroup entity in database
@@ -49,22 +48,20 @@ class GroupsUpdate {
 				$olvidGroup = OlvidGroup::create($groupId);
 			}
 
-			// update group fields
-			$request = json_decode(file_get_contents('php://input'), true) ?? [];
-			if (isset($request['enabled']) && $request['enabled'] !== $olvidGroup->getEnabled()) {
-				$olvidGroup->setEnabled($request['enabled']);
+			if ($enabled !== null && $enabled !== $olvidGroup->getEnabled()) {
+				$olvidGroup->setEnabled($enabled);
 				$enableStatusChanged = true;
 			}
-			if (array_key_exists('customName', $request) && $request['customName'] !== $olvidGroup->getDiscussionName()) {
-				$olvidGroup->setDiscussionName((string)$request['customName']);
+			if ($customName !== null && $customName !== $olvidGroup->getDiscussionName()) {
+				$olvidGroup->setDiscussionName($customName);
 			}
-			if (array_key_exists('description', $request) && $request['description'] !== $olvidGroup->getDiscussionDescription()) {
-				$olvidGroup->setDiscussionDescription((string)$request['description']);
+			if ($description !== null && $description !== $olvidGroup->getDiscussionDescription()) {
+				$olvidGroup->setDiscussionDescription($description);
 			}
 
 			// if nothing changed we can end now
 			if (count($olvidGroup->getUpdatedFields()) === 0) {
-				return new Response(200);
+				return new DataResponse(null, Http::STATUS_OK);
 			}
 
 			// group was enabled or disabled, manage groupDeletion in database
@@ -123,10 +120,10 @@ class GroupsUpdate {
 				$this->logger->error('GroupsUpdate: cannot send notifications: ' . $exception->getMessage());
 			}
 
-			return new JSONResponse($olvidGroup);
+			return new DataResponse($olvidGroup);
 		} catch (Exception $exception) {
 			$this->logger->error('Unexpected exception', ['exception' => $exception]);
-			return new JSONResponse([], 500);
+			return new DataResponse(['error' => 'internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
 
