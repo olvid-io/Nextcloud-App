@@ -45,7 +45,7 @@ class UserGetMagicLink {
 
 			// build the magic link url
 			$serverUrl = $this->appConfig->getOlvidServerUrl() ?? '';
-			$nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('olvid.ocs.olvid');
+			$nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('olvid.directoryApi.index');
 
 			// compute magic link payload
 			$payload = [

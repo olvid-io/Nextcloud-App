@@ -423,7 +423,7 @@ class AppApiController extends OCSController {
 			'lastname' => $this->olvidUserConfig->getLastname($uid),
 			'position' => $this->olvidUserConfig->getPosition($uid),
 			'company' => $this->olvidUserConfig->getCompany($uid),
-		]);
+		], Http::STATUS_OK);
 	}
 
 	/**
