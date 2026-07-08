@@ -178,7 +178,12 @@ export default {
 			if (!this.deleteTarget) return
 			this.deleting = true
 			try {
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}`), { data: { revoke: this.deleteRevoke } })
+				// to revoke identity call the specific endpoint before deleting user
+				if (this.deleteRevoke) {
+					await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}/identity`), { data: { revoke: this.deleteRevoke } })
+				}
+				// delete nextcloud user
+				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}`))
 				this.removeUser(this.deleteTarget.id)
 				this.closeDeleteDialog()
 			} catch (e) {

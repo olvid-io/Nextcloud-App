@@ -448,17 +448,16 @@ class AppApiController extends OCSController {
 	}
 
 	/**
-	 * Deletes a Nextcloud user. Optionally revokes their Olvid identity first
+	 * Deletes a Nextcloud user.
 	 * Cannot be used to delete the currently authenticated user
 	 *
 	 * @param string $userId User ID (URL path)
-	 * @param bool $revoke Permanently revoke the user's Olvid identity before deletion (irreversible)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @throws \OCP\DB\Exception
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}')]
-	public function deleteUser(string $userId, bool $revoke = false): DataResponse {
+	public function deleteUser(string $userId): DataResponse {
 		if ($userId === $this->userId) {
 			return new DataResponse(['error' => 'Cannot delete yourself'], Http::STATUS_BAD_REQUEST);
 		}
@@ -466,7 +465,6 @@ class AppApiController extends OCSController {
 		if ($user === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
-		$this->userDeleteIdentity->handle($userId, $revoke);
 		$user->delete();
 		return new DataResponse([]);
 	}

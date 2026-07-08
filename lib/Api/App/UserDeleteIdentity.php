@@ -56,6 +56,29 @@ class UserDeleteIdentity {
 			return new DataResponse(null, Http::STATUS_NOT_FOUND);
 		}
 
+		// revoke identity
+		try {
+			if ($revoke) {
+				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_REVOKE_ID, $this->olvidAppConfig);
+			} else {
+				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->olvidAppConfig);
+			}
+		} catch (Exception $exception) {
+			$this->logger->error('UserDeleteIdentity: cannot create revocation', ['exception' => $exception]);
+		}
+
+		// sign out user (ignore exception)
+		try {
+			$this->olvidUserConfig->setSessionRevokedBefore($userId, TimeUtil::currentTimeMillis());
+		} catch (Exception $exception) {
+			$this->logger->error('UserDeleteIdentity: cannot revoke session', ['exception' => $exception]);
+		}
+
+		// delete user identity, nonce and signed details
+		$this->olvidUserConfig->unsetIdentity($userId);
+		$this->olvidUserConfig->unsetNonce($userId);
+		$this->olvidUserConfig->unsetSignedDetails($userId);
+
 		// remove user from Olvid groups (ignore exceptions)
 		$nextcloudGroups = $this->groupManager->getUserGroups($user);
 		foreach ($nextcloudGroups as $nextcloudGroup) {
@@ -88,29 +111,6 @@ class UserDeleteIdentity {
 				$this->logger->error('UserDeleteIdentity: cannot kick user from group', ['exception' => $exception]);
 			}
 		}
-
-		// revoke identity
-		try {
-			if ($revoke) {
-				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_REVOKE_ID, $this->olvidAppConfig);
-			} else {
-				$this->db->revocation->computeAndSaveRevocation($userId, $this->olvidUserConfig->getB64Identity($userId), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->olvidAppConfig);
-			}
-		} catch (Exception $exception) {
-			$this->logger->error('UserDeleteIdentity: cannot create revocation', ['exception' => $exception]);
-		}
-
-		// sign out user (ignore exception)
-		try {
-			$this->olvidUserConfig->setSessionRevokedBefore($userId, TimeUtil::currentTimeMillis());
-		} catch (Exception $exception) {
-			$this->logger->error('UserDeleteIdentity: cannot revoke session', ['exception' => $exception]);
-		}
-
-		// delete user identity, nonce and signed details
-		$this->olvidUserConfig->unsetIdentity($userId);
-		$this->olvidUserConfig->unsetNonce($userId);
-		$this->olvidUserConfig->unsetSignedDetails($userId);
 
 		// notify every user (ignore exception)
 		try {
