@@ -28,6 +28,7 @@ class PageController extends Controller {
 		);
 	}
 
+	/** @noinspection PhpUnused */
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[OpenAPI(OpenAPI::SCOPE_IGNORE)]

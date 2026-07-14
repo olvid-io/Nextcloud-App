@@ -10,7 +10,7 @@ class JsonGroupDeletionData implements JsonSerializable {
 	use JsonSerializableTrait;
 
 	#[JsonField('groupUid', isBytes: true)]
-	public ?string $groupUid = null;
+	public ?string $bytesGroupUid = null;
 
 	#[JsonField('timestamp')]
 	public int $timestamp = 0;

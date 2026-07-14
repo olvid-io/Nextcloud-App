@@ -5,39 +5,28 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\Directory;
 
 use Exception;
-use OCA\Olvid\Db\OlvidDatabase;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidServer\OlvidServer;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
-use OCP\Accounts\IAccountManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\IAppConfig;
-use OCP\IConfig;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
-use OCP\IUserManager;
 use OCP\Lock\ILockingProvider;
 use Psr\Log\LoggerInterface;
 
+/*
+ * DeviceApi:
+ *   Entrypoint called by client applications to interact with directory.
+ *   This API (mostly) use json as input/output format.
+ */
 abstract class AbstractDeviceApiHandler {
 	protected ?IUser $user = null;
 
 	public function __construct(
 		protected readonly IRequest $request,
 		protected readonly LoggerInterface $logger,
-		protected readonly IConfig $config,
-		protected readonly IAppConfig $appConfig,
-		protected readonly IUserManager $userManager,
-		protected readonly IGroupManager $groupManager,
-		protected readonly IAccountManager $accountManager,
 		protected readonly ILockingProvider $lockingProvider,
-		protected readonly OlvidUserConfigManager $olvidUserConfig,
-		protected readonly OlvidAppConfigManager $olvidAppConfig,
-		protected readonly OlvidDatabase $db,
-		protected readonly OlvidServer $olvidServer,
+		protected readonly OlvidContext $context,
 	) {
 	}
 

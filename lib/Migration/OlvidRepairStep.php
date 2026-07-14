@@ -49,7 +49,7 @@ class OlvidRepairStep implements IRepairStep {
 		$this->syncEveryoneGroup();
 	}
 
-	private function createJwks(IOutput $output) {
+	private function createJwks(IOutput $output): void {
 		$keyId = $this->olvidAppConfig->getJwkKeyId();
 		if (!$keyId) {
 			$output->info('Olvid: Create a new JWKS key');

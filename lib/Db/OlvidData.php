@@ -17,58 +17,51 @@ use OCP\DB\Types;
  * different even though the underlying data has not changed.
  *
  * Fields:
- *   data_uid          – base64-encoded 32-byte UID used as the lookup key.
- *                       Stored as a VARCHAR so it can be indexed efficiently.
- *   encoded_data_key  – Olvid Encoded AuthEncAES256ThenSHA256 symmetric key
- *                       Use Encoded::encodeSymmetricKey /
- *                       Encoded::decodeSymmetricKey to read/write this field.
- *                       Dictionary entries: "mackey" (32 bytes HMAC-SHA256 key)
- *                       and "enckey" (32 bytes AES-256 key).
- *   data              – raw plaintext blob supplied by the device at store time.
+ *  bytes_data_uid: base64-encoded 32-byte UID used as the lookup key.
+ *  bytes_encoded_data_key: Olvid Encoded AuthEncAES256ThenSHA256 symmetric key
+ *    Use Encoded::encodeSymmetricKey /
+ *    Encoded::decodeSymmetricKey to read/write this field.
+ *    Dictionary entries: "mackey" (32 bytes HMAC-SHA256 key)
+ *    and "enckey" (32 bytes AES-256 key).
+ *  bytes_data: raw plaintext blob supplied by the device at store time.
+ *
+ * @method string getBytesDataUid()
+ * @method void setBytesDataUid(string $dataUid)
+ * @method string getBytesEncodedKey()
+ * @method void setBytesEncodedKey(string $identity)
+ * @method string getBytesData()
+ * @method void setBytesData(string $bytesData)
  */
 class OlvidData extends Entity {
-	/** @var string Base64-encoded 32-byte UID (see Constants::UID_SIZE). */
-	protected string $dataUid = '';
+	/** @var string */
+	protected string $bytesDataUid = '';
 
-	/**
-	 * @var string Olvid-encoded AuthEncAES256ThenSHA256 key (binary, type 0x90).
-	 *             Decoded via Encoded::decodeSymmetricKey() to obtain mackey/enckey.
-	 */
-	protected string $encodedDataKey = '';
+	/** @var string Olvid-encoded AuthEncAES256ThenSHA256 key */
+	protected string $bytesEncodedKey = '';
 
-	/** @var string Raw plaintext stored by the device via storeData. */
-	protected string $data = '';
+	/** @var string */
+	protected string $bytesData = '';
 
 	public function __construct() {
-		$this->addType('dataUid', Types::STRING);
-		$this->addType('encodedDataKey', Types::BLOB);
-		$this->addType('data', Types::BLOB);
+		$this->addType('bytesDataUid', Types::BLOB);
+		$this->addType('bytesEncodedKey', Types::BLOB);
+		$this->addType('bytesData', Types::BLOB);
 	}
 
-	public function getDataUid(): string {
-		return $this->dataUid;
+	public function jsonSerialize(): array {
+		return [
+			'bytesDataUid' => base64_encode($this->bytesDataUid),
+			'bytesEncodedDataKey' => base64_encode($this->bytesEncodedKey),
+			'bytesData' => base64_encode($this->bytesData)
+		];
 	}
 
-	public function setDataUid(string $dataUid): void {
-		$this->dataUid = $dataUid;
-		$this->markFieldUpdated('dataUid');
-	}
-
-	public function getEncodedDataKey(): string {
-		return $this->encodedDataKey;
-	}
-
-	public function setEncodedDataKey(string $encodedDataKey): void {
-		$this->encodedDataKey = $encodedDataKey;
-		$this->markFieldUpdated('encodedDataKey');
-	}
-
-	public function getData(): string {
-		return $this->data;
-	}
-
-	public function setData(string $data): void {
-		$this->data = $data;
-		$this->markFieldUpdated('data');
+	public function __toString(): string {
+		return 'OlvidData{'
+			. 'id=' . $this->getId()
+			. ', bytesDataUid=' . base64_encode($this->bytesDataUid)
+			. ', bytesEncodedDataKey=' . base64_encode($this->bytesEncodedKey)
+			. ', bytesData=' . base64_encode($this->bytesData)
+			. '}';
 	}
 }

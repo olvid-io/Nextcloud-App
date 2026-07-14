@@ -261,7 +261,7 @@ export default {
 				position: res.data.position ?? '',
 				company: res.data.company ?? '',
 			}
-			if (res.data.olvidIdentityUploaded) {
+			if (res.data.useOlvid) {
 				this.step = 'registered'
 				await this.fetchGroups()
 			}
@@ -313,7 +313,7 @@ export default {
 			this.pollInterval = setInterval(async () => {
 				try {
 					const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
-					if (res.data.olvidIdentityUploaded) {
+					if (res.data.useOlvid) {
 						this.stopPolling()
 						this.form = {
 							firstname: res.data.firstname ?? '',

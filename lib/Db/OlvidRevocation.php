@@ -7,162 +7,62 @@ namespace OCA\Olvid\Db;
 use OCP\AppFramework\Db\Entity;
 use OCP\DB\Types;
 
+/**
+ * @method string getUserId()
+ * @method void setUserId(string $userId)
+ * @method string getBytesIdentity()
+ * @method void setBytesIdentity(string $identity)
+ * @method int getRevocationType()
+ * @method void setRevocationType(int $revocationType)
+ * @method string getSignedRevocation()
+ * @method void setSignedRevocation(string $signedRevocation)
+ * @method int getTimestamp()
+ * @method void setTimestamp(int $timestamp)
+ */
 class OlvidRevocation extends Entity {
-	protected string $olvidId = '';
+	protected string $userId = '';
+	protected string $bytesIdentity = '';
+	// initialize to null, else they won't be considered as updated if set to 0
+	protected ?int $revocationType = null;
+	protected string $signedRevocation = '';
 	protected int $timestamp = 0;
-	protected int $revocationType = 0;
-	protected string $signature = '';
-	protected ?string $username = null;
-	protected ?string $firstname = null;
-	protected ?string $lastname = null;
-	protected ?string $mail = null;
-	protected ?string $position = null;
-	protected ?string $company = null;
-	protected ?string $fullSearchString = null;
 
 	public function __construct() {
-		// TODO : this field is olvid identity, rename to identity ? change to blob ?
-		$this->addType('olvidId', Types::STRING);
+		$this->addType('userId', Types::STRING);
+		$this->addType('bytesIdentity', Types::BLOB);
 		$this->addType('timestamp', Types::BIGINT);
 		$this->addType('revocationType', Types::INTEGER);
-		$this->addType('signature', Types::TEXT);
-		// TODO no need to store those info (only used to display revocation history)
-		// TODO we can keep username but rename it to userId
-		$this->addType('username', Types::STRING);
-		$this->addType('firstname', Types::STRING);
-		$this->addType('lastname', Types::STRING);
-		$this->addType('mail', Types::STRING);
-		$this->addType('position', Types::STRING);
-		$this->addType('company', Types::STRING);
-		$this->addType('fullSearchString', Types::STRING);
+		$this->addType('signedRevocation', Types::TEXT);
 	}
 
-	public static function create(string $identity, int $timestamp, int $revocationType, string $signedRevocationData, string $userId): OlvidRevocation {
+	public static function create(string $userId, string $bytesIdentity, int $revocationType, string $signedRevocation, int $timestamp): OlvidRevocation {
 		$revocation = new OlvidRevocation();
-		$revocation->setOlvidId($identity);
+		$revocation->setBytesIdentity($bytesIdentity);
 		$revocation->setTimestamp($timestamp);
 		$revocation->setRevocationType($revocationType);
-		$revocation->setSignature($signedRevocationData);
-		$revocation->setUsername($userId);
+		$revocation->setSignedRevocation($signedRevocation);
+		$revocation->setUserId($userId);
 		return $revocation;
 	}
 
-	public function getOlvidId(): string {
-		return $this->olvidId;
-	}
-
-	public function setOlvidId(string $olvidId): void {
-		$this->olvidId = $olvidId;
-		$this->markFieldUpdated('olvidId');
-	}
-
-	public function getTimestamp(): int {
-		return $this->timestamp;
-	}
-
-	public function setTimestamp(int $timestamp): void {
-		$this->timestamp = $timestamp;
-		$this->markFieldUpdated('timestamp');
-	}
-
-	public function getRevocationType(): int {
-		return $this->revocationType;
-	}
-
-	public function setRevocationType(int $revocationType): void {
-		$this->revocationType = $revocationType;
-		$this->markFieldUpdated('revocationType');
-	}
-
-	public function getSignature(): string {
-		return $this->signature;
-	}
-
-	public function setSignature(string $signature): void {
-		$this->signature = $signature;
-		$this->markFieldUpdated('signature');
-	}
-
-	public function getUsername(): ?string {
-		return $this->username;
-	}
-
-	public function setUsername(?string $username): void {
-		$this->username = $username;
-		$this->markFieldUpdated('username');
-	}
-
-	public function getFirstname(): ?string {
-		return $this->firstname;
-	}
-
-	public function setFirstname(?string $firstname): void {
-		$this->firstname = $firstname;
-		$this->markFieldUpdated('firstname');
-	}
-
-	public function getLastname(): ?string {
-		return $this->lastname;
-	}
-
-	public function setLastname(?string $lastname): void {
-		$this->lastname = $lastname;
-		$this->markFieldUpdated('lastname');
-	}
-
-	public function getMail(): ?string {
-		return $this->mail;
-	}
-
-	public function setMail(?string $mail): void {
-		$this->mail = $mail;
-		$this->markFieldUpdated('mail');
-	}
-
-	public function getPosition(): ?string {
-		return $this->position;
-	}
-
-	public function setPosition(?string $position): void {
-		$this->position = $position;
-		$this->markFieldUpdated('position');
-	}
-
-	public function getCompany(): ?string {
-		return $this->company;
-	}
-
-	public function setCompany(?string $company): void {
-		$this->company = $company;
-		$this->markFieldUpdated('company');
-	}
-
-	public function getFullSearchString(): ?string {
-		return $this->fullSearchString;
-	}
-
-	public function setFullSearchString(?string $fullSearchString): void {
-		$this->fullSearchString = $fullSearchString;
-		$this->markFieldUpdated('fullSearchString');
-	}
-
-	public function recomputeFullSearchString(): void {
-		$parts = [$this->username, $this->firstname, $this->lastname, $this->position, $this->company];
-		$this->setFullSearchString(mb_substr(implode(' ', array_filter($parts)), 0, 255));
+	public function jsonSerialize(): array {
+		return [
+			'userId' => $this->userId,
+			'bytesIdentity' => base64_encode($this->bytesIdentity),
+			'revocationType' => $this->revocationType,
+			'signedRevocation' => $this->signedRevocation,
+			'timestamp' => $this->timestamp
+		];
 	}
 
 	public function __toString(): string {
 		return 'OlvidRevocation{'
 			. 'id=' . $this->getId()
-			. ', olvidId=' . $this->olvidId
-			. ', timestamp=' . $this->timestamp
+			. ', userId=' . $this->userId
+			. ', bytesIdentity=' . base64_encode($this->bytesIdentity)
 			. ', revocationType=' . $this->revocationType
-			. ', username=' . $this->username
-			. ', firstname=' . $this->firstname
-			. ', lastname=' . $this->lastname
-			. ', mail=' . $this->mail
-			. ', position=' . $this->position
-			. ', company=' . $this->company
+			. ', signedRevocation=' . $this->signedRevocation
+			. ', timestamp=' . $this->timestamp
 			. '}';
 	}
 }

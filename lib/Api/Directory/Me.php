@@ -6,7 +6,7 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Models\JsonUserDetails;
+use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http;
@@ -15,10 +15,13 @@ use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Me extends AbstractAuthenticatedDeviceApiHandler {
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// parse request (don't fail on parse error)
 		try {
-			$deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
+			// $deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
 			$timestamp = (int)($jsonParameters[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
 		} catch (Exception $e) {
 			$this->logger->warning('me: parse error: ', ['exception' => $e]);
@@ -26,34 +29,45 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 
 		$currentTimestamp = TimeUtil::currentTimeMillis();
 
+		// get or create the base OlvidUser
+		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID());
+
 		// compute user details
-		$userDetails = JsonUserDetails::computeDetails($nextcloudUser, $this->olvidUserConfig);
+		$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
 
 		// set or update full search string attributes
-		$userDetails->updateFullSearchString($nextcloudUser->getUID(), $this->olvidUserConfig);
+		$olvidUser->setFullSearchField($jsonUserDetails->computeFullSearchString());
 
-		// set signature (compute if necessary)
-		$signature = $this->olvidUserConfig->getSignedDetails($nextcloudUser->getUID());
-		if (!$signature) {
-			$signature = $userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
+		// get signed user details (or sign user details if necessary)
+		if ($olvidUser->getSignedDetails() === null) {
+			$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 		}
-		$response[Constants::ME_RESPONSE_SIGNATURE] = $signature;
+		$response[Constants::ME_RESPONSE_SIGNATURE] = $olvidUser->getSignedDetails();
 
-		// get current api  key, create a new one if there is an identity and no associated api key (fallback)
-		$apiKey = $this->olvidUserConfig->getApiKey($nextcloudUser->getUID());
-		$identity = $this->olvidUserConfig->getB64Identity($nextcloudUser->getUID());
-		if ($identity && !$apiKey) {
+		// if identity was already uploaded create an api key if necessary
+		if ($olvidUser->hasIdentity() && $olvidUser->getApiKey() === null) {
 			// this might fail if an olvid server api have not been set
 			try {
-				$apiKey = $this->olvidServer->requestNewApiKey();
-				$this->olvidUserConfig->setApiKey($nextcloudUser->getUID(), $apiKey);
+				$apiKey = $this->context->olvidServer->requestNewApiKey();
+				$olvidUser->setApiKey($apiKey);
+			} catch (InvalidConfigurationException) {
+				$this->logger->error('Me: cannot create user api key: invalid configuration');
 			} catch (Exception $e) {
-				$this->logger->error('Me: cannot create user api key: ' . $e);
+				$this->logger->error('Me: cannot create user api key: unexpected exception', ['exception' => $e]);
 			}
 		}
-		$response[Constants::ME_RESPONSE_API_KEY] = $apiKey;
+		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getApiKey();
 
-		$response[Constants::ME_RESPONSE_SERVER] = $this->olvidAppConfig->getOlvidServerUrl() ?? '';
+		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
+		if ($olvidUser->hasIdentity() && $olvidUser->getNonce() === null) {
+			$olvidUser->setNonce(RandomUtil::uuid_create());
+			$response[Constants::ME_RESPONSE_NONCE] = base64_encode($olvidUser->getNonce());
+		}
+
+		// save olvid user to database
+		$this->context->db->user->update($olvidUser);
+
+		$response[Constants::ME_RESPONSE_SERVER] = $this->context->nextcloud->appManager->getOlvidServerUrl() ?? '';
 		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = true;
 		$response[Constants::ME_RESPONSE_TRANSFER_RESTRICTED] = false;
 
@@ -63,33 +77,24 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			Constants::ME_RESPONSE_MINIMUM_BUILD_VERSION_IOS_LABEL => Constants::MIN_BUILD_IOS,
 		];
 
-		$globalPushTopic = $this->olvidAppConfig->getGlobalPushTopic();
+		$globalPushTopic = $this->context->nextcloud->appManager->getGlobalPushTopic();
 		// global push topic not set try to request one
 		if (!$globalPushTopic) {
-			// this might fail if an olvid server api have not been set
 			try {
-				$globalPushTopic = $this->olvidServer->requestNewPushTopic();
-				$this->olvidAppConfig->setGlobalPushTopic($globalPushTopic);
+				$globalPushTopic = $this->context->olvidServer->requestNewPushTopic();
+				$this->context->nextcloud->appManager->setGlobalPushTopic($globalPushTopic);
+			} catch (InvalidConfigurationException) {
+				$this->logger->error('Me: cannot create global push topic: invalid configuration');
 			} catch (Exception $e) {
-				$this->logger->error('Me: cannot create global push topic: ', ['exception' => $e]);
+				$this->logger->error('Me: cannot create global push topic unexpected exception', ['exception' => $e]);
 			}
 		}
 		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : null;
 
-		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
-		if ($userDetails->identity) {
-			$nonce = $this->olvidUserConfig->getNonce($nextcloudUser->getUID());
-			if (!$nonce) {
-				$nonce = RandomUtil::uuid_create();
-				$this->olvidUserConfig->setNonce($nextcloudUser->getUID(), $nonce);
-			}
-			$response[Constants::ME_RESPONSE_NONCE] = $nonce;
-		}
-
 		// list every revocation since timestamp passed in request
-		$signedRevocations = $this->db->revocation->findSignedRevocationsSinceTimestampOrNull($timestamp);
+		$signedRevocations = $this->context->db->revocation->getSinceTimestampOrNull($timestamp);
 
-		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) { return $revocation->getSignature(); }, $signedRevocations ?? []);
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) { return $revocation->getSignedRevocation(); }, $signedRevocations ?? []);
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS]) !== 0 ? $response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] : null;
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;

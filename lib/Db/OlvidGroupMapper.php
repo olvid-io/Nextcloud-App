@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace OCA\Olvid\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
-use OCP\DB\Types;
+use OCP\DB\Exception;
 use OCP\IDBConnection;
 
 /** @template-extends QBMapper<OlvidGroup> */
@@ -16,54 +17,44 @@ class OlvidGroupMapper extends QBMapper {
 	}
 
 	/**
+	 * @param string $groupId
+	 * @return OlvidGroup
 	 * @throws DoesNotExistException
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
 	 */
-	public function findByGroupId(string $groupId): OlvidGroup {
+	public function getByGroupId(string $groupId): OlvidGroup {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->eq('group_id', $qb->createNamedParameter($groupId)));
 		return $this->findEntity($qb);
 	}
 
-	public function findByGroupIdOrNull(string $groupId): ?OlvidGroup {
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
+	public function getByGroupIdOrNull(string $groupId): ?OlvidGroup {
 		try {
-			return $this->findByGroupId($groupId);
+			return $this->getByGroupId($groupId);
 		} catch (DoesNotExistException) {
 			return null;
 		}
 	}
 
-	/** @return OlvidGroup[] */
-	public function findAll(): array {
+	/**
+	 * @return OlvidGroup[]
+	 * @throws Exception
+	 */
+	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
 	}
 
-	/** @return OlvidGroup[] */
-	public function findAllEnabled(): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('enabled', $qb->createNamedParameter(true, Types::BOOLEAN)));
-		return $this->findEntities($qb);
-	}
-
-	/** @return OlvidGroup[] */
-	public function findAllWithPushTopic(): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->isNotNull('push_topic'));
-		return $this->findEntities($qb);
-	}
-
-	/** @return OlvidGroup[] */
-	public function findAllWithGroupPhoto(): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->isNotNull('group_photo_uid'));
-		return $this->findEntities($qb);
-	}
-
+	/**
+	 * @throws Exception
+	 */
 	public function deleteAll(): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName());

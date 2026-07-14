@@ -7,6 +7,7 @@ namespace OCA\Olvid\Api\Engine;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Http\BinaryResponse;
+use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\Encoded;
 
 /**
@@ -24,7 +25,7 @@ use OCA\Olvid\Utils\Encoded;
  */
 class Verify extends AbstractEngineApiHandler {
 	protected function handler(string $rawInput): BinaryResponse {
-		// --- 1. Parse request ---
+		// Parse request
 		try {
 			$json = json_decode($rawInput, true);
 			$signature = $json[Constants::VERIFY_REQUEST_SIGNATURE] ?? null;
@@ -36,64 +37,25 @@ class Verify extends AbstractEngineApiHandler {
 			return $this->generalError();
 		}
 
-		// --- 2. Verify JWT and check identity ---
+		// Verify JWT and check identity
 		try {
-			// Split JWT
-			$parts = explode('.', $signature);
-			if (count($parts) !== 3) {
-				throw new Exception('Invalid JWT format');
-			}
-			[$headerB64, $payloadB64, $sigB64] = $parts;
-
-			// Decode payload
-			$payloadJson = base64_decode(strtr($payloadB64, '-_', '+/'));
-			$payload = json_decode($payloadJson, true, 512, JSON_THROW_ON_ERROR);
-
-			$userId = $payload[Constants::DETAILS_KEY_ID] ?? null;
-			$identity = $payload[Constants::DETAILS_KEY_IDENTITY] ?? null;
-			if ($userId === null || $identity === null || $identity === '') {
+			$decodedPayload = $this->context->signatory->verify($signature);
+			$jsonUserDetails = JsonUserDetails::fromArray((array)$decodedPayload);
+			if ($jsonUserDetails?->id === null || $jsonUserDetails?->identity === null) {
 				throw new Exception('Missing id or identity in JWT payload');
 			}
-
-			// Get app's EC public key (PEM)
-			$publicKeyPem = $this->olvidAppConfig->getJwkKeyPublicKey();
-			if (!$publicKeyPem) {
-				throw new Exception('No JWK public key configured');
-			}
-
-			// Verify ES256 signature: JWT uses raw R||S (64 bytes), openssl needs DER
-			$signingInput = $headerB64 . '.' . $payloadB64;
-			$rawSig = base64_decode(strtr($sigB64, '-_', '+/'));
-			if (strlen($rawSig) !== 64) {
-				throw new Exception('Unexpected ES256 signature length: ' . strlen($rawSig));
-			}
-
-			$pubKey = openssl_pkey_get_public($publicKeyPem);
-			if ($pubKey === false) {
-				throw new Exception('Invalid public key PEM');
-			}
-
-			$verified = openssl_verify($signingInput, self::rawToDer($rawSig), $pubKey, OPENSSL_ALGO_SHA256) === 1;
-			if (!$verified) {
-				$this->logger->debug('verify: signature verification failed');
-				return $this->binaryResult(false);
-			}
+			$userId = $jsonUserDetails->id;
+			$base64Identity = $jsonUserDetails->identity;
 
 			// Check identity matches stored value
-			$user = $this->userManager->get($userId);
-			if ($user === null) {
-				$this->logger->debug('verify: user not found: ' . $userId);
-				return $this->binaryResult(false);
-			}
-
-			$storedIdentity = $this->userConfig->getB64Identity($user->getUID());
-			if ($storedIdentity === null || $storedIdentity !== $identity) {
+			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+			if ($olvidUser === null || !$olvidUser->hasIdentity()
+				|| base64_encode($olvidUser->getBytesIdentity()) !== $base64Identity) {
 				$this->logger->debug('verify: identity mismatch for user ' . $userId);
 				return $this->binaryResult(false);
 			}
 
 			return $this->binaryResult(true);
-
 		} catch (Exception $e) {
 			$this->logger->warning('verify: error: ', ['exception' => $e]);
 			return $this->generalError();

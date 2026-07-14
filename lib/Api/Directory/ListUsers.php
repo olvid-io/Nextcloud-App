@@ -6,13 +6,15 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		try {
 			$timestamp = (int)($jsonParameters[Constants::LIST_USERS_REQUEST_TIMESTAMP] ?? 0);
@@ -27,11 +29,11 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 		$response = [
 			Constants::LIST_USERS_RESPONSE_USERS => [],
 		];
-		$users = $this->userManager->search('');
-		foreach ($users as $nextcloudUser) {
+		$olvidUsers = $this->context->db->user->getAll();
+		foreach ($olvidUsers as $olvidUser) {
 			// only add users with a valid identity on server
-			if ($this->olvidUserConfig->hasIdentity($nextcloudUser->getUID())) {
-				$response[Constants::LIST_USERS_RESPONSE_USERS][] = JsonUserDetails::parseSignedDetails($nextcloudUser, $this->olvidUserConfig);
+			if ($olvidUser->hasIdentity()) {
+				$response[Constants::LIST_USERS_RESPONSE_USERS][] = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
 			}
 		}
 

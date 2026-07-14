@@ -7,16 +7,9 @@ namespace OCA\Olvid\Api\Engine;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Crypto\AuthEnc;
-use OCA\Olvid\Db\OlvidDataMapper;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
-use OCP\IAppConfig;
-use OCP\ICacheFactory;
-use OCP\IConfig;
-use OCP\IUserManager;
-use Psr\Log\LoggerInterface;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
  * POST /olvid-rest/getData
@@ -54,49 +47,36 @@ class GetData extends AbstractEngineApiHandler {
 	private const MAC_KEY_LENGTH = 32; // HMAC-SHA256
 	private const ENC_KEY_LENGTH = 32; // AES-256
 
-	public function __construct(
-		IConfig $config,
-		IAppConfig $appConfig,
-		IUserManager $userManager,
-		ICacheFactory $cacheFactory,
-		LoggerInterface $logger,
-		OlvidUserConfigManager $userConfig,
-		OlvidAppConfigManager $olvidAppConfig,
-		private readonly OlvidDataMapper $olvidDataMapper,
-	) {
-		parent::__construct($config, $appConfig, $userManager, $cacheFactory, $logger, $userConfig, $olvidAppConfig);
-	}
-
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws \OCP\DB\Exception
+	 */
 	protected function handler(string $rawInput): BinaryResponse {
-		// ── 1. Validate UID length ───────────────────────────────────────────
-		// The entire request body must be exactly 32 raw bytes (no Encoded wrapper).
-		// Any other length is a protocol error — return 0xff (general error).
+		// validate data uid length
 		if (strlen($rawInput) !== Constants::UID_SIZE) {
 			$this->logger->warning('getData: wrong UID length, got ' . strlen($rawInput));
 			return $this->generalError();
 		}
+		$bytesDataUid = $rawInput;
 
-		// ── 2. Look up stored data ───────────────────────────────────────────
-		// The UID is stored base64-encoded so it can be indexed as a VARCHAR column,
-		$dataUid = base64_encode($rawInput);
-		$olvidData = $this->olvidDataMapper->getByUidOrNull($dataUid);
+		// search for data entry in database
+		$olvidData = $this->context->db->data->getByUidOrNull($bytesDataUid);
 		if ($olvidData === null) {
 			$this->logger->warning('getData: no data found for UID');
 			return $this->notFound();
 		}
 
-		// ── 3. Decode the stored Olvid symmetric key (type 0x90) ────────────
+		// Decode the stored Olvid symmetric key (type 0x90)
 		// The key was stored by storeData as an Encoded AuthEncAES256ThenSHA256Key:
 		//   [0x90][len] [Encoded.of([0x02, 0x00])] [Encoded dict{"mackey"->32B, "enckey"->32B}]
-		// We decode it here to extract the raw HMAC key and AES key bytes.
 		try {
-			$keyComponents = Encoded::decodeSymmetricKey($olvidData->getEncodedDataKey());
+			$keyComponents = Encoded::decodeSymmetricKey($olvidData->getBytesEncodedKey());
 		} catch (Exception $e) {
 			$this->logger->warning('getData: cannot decode stored key: ', ['exception' => $e]);
 			return $this->notFound();
 		}
 
-		// Verify this is the algorithm we expect before trusting the key material.
+		// Verify this is the algorithm we expect
 		if ($keyComponents['algoClass'] !== self::EXPECTED_ALGO_CLASS
 			|| $keyComponents['algoImpl'] !== self::EXPECTED_ALGO_IMPL) {
 			$this->logger->warning('getData: unexpected key algorithm '
@@ -104,10 +84,12 @@ class GetData extends AbstractEngineApiHandler {
 			return $this->notFound();
 		}
 
+		// split key to extract components
 		$dict = $keyComponents['dict'];
 		$macKey = $dict[self::DICT_KEY_MAC] ?? null;
 		$encKey = $dict[self::DICT_KEY_ENC] ?? null;
 
+		// check key format
 		if ($macKey === null || $encKey === null
 			|| strlen($macKey) !== self::MAC_KEY_LENGTH
 			|| strlen($encKey) !== self::ENC_KEY_LENGTH) {
@@ -115,17 +97,16 @@ class GetData extends AbstractEngineApiHandler {
 			return $this->notFound();
 		}
 
-		// ── 4. Re-encrypt the plaintext ──────────────────────────────────────
-		// AuthEncAES256ThenSHA256: AES-256-CTR (8-byte IV, zero-padded to 16) + HMAC-SHA256.
+		// Re-encrypt the plaintext
 		// A fresh random IV is generated every call so each response is unique.
 		try {
-			$encryptedData = AuthEnc::encrypt($macKey, $encKey, $olvidData->getData());
+			$encryptedData = AuthEnc::encrypt($macKey, $encKey, $olvidData->getBytesData());
 		} catch (Exception $e) {
 			$this->logger->error('getData: encryption failed: ', ['exception' => $e]);
 			return $this->generalError();
 		}
 
-		// ── 5. Return encrypted blob ─────────────────────────────────────────
+		// Return encrypted blob
 		return new BinaryResponse(Encoded::encodeList([
 			Encoded::encodeBytes(self::STATUS_OK),
 			Encoded::encodeBytes($encryptedData),

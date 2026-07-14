@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Db;
 
-use Firebase\JWT\JWT;
 use OCA\Olvid\Models\JsonGroupMemberKickedData;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -24,7 +23,7 @@ class OlvidGroupKickedMapper extends QBMapper {
 	/** @return OlvidGroupKicked[]
 	 * @throws Exception
 	 */
-	public function findAll(): array {
+	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
@@ -44,10 +43,10 @@ class OlvidGroupKickedMapper extends QBMapper {
 	 * @throws DoesNotExistException
 	 * @throws Exception
 	 */
-	private function getByGroupAndUserId(string $groupId, string $userId): ?OlvidGroupKicked {
+	private function getByBytesGroupUidAndUserId(string $bytesGroupUid, string $userId): ?OlvidGroupKicked {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('group_id', $qb->createNamedParameter($groupId, Types::STRING)))
+			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::STRING)))
 			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
 		return $this->findEntity($qb);
 	}
@@ -56,9 +55,9 @@ class OlvidGroupKickedMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	private function getByGroupAndUserIdOrNull(string $groupId, string $userId): ?OlvidGroupKicked {
+	private function getByBytesGroupUidAndUserIdOrNull(string $bytesGroupUid, string $userId): ?OlvidGroupKicked {
 		try {
-			return $this->getByGroupAndUserId($groupId, $userId);
+			return $this->getByBytesGroupUidAndUserId($bytesGroupUid, $userId);
 		} catch (DoesNotExistException) {
 			return null;
 		}
@@ -67,37 +66,33 @@ class OlvidGroupKickedMapper extends QBMapper {
 	/** @return OlvidGroupKicked[]
 	 * @throws Exception
 	 */
-	public function getSignatureAfterTimestamp(String $userId, int $earliestRevocationTimestamp) : array {
+	public function getByUserIdAfterTimestamp(String $userId, int $earliestRevocationTimestamp) : array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('signature')->from($this->getTableName())
+		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->gt('timestamp', $qb->createNamedParameter($earliestRevocationTimestamp, Types::BIGINT)))
 			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
 		return $this->findEntities($qb);
 	}
 
 	/*
- ** Helper methods
- */
+	 ** Helper methods
+	 */
 	/**
 	 * Compute and sign a group kick to remove a user from a group and store it in database (create or update existing kick).
+	 * We pass userId and bytesUserIdentity as we probably already deleted them from OlvidUser, not to add user in group blob after re-computing.
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	public function computeAndSaveGroupKick(OlvidAppConfigManager $olvidAppConfig, OlvidGroup $olvidGroup, String $userId, String $userIdentity): OlvidGroupKicked {
-		// get signature key
-		$keyId = $olvidAppConfig->getJwkKeyId();
-		$keyType = $olvidAppConfig->getJwkKeyType();
-		$privateKey = $olvidAppConfig->getJwkKeyPrivateKey();
-
+	public function computeAndSaveGroupKick(OlvidGroup $olvidGroup, string $userId, string $bytesUserIdentity, OlvidContext $context): OlvidGroupKicked {
 		// sign kick
 		$currentTimestamp = TimeUtil::currentTimeMillis();
 		$kickData = new JsonGroupMemberKickedData();
-		$kickData->groupUid = $olvidGroup->getGroupUid(); // Olvid group Uid (not nextcloud id)
-		$kickData->identity = $userIdentity;
+		$kickData->bytesGroupUid = $olvidGroup->getBytesGroupUid();
+		$kickData->base64Identity = base64_encode($bytesUserIdentity);
 		$kickData->timestamp = $currentTimestamp;
-		$signedKickData = JWT::encode($kickData->jsonSerialize(), $privateKey, $keyType, $keyId);
+		$signedKickData = $context->signatory->sign($kickData->jsonSerialize());
 
-		$groupKick = $this->getByGroupAndUserIdOrNull($olvidGroup->getGroupId(), $userId);
+		$groupKick = $this->getByBytesGroupUidAndUserIdOrNull($olvidGroup->getGroupId(), $userId);
 
 		// create a new kick
 		if ($groupKick === null) {
@@ -106,7 +101,7 @@ class OlvidGroupKickedMapper extends QBMapper {
 		}
 		// update existing deletion
 		else {
-			$groupKick->setSignature($signedKickData);
+			$groupKick->setSignedKick($signedKickData);
 			$groupKick->setTimestamp($currentTimestamp);
 			return $this->update($groupKick);
 		}

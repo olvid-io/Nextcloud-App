@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Listener;
 
-use Exception;
-use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\Models\JsonGroupBlob;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidServer\InvalidConfigurationException;
-use OCA\Olvid\Utils\OlvidServer\OlvidServer;
-use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\DB\Exception;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\GroupChangedEvent;
@@ -25,13 +21,14 @@ use Psr\Log\LoggerInterface;
 class GroupEventListener implements IEventListener {
 	public function __construct(
 		private readonly LoggerInterface $logger,
-		private readonly OlvidDatabase $db,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
-		private readonly OlvidUserConfigManager $olvidUserConfig,
-		private readonly OlvidServer $olvidServer,
+		private readonly OlvidContext $context,
 	) {
 	}
 
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
 	public function handle(Event $event): void {
 		if ($event instanceof GroupDeletedEvent) {
 			$this->logger->info('GroupEventListener: GroupDeletedEvent: ' . $event->getGroup()->getGID());
@@ -50,123 +47,115 @@ class GroupEventListener implements IEventListener {
 		}
 	}
 
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
 	public function groupChangedHandler(GroupChangedEvent $event): void {
-		// get olvid group
-		$olvidGroup = $this->db->group->findByGroupIdOrNull($event->getGroup()->getGID());
-		if (!$olvidGroup === null) {
+		// check group is enabled
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
+		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
 		// if group have no custom name we must change it, update blob and notify members
-		if ($olvidGroup->getEnabled()) {
-			if ($olvidGroup->getDiscussionName() === null || trim($olvidGroup->getDiscussionName()) === '') {
-				$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
-				$signedBlob = $blob->sign($this->olvidAppConfig);
-				$olvidGroup->setSignedGroupBlob($signedBlob);
-				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-				$olvidGroup = $this->db->group->update($olvidGroup);
+		if ($olvidGroup->getDiscussionName() === null || trim($olvidGroup->getDiscussionName()) === '') {
+			$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->context);
+			$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
+			$olvidGroup->setSignedGroupBlob($signedBlob);
+			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+			$olvidGroup = $this->context->db->group->update($olvidGroup);
 
-				if ($olvidGroup->getPushTopic() !== null) {
-					try {
-						$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
-					} catch (Exception $e) {
-						$this->logger->error('groupChangedHandler: cannot send notification: ', ['exception' => $e]);
-					}
-				}
+			if ($olvidGroup->getPushTopic() !== null) {
+				$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 			}
 		}
 	}
 
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
 	public function groupDeletedHandler(GroupDeletedEvent $event): void {
-		// get olvid group
-		$olvidGroup = $this->db->group->findByGroupIdOrNull($event->getGroup()->getGID());
-		if (!$olvidGroup === null) {
+		// check group is enabled
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
+		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
 		// if group is enabled: create an olvid deletion and send a notification to members
-		if ($olvidGroup->getEnabled()) {
-			$this->db->groupDeletion->computeAndSaveGroupDeletion($this->olvidAppConfig, $olvidGroup);
-			if ($olvidGroup->getPushTopic() !== null) {
-				try {
-					$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
-				} catch (Exception $e) {
-					$this->logger->error('groupDeletedHandler: cannot send notification: ', ['exception' => $e]);
-				}
-			}
+		$this->context->db->groupDeletion->computeAndSaveGroupDeletion($this->context, $olvidGroup);
+		if ($olvidGroup->getPushTopic() !== null) {
+			$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 		}
 
 		// delete olvid group
-		$this->db->group->delete($olvidGroup);
+		$this->context->db->group->delete($olvidGroup);
 	}
 
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
 	public function userAddedHandler(UserAddedEvent $event): void {
 		// check group is enabled
-		$olvidGroup = $this->db->group->findByGroupIdOrNull($event->getGroup()->getGID());
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
 		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
 		// check user use Olvid
-		if (!$this->olvidUserConfig->hasIdentity($event->getUser()->getUID())) {
+		$olvidUser = $this->context->db->user->getByUserIdOrNull($event->getUser()->getUID());
+		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}
 
 		// update group blob
-		$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
-		$signedBlob = $blob->sign($this->olvidAppConfig);
+		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->context);
+		$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-		$olvidGroup = $this->db->group->update($olvidGroup);
+		$olvidGroup = $this->context->db->group->update($olvidGroup);
 
 		// notify users
 		if ($olvidGroup->getPushTopic() !== null) {
 			// notify current members using group topic
-			try {
-				$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
-			} catch (OlvidServerException|InvalidConfigurationException $exception) {
-				$this->logger->error('GroupEventListener: userAddedHandler: cannot send group notification: ' . $exception->getMessage());
-			}
+			$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 			// notify new member individually
-			try {
-				$this->olvidServer->sendSingleUserNotification($this->olvidUserConfig->getB64Identity($event->getUser()->getUID()));
-			} catch (OlvidServerException|InvalidConfigurationException $exception) {
-				$this->logger->error('GroupEventListener: userAddedHandler: cannot send new user notification: ' . $exception->getMessage());
-			}
+			$this->context->olvidServer->sendSingleUserNotificationNoFail(base64_encode($olvidUser->getBytesIdentity()));
 		}
 	}
 
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws Exception
+	 */
 	public function userRemovedHandler(UserRemovedEvent $event): void {
 		// check group is enabled
-		$olvidGroup = $this->db->group->findByGroupIdOrNull($event->getGroup()->getGID());
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
 		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
-		// check user use Olvid
-		$userIdentity = $this->olvidUserConfig->getB64Identity($event->getUser()->getUID());
-		if ($userIdentity === null) {
+		$olvidUser = $this->context->db->user->getByUserIdOrNull($event->getUser()->getUID());
+		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}
 
 		// create group kick in database
-		$this->db->groupKicked->computeAndSaveGroupKick($this->olvidAppConfig, $olvidGroup, $event->getUser()->getUID(), $userIdentity);
+		$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $olvidUser->getUserId(), $olvidUser->getBytesIdentity(), $this->context);
 
 		// update group blob
-		$blob = JsonGroupBlob::computeBlob($olvidGroup, $event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->olvidAppConfig, $this->olvidUserConfig, $this->db);
-		$signedBlob = $blob->sign($this->olvidAppConfig);
+		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->context);
+		$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-		$olvidGroup = $this->db->group->update($olvidGroup);
+		$olvidGroup = $this->context->db->group->update($olvidGroup);
 
 		// notify users
 		if ($olvidGroup->getPushTopic() !== null) {
 			// we can use push topic to notify members and removed user
-			try {
-				$this->olvidServer->sendGroupNotification($olvidGroup->getPushTopic());
-			} catch (OlvidServerException|InvalidConfigurationException $exception) {
-				$this->logger->error('GroupEventListener: userRemovedHandler: cannot send group notification: ' . $exception->getMessage());
-			}
+			$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 		}
 	}
 }

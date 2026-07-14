@@ -14,8 +14,8 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// Parse request
 		try {
-			$nextcloudUser = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
-			if (!$nextcloudUser) {
+			$otherNextcloudUserId = isset($jsonParameters[Constants::GET_KEY_REQUEST_USER_ID]) ? (string)$jsonParameters[Constants::GET_KEY_REQUEST_USER_ID] : null;
+			if (!$otherNextcloudUserId) {
 				return $this->invalidRequest();
 			}
 		} catch (Exception $e) {
@@ -24,13 +24,13 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		// get user in database
-		$otherUser = $this->userManager->get($nextcloudUser);
-		if (!$otherUser) {
+		$otherOlvidUser = $this->context->db->user->getByUserIdOrNull($otherNextcloudUserId);
+		if (!$otherOlvidUser?->getSignedDetails()) {
 			return $this->invalidRequest();
 		}
 
 		// set user signed details in response
-		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $this->olvidUserConfig->getSignedDetails($otherUser->getUID());
+		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $otherOlvidUser->getSignedDetails();
 
 		return new JSONResponse($response);
 	}

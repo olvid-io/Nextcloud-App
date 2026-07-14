@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Profile;
 
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Db\OlvidUserMapper;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\Profile\ILinkAction;
@@ -14,13 +14,14 @@ class OlvidProfileLinkAction implements ILinkAction {
 	private bool $hasIdentity = false;
 
 	public function __construct(
-		private readonly OlvidUserConfigManager $userConfig,
+		private readonly OlvidUserMapper $olvidUserMapper,
 		private readonly IURLGenerator $urlGenerator,
 	) {
 	}
 
 	public function preload(IUser $targetUser): void {
-		$this->hasIdentity = $this->userConfig->hasIdentity($targetUser->getUID());
+		$olvidUser = $this->olvidUserMapper->getByUserIdOrNull($targetUser->getUID());
+		$this->hasIdentity = $olvidUser?->hasIdentity() ?? false;
 	}
 
 	public function getAppId(): string {

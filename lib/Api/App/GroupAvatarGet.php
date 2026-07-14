@@ -34,17 +34,17 @@ class GroupAvatarGet {
 	 */
 	public function handle(string $groupId, string $b64PhotoUid): DataDisplayResponse {
 		// Load the OlvidGroup
-		$olvidGroup = $this->olvidGroupMapper->findByGroupIdOrNull($groupId);
-		if ($olvidGroup === null || $olvidGroup->getGroupPhotoUid() === null) {
+		$olvidGroup = $this->olvidGroupMapper->getByGroupIdOrNull($groupId);
+		if ($olvidGroup === null || $olvidGroup->getBytesGroupPhotoUid() === null) {
 			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
 		}
 
 		// get photo by UID (this checks user got access to the current avatar ID)
-		$olvidData = $this->olvidDataMapper->getByUidOrNull($b64PhotoUid);
+		$olvidData = $this->olvidDataMapper->getByUidOrNull(base64_decode($b64PhotoUid));
 		if ($olvidData === null) {
 			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
 		}
 
-		return new DataDisplayResponse($olvidData->getData(), Http::STATUS_OK);
+		return new DataDisplayResponse($olvidData->getBytesData(), Http::STATUS_OK);
 	}
 }

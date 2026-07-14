@@ -3,45 +3,43 @@
 namespace OCA\Olvid\Api\App;
 
 use OCA\Olvid\Models\JsonUserDetails;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidServer\InvalidConfigurationException;
-use OCA\Olvid\Utils\OlvidServer\OlvidServer;
-use OCA\Olvid\Utils\OlvidServer\OlvidServerException;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\DB\Exception;
 use OCP\IRequest;
 use OCP\IUser;
-use Psr\Log\LoggerInterface;
 
 class UserUpdate {
 	public function __construct(
 		IRequest $request,
-		private readonly LoggerInterface $logger,
-		private readonly OlvidUserConfigManager $olvidUserConfig,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
-		private readonly OlvidServer $olvidServer,
+		private readonly OlvidContext $context,
 	) {
 	}
 
+	/**
+	 * Update Olvid Details for a user. If necessary sign new details and notify users for the change.
+	 *
+	 * @throws Exception
+	 */
 	public function handle(IUser $user, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): DataResponse {
-		$previousUserDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
+		$olvidUser = $this->context->db->user->getOrCreate($user->getUID());
 
 		// update details
 		$updated = false;
-		if ($previousUserDetails->firstname !== $newFirstname) {
-			$this->olvidUserConfig->setFirstname($user->getUID(), $newFirstname);
+		if ($olvidUser->getFirstname() !== $newFirstname) {
+			$olvidUser->setFirstname($newFirstname);
 			$updated = true;
 		}
-		if ($previousUserDetails->lastname !== $newLastname) {
-			$this->olvidUserConfig->setLastname($user->getUID(), $newLastname);
+		if ($olvidUser->getLastname() !== $newLastname) {
+			$olvidUser->setLastname($newLastname);
 			$updated = true;
 		}
-		if ($previousUserDetails->position !== $newPosition) {
-			$this->olvidUserConfig->setPosition($user->getUID(), $newPosition);
+		if ($olvidUser->getPosition() !== $newPosition) {
+			$olvidUser->setPosition($newPosition);
 			$updated = true;
 		}
-		if ($previousUserDetails->company !== $newCompany) {
-			$this->olvidUserConfig->setCompany($user->getUID(), $newCompany);
+		if ($olvidUser->getCompany() !== $newCompany) {
+			$olvidUser->setCompany($newCompany);
 			$updated = true;
 		}
 
@@ -51,19 +49,18 @@ class UserUpdate {
 		}
 
 		// re-compute details and sign them
-		$userDetails = JsonUserDetails::computeDetails($user, $this->olvidUserConfig);
-		$userDetails->sign($this->olvidUserConfig, $this->olvidAppConfig);
+		$userDetails = $olvidUser->computeJsonUserDetails($user->getDisplayName());
+		$olvidUser->setSignedDetails($this->context->signatory->sign($userDetails->jsonSerialize()));
 
 		// update full search field
-		$userDetails->updateFullSearchString($user->getUID(), $this->olvidUserConfig);
+		$olvidUser->setFullSearchField($userDetails->computeFullSearchString());
+
+		// update in database
+		$olvidUser = $this->context->db->user->update($olvidUser);
 
 		// notify user for change (if he registered)
-		if ($userDetails->identity) {
-			try {
-				$this->olvidServer->sendSingleUserNotification($userDetails->identity);
-			} catch (OlvidServerException|InvalidConfigurationException $exception) {
-				$this->logger->error('AppApiController: updateMe: cannot send user notification: ' . $exception->getMessage());
-			}
+		if ($olvidUser->hasIdentity()) {
+			$this->context->olvidServer->sendSingleUserNotificationNoFail($userDetails->identity);
 		}
 
 		return new DataResponse();

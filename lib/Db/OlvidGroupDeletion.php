@@ -7,57 +7,51 @@ namespace OCA\Olvid\Db;
 use OCP\AppFramework\Db\Entity;
 use OCP\DB\Types;
 
+/**
+ * Olvid group Uid as bytes
+ * @method string getBytesGroupUid()
+ * @method void setBytesGroupUid(string $bytesGroupUid)
+ *
+ * @method string getSignedDeletion()
+ * @method void setSignedDeletion(string $signedDeletion)
+ *
+ * @method int getTimestamp()
+ * @method void setTimestamp(int $timestamp)
+ */
 class OlvidGroupDeletion extends Entity {
-	protected string $groupId = '';
+	protected string $bytesGroupUid = '';
 	protected int $timestamp = 0;
-	protected string $signature = '';
+	protected string $signedDeletion = '';
 
 	public function __construct() {
-		$this->addType('groupId', Types::STRING);
+		// Olvid group uid as bytes
+		$this->addType('bytesGroupUid', Types::BLOB);
+		$this->addType('signedDeletion', Types::TEXT);
 		$this->addType('timestamp', Types::BIGINT);
-		$this->addType('signature', Types::TEXT);
 	}
 
-	public static function create(string $groupId, int $timestamp, string $signature): OlvidGroupDeletion {
+	public static function create(string $bytesGroupUid, int $timestamp, string $signedDeletion): OlvidGroupDeletion {
 		$groupDeletion = new OlvidGroupDeletion();
-		$groupDeletion->setGroupId($groupId);
+		$groupDeletion->setBytesGroupUid($bytesGroupUid);
 		$groupDeletion->setTimestamp($timestamp);
-		$groupDeletion->setSignature($signature);
+		$groupDeletion->setSignedDeletion($signedDeletion);
 		return $groupDeletion;
 	}
 
-	public function getGroupId(): string {
-		return $this->groupId;
-	}
-
-	public function setGroupId(string $groupId): void {
-		$this->groupId = $groupId;
-		$this->markFieldUpdated('groupId');
-	}
-
-	public function getTimestamp(): int {
-		return $this->timestamp;
-	}
-
-	public function setTimestamp(int $timestamp): void {
-		$this->timestamp = $timestamp;
-		$this->markFieldUpdated('timestamp');
-	}
-
-	public function getSignature(): string {
-		return $this->signature;
-	}
-
-	public function setSignature(string $signature): void {
-		$this->signature = $signature;
-		$this->markFieldUpdated('signature');
+	public function jsonSerialize(): array {
+		return [
+			'bytesGroupUid' => base64_encode($this->bytesGroupUid),
+			'timestamp' => $this->timestamp,
+			'signedDeletion' => $this->signedDeletion,
+		];
 	}
 
 	public function __toString(): string {
 		return 'OlvidGroupDeletion{'
 			. 'id=' . $this->getId()
-			. ', groupId=' . $this->groupId
+			. ', bytesGroupUid=' . base64_encode($this->bytesGroupUid)
 			. ', timestamp=' . $this->timestamp
+			. ', signedDeletion=' . $this->signedDeletion
 			. '}';
 	}
 }

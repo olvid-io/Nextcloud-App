@@ -13,7 +13,7 @@ namespace OCA\Olvid;
  *   lastname: string,
  *   position: string,
  *   company: string,
- *   olvidIdentityUploaded: bool,
+ *   useOlvid: bool,
  *   isAdmin: bool,
  * }
  *

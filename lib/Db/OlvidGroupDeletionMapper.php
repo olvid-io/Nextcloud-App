@@ -6,6 +6,7 @@ namespace OCA\Olvid\Db;
 
 use Firebase\JWT\JWT;
 use OCA\Olvid\Models\JsonGroupDeletionData;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -24,16 +25,6 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	/**
 	 * @throws Exception
 	 */
-	public function expungeOlderThan(int $timestamp): void {
-		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName())
-			->where($qb->expr()->lt('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
-		$qb->executeStatement();
-	}
-
-	/**
-	 * @throws Exception
-	 */
 	public function deleteAll(): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName());
@@ -43,7 +34,7 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	/** @return OlvidGroupDeletion[]
 	 * @throws Exception
 	 */
-	public function findAll(): array {
+	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
@@ -54,10 +45,10 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	 * @throws DoesNotExistException
 	 * @throws Exception
 	 */
-	public function getByGroupId(string $groupId): OlvidGroupDeletion {
+	public function getByBytesGroupUid(string $bytesGroupUid): OlvidGroupDeletion {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('group_id', $qb->createNamedParameter($groupId, Types::STRING)));
+			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::STRING)));
 		return $this->findEntity($qb);
 	}
 
@@ -65,9 +56,9 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	public function getByGroupIdOrNull(string $groupId): ?OlvidGroupDeletion {
+	public function getByBytesGroupUidOrNull(string $bytesGroupUid): ?OlvidGroupDeletion {
 		try {
-			return $this->getByGroupId($groupId);
+			return $this->getByBytesGroupUid($bytesGroupUid);
 		} catch (DoesNotExistException) {
 			return null;
 		}
@@ -76,9 +67,9 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	/** @return OlvidGroupDeletion[]
 	 * @throws Exception
 	 */
-	public function getSignatureAfterTimestamp(int $earliestRevocationTimestamp) : array {
+	public function getAfterTimestamp(int $earliestRevocationTimestamp) : array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('signature')->from($this->getTableName())
+		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->gt('timestamp', $qb->createNamedParameter($earliestRevocationTimestamp, Types::BIGINT)));
 		return $this->findEntities($qb);
 	}
@@ -91,29 +82,23 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	public function computeAndSaveGroupDeletion(OlvidAppConfigManager $olvidAppConfig, OlvidGroup $olvidGroup): OlvidGroupDeletion {
-		// get signature key
-		$keyId = $olvidAppConfig->getJwkKeyId();
-		$keyType = $olvidAppConfig->getJwkKeyType();
-		$privateKey = $olvidAppConfig->getJwkKeyPrivateKey();
-
+	public function computeAndSaveGroupDeletion(OlvidContext $context, OlvidGroup $olvidGroup): OlvidGroupDeletion {
 		// sign deletion
 		$currentTimestamp = TimeUtil::currentTimeMillis();
 		$deletionData = new JsonGroupDeletionData();
-		$deletionData->groupUid = $olvidGroup->getGroupUid(); // Olvid group Uid (not nextcloud id)
+		$deletionData->bytesGroupUid = $olvidGroup->getBytesGroupUid();
 		$deletionData->timestamp = $currentTimestamp;
-		$signedDeletionData = JWT::encode($deletionData->jsonSerialize(), $privateKey, $keyType, $keyId);
+		$signedDeletionData = $context->signatory->sign($deletionData->jsonSerialize());
 
-		$groupDeletion = $this->getByGroupIdOrNull($olvidGroup->getGroupId());
-
+		$groupDeletion = $this->getByBytesGroupUidOrNull($olvidGroup->getGroupId());
 		// create a new deletion
 		if ($groupDeletion === null) {
-			$groupDeletion = OlvidGroupDeletion::create($olvidGroup->getGroupId(), $currentTimestamp, $signedDeletionData);
+			$groupDeletion = OlvidGroupDeletion::create($olvidGroup->getBytesGroupUid(), $currentTimestamp, $signedDeletionData);
 			return $this->insert($groupDeletion);
 		}
 		// update existing deletion
 		else {
-			$groupDeletion->setSignature($signedDeletionData);
+			$groupDeletion->setSignedDeletion($signedDeletionData);
 			$groupDeletion->setTimestamp($currentTimestamp);
 			return $this->update($groupDeletion);
 		}

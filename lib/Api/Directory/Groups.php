@@ -7,6 +7,7 @@ namespace OCA\Olvid\Api\Directory;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
@@ -17,6 +18,7 @@ use OCP\IUser;
 class Groups extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws \OCP\DB\Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
 		// parse request (don't fail on parse error)
@@ -31,10 +33,10 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		// signed blobs
 		// first get all user groups and return those updated recently enough
 		$signedGroupBlobs = [];
-		$userGroups = $this->groupManager->getUserGroups($nextcloudUser);
-		foreach ($userGroups as $group) {
+		$userNextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
+		foreach ($userNextcloudGroups as $nextcloudGroup) {
 			// get associated olvid group
-			$olvidGroup = $this->db->group->findByGroupIdOrNull($group->getGID());
+			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
 
 			// only add enabled groups
 			if (!$olvidGroup?->getEnabled()) {
@@ -50,15 +52,15 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		$earliestRevocationTimestamp = $requestTimestamp != null ? $requestTimestamp : ($currentTimestamp - Constants::DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS);
 
 		// get all deleted groups
-		$signedGroupDeletions = $this->db->groupDeletion->getSignatureAfterTimestamp($earliestRevocationTimestamp);
+		$signedGroupDeletions = $this->context->db->groupDeletion->getAfterTimestamp($earliestRevocationTimestamp);
 
 		// get all groups user was removed from
-		$signedGroupKicks = $this->db->groupKicked->getSignatureAfterTimestamp($nextcloudUser->getUID(), $earliestRevocationTimestamp);
+		$signedGroupKicks = $this->context->db->groupKicked->getByUserIdAfterTimestamp($nextcloudUser->getUID(), $earliestRevocationTimestamp);
 
 		$response = [
 			Constants::GROUPS_RESPONSE_SIGNED_GROUP_BLOBS => count($signedGroupBlobs) ? $signedGroupBlobs : [],
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS => count($signedGroupDeletions) ? array_map(fn ($v) => $v->getSignature(), $signedGroupDeletions) : [],
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_KICKS => count($signedGroupKicks) ? array_map(fn ($v) => $v->getSignature(), $signedGroupKicks) : [],
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS => count($signedGroupDeletions) ? array_map(fn ($v) => $v->getSignedDeletion(), $signedGroupDeletions) : [],
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_KICKS => count($signedGroupKicks) ? array_map(fn ($v) => $v->getSignedKick(), $signedGroupKicks) : [],
 			Constants::GROUPS_RESPONSE_CURRENT_TIMESTAMP => $currentTimestamp,
 		];
 

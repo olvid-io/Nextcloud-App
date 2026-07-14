@@ -31,11 +31,12 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 			Constants::SEARCH_RESPONSE_COUNT_UNACTIVATED_USERS => 0,
 		];
 
-		$users = $this->userManager->search('');
-		foreach ($users as $nextcloudUser) {
+		$nextcloudUsers = $this->context->nextcloud->userManager->search('');
+		foreach ($nextcloudUsers as $nextcloudUser) {
 			// only add users with a valid identity on server
-			if ($this->olvidUserConfig->hasIdentity($nextcloudUser->getUID())) {
-				$response[Constants::SEARCH_RESPONSE_RESULTS][] = JsonUserDetails::parseSignedDetails($nextcloudUser, $this->olvidUserConfig);
+			$olvidUser = $this->context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
+			if ($olvidUser?->hasIdentity()) {
+				$response[Constants::SEARCH_RESPONSE_RESULTS][] = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
 			}
 		}
 

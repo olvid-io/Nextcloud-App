@@ -2,7 +2,7 @@
 
 /** @noinspection PhpMultipleClassesDeclarationsInOneFile */
 
-namespace OCA\Olvid\Utils\OlvidServer;
+namespace OCA\Olvid\Utils\Context\OlvidServer;
 
 use Exception;
 
@@ -15,8 +15,8 @@ abstract class OlvidServerException extends Exception {
 	public const ERROR_MISSING_BOT_PERMISSION = 5;
 }
 
-// cannot parse / use request
-class InvalidConfigurationException extends Exception {
+// client side: miss api key or server url in app configuration
+class InvalidConfigurationException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();
 		$this->code = 0;
@@ -24,12 +24,21 @@ class InvalidConfigurationException extends Exception {
 	}
 }
 
-// cannot parse / use request
+// client side: cannot parse / use request
 class InvalidRequestException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();
 		$this->code = self::ERROR_INVALID_REQUEST;
 		$this->message = 'Invalid request';
+	}
+}
+
+// client side: cannot contact server
+class NetworkException extends OlvidServerException {
+	public function __construct(string $message) {
+		parent::__construct();
+		$this->code = 0;
+		$this->message = $message;
 	}
 }
 

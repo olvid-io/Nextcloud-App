@@ -6,8 +6,7 @@ namespace OCA\Olvid\Api\App;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http;
@@ -17,8 +16,7 @@ use Psr\Log\LoggerInterface;
 
 class UserGetMagicLink {
 	public function __construct(
-		private readonly OlvidUserConfigManager $userConfig,
-		private readonly OlvidAppConfigManager $appConfig,
+		private readonly OlvidContext $context,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly LoggerInterface $logger,
 	) {
@@ -38,13 +36,16 @@ class UserGetMagicLink {
 	 */
 	public function handle(string $userId): DataResponse {
 		try {
+			$olvidUser = $this->context->db->user->getOrCreate($userId);
+
 			// create token and store in db
 			$token = RandomUtil::uuid_create();
-			$this->userConfig->setMagicToken($userId, $token);
-			$this->userConfig->setMagicTokenExpiration($userId, TimeUtil::currentTimeMillis() + Constants::MAGIC_LINK_DURATION_S * 1000);
+			$olvidUser->setMagicToken($token);
+			$olvidUser->setMagicTokenExpiration(TimeUtil::currentTimeMillis() + Constants::MAGIC_LINK_DURATION_S * 1000);
+			$this->context->db->user->update($olvidUser);
 
 			// build the magic link url
-			$serverUrl = $this->appConfig->getOlvidServerUrl() ?? '';
+			$serverUrl = $this->context->nextcloud->appManager->getOlvidServerUrl() ?? '';
 			$nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('olvid.directoryApi.index');
 
 			// compute magic link payload

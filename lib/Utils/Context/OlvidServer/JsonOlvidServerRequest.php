@@ -1,6 +1,6 @@
 <?php
 
-namespace OCA\Olvid\Utils\OlvidServer;
+namespace OCA\Olvid\Utils\Context\OlvidServer;
 
 use JsonSerializable;
 

@@ -14,7 +14,7 @@ use OCP\Settings\IDeclarativeSettingsForm;
 
 class Admin implements IDeclarativeSettingsForm {
 	public function __construct(
-		private IL10N $l,
+		private readonly IL10N $l,
 	) {
 	}
 

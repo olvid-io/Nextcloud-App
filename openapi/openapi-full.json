@@ -532,7 +532,7 @@
                     "lastname",
                     "position",
                     "company",
-                    "olvidIdentityUploaded",
+                    "useOlvid",
                     "isAdmin"
                 ],
                 "properties": {
@@ -548,7 +548,7 @@
                     "company": {
                         "type": "string"
                     },
-                    "olvidIdentityUploaded": {
+                    "useOlvid": {
                         "type": "boolean"
                     },
                     "isAdmin": {

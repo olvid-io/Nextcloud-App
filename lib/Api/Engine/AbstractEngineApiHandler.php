@@ -7,20 +7,16 @@ namespace OCA\Olvid\Api\Engine;
 use Exception;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Http\BinaryResponse;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Encoded;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
-use OCP\IAppConfig;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use OCP\IConfig;
-use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 /**
- * Base class for binary Olvid Engine API endpoints (requestChallenge, getSession, verify).
+ * Base class for binary Olvid Engine API endpoints.
  *
- * Request and response bodies use the binary Encoded protocol (application/octet-stream).
+ * Request and response bodies use the binary Encoded protocol as `application/octet-stream`.
  * All responses are Encoded lists whose first element is a single-byte status code.
  *
  * Subclasses implement handler(string $rawInput): BinaryResponse and use the
@@ -34,17 +30,13 @@ abstract class AbstractEngineApiHandler {
 	protected const STATUS_PERMISSION_DENIED = "\x0e";
 	protected const STATUS_PARSING_ERROR = "\xfe";
 	protected const STATUS_GENERAL_ERROR = "\xff";
-
+	// cache is used to store session challenges in memory (no need to persist them)
 	protected readonly ICache $cache;
 
 	public function __construct(
-		protected readonly IConfig $config,
-		protected readonly IAppConfig $appConfig,
-		protected readonly IUserManager $userManager,
 		ICacheFactory $cacheFactory,
 		protected readonly LoggerInterface $logger,
-		protected readonly OlvidUserConfigManager $userConfig,
-		protected readonly OlvidAppConfigManager $olvidAppConfig,
+		protected readonly OlvidContext $context,
 	) {
 		$this->cache = $cacheFactory->createDistributed(Application::APP_ID);
 	}

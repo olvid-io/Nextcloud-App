@@ -195,7 +195,7 @@ msgstr "Annuler"
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:147
 msgid "Unlinking…"
-msgstr "Désynchronisation en cours…"
+msgstr "Dissociation en cours…"
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:147
 msgid "Unlink and block"
@@ -281,7 +281,7 @@ msgstr "Supprimer et bloquer"
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:19
 msgid "Olvid details (optional)"
-msgstr "Détails de la commande (facultatif)"
+msgstr "Détails du profil Olvid (facultatif)"
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:46
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateGroupModal.vue:22

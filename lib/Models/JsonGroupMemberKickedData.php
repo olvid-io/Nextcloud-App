@@ -10,10 +10,10 @@ class JsonGroupMemberKickedData implements JsonSerializable {
 	use JsonSerializableTrait;
 
 	#[JsonField('groupUid', isBytes: true)]
-	public ?string $groupUid = null;
+	public ?string $bytesGroupUid = null;
 
 	#[JsonField('identity')]
-	public ?string $identity = null;
+	public ?string $base64Identity = null;
 
 	#[JsonField('timestamp')]
 	public int $timestamp = 0;

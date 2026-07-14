@@ -27,7 +27,7 @@ class OlvidDataMapper extends QBMapper {
 	/** @return OlvidData[]
 	 * @throws Exception
 	 */
-	public function findAll(): array {
+	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
@@ -42,31 +42,29 @@ class OlvidDataMapper extends QBMapper {
 	}
 
 	/**
-	 * Find a data row by its base64-encoded UID.
-	 *
-	 * @param string $dataUid base64( raw 32-byte UID )
+	 * @param string $bytesDataUid
 	 * @return OlvidData
 	 * @throws DoesNotExistException when no row exists for that UID.
-	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
-	public function getByUid(string $dataUid): OlvidData {
+	public function getByUid(string $bytesDataUid): OlvidData {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('data_uid', $qb->createNamedParameter($dataUid)));
+			->where($qb->expr()->eq('bytes_data_uid', $qb->createNamedParameter($bytesDataUid)));
 		return $this->findEntity($qb);
 	}
 
 	/** Same as getByUid() but returns null instead of throwing on a missing row.
-	 * @param string $dataUid
+	 * @param string $bytesDataUid
 	 * @return OlvidData|null
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
 	 */
-	public function getByUidOrNull(string $dataUid): ?OlvidData {
+	public function getByUidOrNull(string $bytesDataUid): ?OlvidData {
 		try {
-			return $this->getByUid($dataUid);
+			return $this->getByUid($bytesDataUid);
 		} catch (DoesNotExistException) {
 			return null;
 		}

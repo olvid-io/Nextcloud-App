@@ -11,6 +11,8 @@ use OCA\Olvid\Http\BinaryResponse;
 /**
  * POST /olvid-rest/revocationTest
  *
+ * Mixed protocol: JSON request body, binary Encoded response.
+ *
  * To validate he has not been revoked when logged out, Olvid engine can call this entrypoint.
  * It passes a nonce he received when he registered on server (and stored as a user attribute).
  * If the nonce is still associated with the user, the user was not revoked, you can log again.
@@ -20,6 +22,9 @@ use OCA\Olvid\Http\BinaryResponse;
  * Returns \x00 if the nonce was found, \x01 else or if an error happened
  */
 class RevocationTest extends AbstractEngineApiHandler {
+	/**
+	 * @throws \OCP\DB\Exception
+	 */
 	public function handler(string $rawInput): BinaryResponse {
 		// parse request
 		try {
@@ -34,17 +39,17 @@ class RevocationTest extends AbstractEngineApiHandler {
 		}
 
 		// check nonce is not empty (else all it will match everyone)
-		if ($nonce === null || trim($nonce) === '') {
+		if (trim($nonce) === '') {
 			return new BinaryResponse("\x01");
 		}
 
 		// get user associated with this nonce
-		$userIdsForNonce = $this->userConfig->searchNonce($nonce);
-		if (count($userIdsForNonce) === 0) {
+		$olvidUsersForNonce = $this->context->db->user->searchNonce($nonce);
+		if (count($olvidUsersForNonce) === 0) {
 			$this->logger->error('revocationTest: nonce not found');
 			return new BinaryResponse("\x01");
 		}
-		if (count($userIdsForNonce) > 1) {
+		if (count($olvidUsersForNonce) > 1) {
 			$this->logger->error('revocationTest: found more than one user with the same nonce');
 			return new BinaryResponse("\x01");
 		}

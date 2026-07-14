@@ -26,15 +26,15 @@ class RequestChallenge extends AbstractEngineApiHandler {
 	private const CACHE_TTL = 60;
 
 	protected function handler(string $rawInput): BinaryResponse {
-		// --- 1. Parse ---
+		// parse request
 		try {
 			$items = Encoded::decodeList($rawInput);
 			if (count($items) < 2) {
 				throw new Exception('Not enough list items');
 			}
 			$userId = Encoded::decodeString($items[0]);
-			$nonce = Encoded::decodeBytes($items[1]);
-			if (strlen($nonce) !== Constants::ENGINE_NONCE_LENGTH) {
+			$bytesNonce = Encoded::decodeBytes($items[1]);
+			if (strlen($bytesNonce) !== Constants::ENGINE_NONCE_LENGTH) {
 				throw new Exception('Invalid nonce length');
 			}
 		} catch (Exception $e) {
@@ -42,37 +42,37 @@ class RequestChallenge extends AbstractEngineApiHandler {
 			return $this->parsingError();
 		}
 
-		// --- 2. Generate challenge (always, even for unknown users, to avoid leaking existence) ---
+		// generate challenge (always, even for unknown users, to avoid leaking existence)
 		try {
-			$challenge = RandomUtil::random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
+			$bytesChallenge = RandomUtil::random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
 		} catch (Exception $e) {
 			$this->logger->error('requestChallenge: cannot generate random bytes: ', ['exception' => $e]);
 			return $this->generalError();
 		}
 
+		// prepare response
 		$response = new BinaryResponse(Encoded::encodeList([
 			Encoded::encodeBytes(self::STATUS_OK),
-			Encoded::encodeBytes($challenge),
-			Encoded::encodeBytes($nonce),
+			Encoded::encodeBytes($bytesChallenge),
+			Encoded::encodeBytes($bytesNonce),
 		]));
 
-		// --- 3. Look up user and cache challenge only when user has an identity ---
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
+		// look up user and cache challenge only when user has an identity
+		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		if ($olvidUser == null) {
 			$this->logger->warning('requestChallenge: user not found');
 			return $response;
 		}
-
-		$identity = $this->userConfig->getB64Identity($user->getUID());
-		if ($identity === null) {
+		if (!$olvidUser->hasIdentity()) {
 			$this->logger->warning('requestChallenge: user has no Olvid identity');
 			return $response;
 		}
 
-		$cacheKey = 'challenge-' . base64_encode($nonce);
+		// we can cache challenge now, user exists and have an identity to resolve it
+		$cacheKey = 'challenge-' . base64_encode($bytesNonce);
 		$cacheValue = base64_encode(Encoded::encodeList([
 			Encoded::encodeString($userId),
-			Encoded::encodeBytes($challenge),
+			Encoded::encodeBytes($bytesChallenge),
 		]));
 		$this->cache->set($cacheKey, $cacheValue, self::CACHE_TTL);
 

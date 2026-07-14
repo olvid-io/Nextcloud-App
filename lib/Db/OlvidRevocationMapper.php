@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace OCA\Olvid\Db;
 
 use Exception;
-use Firebase\JWT\JWT;
 use OCA\Olvid\Models\JsonRevocationData;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -28,7 +27,7 @@ class OlvidRevocationMapper extends QBMapper {
 	/** @return OlvidRevocation[]
 	 * @throws \OCP\DB\Exception
 	 */
-	public function findAll(): array {
+	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
@@ -48,13 +47,11 @@ class OlvidRevocationMapper extends QBMapper {
 	 * @throws DoesNotExistException
 	 * @throws Exception
 	 */
-	private function getByUserIdAndIdentity(string $userId, string $signature): ?OlvidRevocation {
+	private function getByUserIdAndBytesIdentity(string $userId, string $bytesIdentity): ?OlvidRevocation {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			// TODO db rename to user_id when rename table
-			->where($qb->expr()->eq('username', $qb->createNamedParameter($userId, Types::STRING)))
-			// TODO db rename to identity when refactor
-			->andWhere($qb->expr()->eq('olvid_id', $qb->createNamedParameter($signature, Types::STRING)));
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)))
+			->andWhere($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BLOB)));
 		return $this->findEntity($qb);
 	}
 
@@ -62,10 +59,10 @@ class OlvidRevocationMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	private function getByUserIdAndIdentityOrNull(string $userId, string $signature): ?OlvidRevocation {
+	private function getByUserIdAndBytesIdentityOrNull(string $userId, string $bytesIdentity): ?OlvidRevocation {
 		try {
-			return $this->getByUserIdAndIdentity($userId, $signature);
-		} catch (DoesNotExistException $e) {
+			return $this->getByUserIdAndBytesIdentity($userId, $bytesIdentity);
+		} catch (DoesNotExistException) {
 			return null;
 		}
 	}
@@ -73,71 +70,81 @@ class OlvidRevocationMapper extends QBMapper {
 	/**
 	 * @return ?OlvidRevocation[]
 	 */
-	public function findSignedRevocationsSinceTimestampOrNull(int $timestamp): ?array {
-		try {
-			$qb = $this->db->getQueryBuilder();
-			$qb->select('signature')->from($this->getTableName())
-				->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
-			return $this->findEntities($qb);
-		} catch (Exception $e) {
-			$this->logger->error('findSignedRevocationsSinceTimestampOrNull', ['exception' => $e]);
-			return null;
-		}
-	}
-
-
-	/**
-	 * Search revocations with type REVOCATION_TYPE_REVOKE_ID for a given identity.
-	 * @return ?OlvidRevocation[]
-	 */
-	public function findRevokeByIdentityOrNull(string $identity): ?array {
+	public function getSinceTimestampOrNull(int $timestamp): ?array {
 		try {
 			$qb = $this->db->getQueryBuilder();
 			$qb->select('*')->from($this->getTableName())
-				// TODO db rename to identity when refactor
-				->where($qb->expr()->eq('olvid_id', $qb->createNamedParameter($identity, Types::TEXT)))
-				->andWhere($qb->expr()->eq('revocation_type', $qb->createNamedParameter(JsonRevocationData::REVOCATION_TYPE_REVOKE_ID, Types::INTEGER)));
+				->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
 			return $this->findEntities($qb);
 		} catch (Exception $e) {
-			$this->logger->error('findByIdentityOrNull', ['exception' => $e]);
+			$this->logger->error('getSinceTimestampOrNull', ['exception' => $e]);
 			return null;
 		}
 	}
 
 	/**
-	 * @throws \OCP\DB\Exception|MultipleObjectsReturnedException
+	 * @return ?OlvidRevocation[]
 	 */
-	public function computeAndSaveRevocation(string $userId, string $b64Identity, int $revocationType, OlvidAppConfigManager $olvidAppConfig): OlvidRevocation {
-		// get signature key
-		$keyId = $olvidAppConfig->getJwkKeyId();
-		$keyType = $olvidAppConfig->getJwkKeyType();
-		$privateKey = $olvidAppConfig->getJwkKeyPrivateKey();
+	public function getUserRevocationsSinceTimestampOrNull(string $userId, int $timestamp): ?array {
+		try {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('*')->from($this->getTableName())
+				->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)))
+				->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
+			return $this->findEntities($qb);
+		} catch (Exception $e) {
+			$this->logger->error('getUserRevocationsSinceTimestampOrNull', ['exception' => $e]);
+			return null;
+		}
+	}
 
+	/**
+	 * Search revocations by type for a given identity.
+	 * @return ?OlvidRevocation[]
+	 */
+	public function getByTypeAndBytesIdentityOrNull(string $bytesIdentity, int $revocationType): ?array {
+		try {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('*')->from($this->getTableName())
+				->where($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BLOB)))
+				->andWhere($qb->expr()->eq('revocation_type', $qb->createNamedParameter($revocationType, Types::INTEGER)));
+			return $this->findEntities($qb);
+		} catch (Exception $e) {
+			$this->logger->error('findRevokeByIdentityOrNull', ['exception' => $e]);
+			return null;
+		}
+	}
+
+	/**
+	 * @throws \OCP\DB\Exception
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function computeAndSaveRevocation(string $userId, string $bytesIdentity, int $revocationType, OlvidContext $context): OlvidRevocation {
 		// sign revocation data
 		$currentTimestamp = TimeUtil::currentTimeMillis();
 		$revocationData = new JsonRevocationData();
-		$revocationData->identity = base64_decode($b64Identity);
+		$revocationData->identity = $bytesIdentity;
 		$revocationData->revocationType = $revocationType;
 		$revocationData->timestamp = $currentTimestamp;
-		$signedRevocationData = JWT::encode($revocationData->jsonSerialize(), $privateKey, $keyType, $keyId);
+		$signedRevocationData = $context->signatory->sign($revocationData->jsonSerialize());
 
 		// create or update revocation
-		$revocation = $this->getByUserIdAndIdentityOrNull($userId, $b64Identity);
+		$revocation = $this->getByUserIdAndBytesIdentityOrNull($userId, $bytesIdentity);
 
 		if ($revocation === null) {
 			$revocation = OlvidRevocation::create(
-				$b64Identity,
-				$currentTimestamp,
+				$userId,
+				$bytesIdentity,
 				$revocationType,
 				$signedRevocationData,
-				$userId,
+				$currentTimestamp,
 			);
+			return $this->insert($revocation);
 		} else {
 			$revocation->setRevocationType($revocationType);
 			$revocation->setTimestamp($currentTimestamp);
-			$revocation->setSignature($signedRevocationData);
+			$revocation->setSignedRevocation($signedRevocationData);
+			return $this->update($revocation);
 		}
-
-		return $this->insertOrUpdate($revocation);
 	}
 }

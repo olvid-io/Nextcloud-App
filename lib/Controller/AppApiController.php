@@ -12,9 +12,8 @@ use OCA\Olvid\Api\App\UserDeleteIdentity;
 use OCA\Olvid\Api\App\UserGetMagicLink;
 use OCA\Olvid\Api\App\UserUpdate;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Db\OlvidDatabase;
 use OCA\Olvid\ResponseDefinitions;
-use OCA\Olvid\Utils\OlvidUserConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -23,9 +22,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
-use OCP\IUserManager;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -40,13 +37,10 @@ use Psr\Log\LoggerInterface;
 class AppApiController extends OCSController {
 	public function __construct(
 		IRequest $request,
+		private readonly ?string $userId,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
-		private readonly IGroupManager $groupManager,
-		private readonly OlvidDatabase $db,
-		private readonly IUserManager $userManager,
-		private readonly OlvidUserConfigManager $olvidUserConfig,
-		private readonly ?string $userId,
+		private readonly OlvidContext $context,
 		private readonly UserGetMagicLink $userGetMagicLink,
 		private readonly UserDeleteIdentity $userDeleteIdentity,
 		private readonly GroupsUpdate $updateGroupsHandler,
@@ -68,13 +62,14 @@ class AppApiController extends OCSController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/me')]
 	public function meGet(): DataResponse {
+		$olvidUser = $this->context->db->user->getOrCreate($this->userId);
 		return new DataResponse([
-			'firstname' => $this->olvidUserConfig->getFirstname($this->userId),
-			'lastname' => $this->olvidUserConfig->getLastname($this->userId),
-			'position' => $this->olvidUserConfig->getPosition($this->userId),
-			'company' => $this->olvidUserConfig->getCompany($this->userId),
-			'olvidIdentityUploaded' => $this->olvidUserConfig->hasIdentity($this->userId),
-			'isAdmin' => $this->groupManager->isAdmin($this->userId),
+			'firstname' => $olvidUser->getFirstname(),
+			'lastname' => $olvidUser->getLastname(),
+			'position' => $olvidUser->getPosition(),
+			'company' => $olvidUser->getCompany(),
+			'useOlvid' => $olvidUser->hasIdentity(),
+			'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
 		]);
 	}
 
@@ -86,6 +81,7 @@ class AppApiController extends OCSController {
 	 * @param string $position Job position
 	 * @param string $company Company name
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>
+	 * @throws \OCP\DB\Exception
 	 * @noinspection PhpUnused
 	 */
 	#[NoAdminRequired]
@@ -127,22 +123,23 @@ class AppApiController extends OCSController {
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroup>}, array{}>
 	 * @noinspection PhpUnused
+	 * @throws Exception
 	 */
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/me/groups')]
 	public function meGroups(): DataResponse {
-		$user = $this->userSession->getUser();
-		$groups = $this->groupManager->getUserGroups($user);
+		$nextcloudUser = $this->userSession->getUser();
+		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
 		$result = [];
-		foreach ($groups as $group) {
+		foreach ($nextcloudGroups as $group) {
 			$gid = $group->getGID();
-			$olvidGroup = $this->db->group->findByGroupIdOrNull($gid);
-			$photoUidBytes = $olvidGroup?->getGroupPhotoUid();
+			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($gid);
+			$bytesPhotoUid = $olvidGroup?->getBytesGroupPhotoUid();
 			$result[] = [
 				'id' => $gid,
 				'displayName' => $group->getDisplayName(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'photoUid' => $photoUidBytes !== null ? base64_encode($photoUidBytes) : null,
+				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 			];
 		}
 		return new DataResponse(['groups' => $result]);
@@ -155,32 +152,34 @@ class AppApiController extends OCSController {
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupFull>}, array{}>
 	 * @noinspection PhpUnused
+	 * @throws Exception
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/groups')]
 	public function groupsGet(): DataResponse {
-		$groups = $this->groupManager->search('');
+		$nextcloudGroups = $this->context->nextcloud->groupManager->search('');
 
 		$response = ['groups' => []];
-		foreach ($groups as $group) {
+		foreach ($nextcloudGroups as $group) {
 			$gid = $group->getGID();
-			$olvidGroup = $this->db->group->findByGroupIdOrNull($gid);
+			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($gid);
 			$members = [];
 			foreach ($group->getUsers() as $member) {
 				$members[] = [
 					'id' => $member->getUID(),
 					'displayName' => $member->getDisplayName(),
-					'useOlvid' => $this->olvidUserConfig->hasIdentity($member->getUID()),
+					// TODO this can be optimized (build a user cache ? batch member requests ?)
+					'useOlvid' => $this->context->db->user->hasUserAnIdentity($member->getUID()),
 				];
 			}
 			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
-			$photoUidBytes = $olvidGroup?->getGroupPhotoUid();
+			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$response['groups'][] = [
 				'id' => $gid,
 				'displayName' => $group->getDisplayName(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'customName' => $olvidGroup?->getDiscussionName() ?? null,
 				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
-				'photoUid' => $photoUidBytes !== null ? base64_encode($photoUidBytes) : null,
+				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 				'members' => $members,
 			];
 		}
@@ -202,12 +201,12 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'id is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->groupManager->get($groupId) !== null) {
+		if ($this->context->nextcloud->groupManager->get($groupId) !== null) {
 			return new DataResponse(['error' => 'group already exists'], Http::STATUS_BAD_REQUEST);
 		}
 
 		// create nextcloud group
-		$nextcloudGroup = $this->groupManager->createGroup($groupId);
+		$nextcloudGroup = $this->context->nextcloud->groupManager->createGroup($groupId);
 
 		return new DataResponse([
 			'id' => $groupId,
@@ -278,15 +277,15 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'POST', url: '/app/groups/{groupId}/members/{userId}')]
 	public function groupsMemberPost(string $groupId, string $userId): DataResponse {
-		$group = $this->groupManager->get($groupId);
-		if ($group === null) {
+		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
+		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
+		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
+		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
-		$group->addUser($user);
+		$nextcloudGroup->addUser($nextcloudUser);
 		return new DataResponse([]);
 	}
 
@@ -300,19 +299,19 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'DELETE', url: '/app/groups/{groupId}/members/{userId}')]
 	public function groupsMemberDelete(string $groupId, string $userId): DataResponse {
-		$group = $this->groupManager->get($groupId);
-		if ($group === null) {
+		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
+		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
+		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
+		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
 		// protect against last admin deletion !
-		if ($group->getGID() === 'admin' && $user->getUID() === $this->userSession->getUser()->getUID()) {
+		if ($nextcloudGroup->getGID() === 'admin' && $nextcloudUser->getUID() === $this->userSession->getUser()->getUID()) {
 			return new DataResponse(['error' => 'you can remove yourself from admin group'], Http::STATUS_BAD_REQUEST);
 		}
-		$group->removeUser($user);
+		$nextcloudGroup->removeUser($nextcloudUser);
 		return new DataResponse([]);
 	}
 
@@ -327,14 +326,14 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/search')]
 	public function usersSearch(string $query = ''): DataResponse {
-		$users = $this->userManager->search($query, 20);
+		$nextcloudUsers = $this->context->nextcloud->userManager->search($query, 20);
 
 		$result = [];
-		foreach ($users as $user) {
+		foreach ($nextcloudUsers as $user) {
 			$result[] = [
 				'id' => $user->getUID(),
 				'displayName' => $user->getDisplayName(),
-				'useOlvid' => $this->olvidUserConfig->hasIdentity($user->getUID()),
+				'useOlvid' => $this->context->db->user->hasUserAnIdentity($user->getUID()),
 			];
 		}
 		return new DataResponse(['users' => $result]);
@@ -350,19 +349,19 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users')]
 	public function usersGet(): DataResponse {
-		$users = $this->userManager->search('');
+		$nextcloudUsers = $this->context->nextcloud->userManager->search('');
 
 		$result = [];
-		foreach ($users as $user) {
-			$uid = $user->getUID();
+		foreach ($nextcloudUsers as $nextcloudUser) {
+			$olvidUser = $this->context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
 			$result[] = [
-				'id' => $uid,
-				'displayName' => $user->getDisplayName(),
-				'useOlvid' => $this->olvidUserConfig->hasIdentity($uid),
-				'firstname' => $this->olvidUserConfig->getFirstname($uid),
-				'lastname' => $this->olvidUserConfig->getLastname($uid),
-				'position' => $this->olvidUserConfig->getPosition($uid),
-				'company' => $this->olvidUserConfig->getCompany($uid),
+				'id' => $nextcloudUser->getUID(),
+				'firstname' => $olvidUser?->getFirstname(),
+				'lastname' => $olvidUser?->getLastname(),
+				'position' => $olvidUser?->getPosition(),
+				'company' => $olvidUser?->getCompany(),
+				'useOlvid' => $olvidUser?->hasIdentity() ?? false,
+				'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
 			];
 		}
 		return new DataResponse(['users' => $result]);
@@ -388,41 +387,43 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'uid and password are required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->userManager->get($uid) !== null) {
+		if ($this->context->nextcloud->userManager->get($uid) !== null) {
 			return new DataResponse(['error' => 'user already exists'], Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$user = $this->userManager->createUser($uid, $password);
-			if ($user === false) {
+			$nextcloudUser = $this->context->nextcloud->userManager->createUser($uid, $password);
+			if ($nextcloudUser === false) {
 				return new DataResponse(['error' => 'Could not create user'], Http::STATUS_INTERNAL_SERVER_ERROR);
 			}
 		} catch (Exception $e) {
-			$this->logger->error('createUser failed: ' . $e->getMessage());
+			$this->logger->error('createUser failed', ['exception' => $e]);
 			return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
+		$olvidUser = $this->context->db->user->getOrCreate($uid);
+
 		if (trim($firstname) !== '') {
-			$this->olvidUserConfig->setFirstname($uid, trim($firstname));
+			$olvidUser->setFirstname(trim($firstname));
 		}
 		if (trim($lastname) !== '') {
-			$this->olvidUserConfig->setLastname($uid, trim($lastname));
+			$olvidUser->setLastname(trim($lastname));
 		}
 		if (trim($position) !== '') {
-			$this->olvidUserConfig->setPosition($uid, trim($position));
+			$olvidUser->setPosition(trim($position));
 		}
 		if (trim($company) !== '') {
-			$this->olvidUserConfig->setCompany($uid, trim($company));
+			$olvidUser->setCompany(trim($company));
 		}
 
 		return new DataResponse([
-			'id' => $user->getUID(),
-			'displayName' => $user->getDisplayName(),
-			'useOlvid' => false,
-			'firstname' => $this->olvidUserConfig->getFirstname($uid),
-			'lastname' => $this->olvidUserConfig->getLastname($uid),
-			'position' => $this->olvidUserConfig->getPosition($uid),
-			'company' => $this->olvidUserConfig->getCompany($uid),
+			'id' => $nextcloudUser->getUID(),
+			'displayName' => $nextcloudUser->getDisplayName(),
+			'useOlvid' => $olvidUser->hasIdentity(),
+			'firstname' => $olvidUser->getFirstname(),
+			'lastname' => $olvidUser->getLastname(),
+			'position' => $olvidUser->getPosition(),
+			'company' => $olvidUser->getCompany(),
 		], Http::STATUS_OK);
 	}
 
@@ -435,11 +436,12 @@ class AppApiController extends OCSController {
 	 * @param string $position Job position
 	 * @param string $company Company name
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @throws \OCP\DB\Exception
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/users/{userId}')]
 	public function updateUser(string $userId, string $firstname = '', string $lastname = '', string $position = '', string $company = ''): DataResponse {
-		$user = $this->userManager->get($userId);
+		$user = $this->context->nextcloud->userManager->get($userId);
 		if ($user === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
@@ -453,7 +455,6 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array{error: string}, array{}>
-	 * @throws \OCP\DB\Exception
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}')]
@@ -461,11 +462,11 @@ class AppApiController extends OCSController {
 		if ($userId === $this->userId) {
 			return new DataResponse(['error' => 'Cannot delete yourself'], Http::STATUS_BAD_REQUEST);
 		}
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
+		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
+		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
-		$user->delete();
+		$nextcloudUser->delete();
 		return new DataResponse([]);
 	}
 
@@ -478,16 +479,16 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/groups')]
 	public function getUserGroups(string $userId): DataResponse {
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
+		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
+		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
-		$groups = $this->groupManager->getUserGroups($user);
+		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
 		$result = [];
-		foreach ($groups as $group) {
+		foreach ($nextcloudGroups as $nextcloudGroup) {
 			$result[] = [
-				'id' => $group->getGID(),
-				'displayName' => $group->getDisplayName(),
+				'id' => $nextcloudGroup->getGID(),
+				'displayName' => $nextcloudGroup->getDisplayName(),
 			];
 		}
 		return new DataResponse(['groups' => $result]);
@@ -503,8 +504,8 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/magicLink')]
 	public function usersGetMagicLink(string $userId): DataResponse {
-		$user = $this->userManager->get($userId);
-		if ($user === null) {
+		$nextcloudGroup = $this->context->nextcloud->userManager->get($userId);
+		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
 		return $this->userGetMagicLink->handle($userId);
