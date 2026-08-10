@@ -52,3 +52,5 @@ curl -X POST \
    -H "Content-Type: application/json" \
     https://apps.nextcloud.com/api/v1/apps/releases \
     -d "{\"download\":\"${DOWNLOAD_URL}\",\"signature\":\"${SIGNATURE}\",\"nightly\":false}"
+
+echo Published version: $VERSION
