@@ -30,7 +30,7 @@ abstract class AbstractDeviceApiHandler {
 	) {
 	}
 
-	public function handle(?array $jsonParameters = null): Response {
+	public function handle(?array $jsonParameters = null): JSONResponse|Response {
 		// parse json payload from php://input when no params injected by the controller
 		if ($jsonParameters === null) {
 			try {

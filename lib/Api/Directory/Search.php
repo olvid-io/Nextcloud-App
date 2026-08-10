@@ -6,13 +6,11 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Models\JsonUserDetails;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Search extends AbstractAuthenticatedDeviceApiHandler {
-	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
 			$filter = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (string)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
 		} catch (Exception $e) {

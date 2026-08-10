@@ -7,13 +7,12 @@ namespace OCA\Olvid\Api\Directory;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
-use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Models\JsonRevocationData;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
@@ -23,7 +22,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws \OCP\DB\Exception
 	 */
-	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
 			$base64Identity = isset($jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY]) ? (string)$jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY] : null;
 		} catch (Exception $e) {

@@ -3,7 +3,6 @@
 namespace OCA\Olvid\Settings;
 
 use OCA\Olvid\AppInfo\Application;
-use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
 

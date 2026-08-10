@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Listener;
 
-use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;

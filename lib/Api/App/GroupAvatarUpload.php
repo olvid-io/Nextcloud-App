@@ -7,7 +7,6 @@ namespace OCA\Olvid\Api\App;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Db\OlvidData;
 use OCA\Olvid\Db\OlvidGroup;
-use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Encoded;
 use OCA\Olvid\Utils\RandomUtil;

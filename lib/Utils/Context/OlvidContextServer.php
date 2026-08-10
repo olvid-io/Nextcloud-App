@@ -27,7 +27,7 @@ class OlvidContextServer {
 	) {
 	}
 
-	private function getCachedApiKey(): string {
+	private function getCachedApiKey(): ?string {
 		if ($this->cachedApiKey === null) {
 			$this->cachedApiKey = $this->olvidAppConfig->getOlvidServerApiKey();
 		}
@@ -54,7 +54,9 @@ class OlvidContextServer {
 
 	/**
 	 * @param string $apiKeyToRevoke
-	 * @return false
+	 *
+	 * @return true
+	 *
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
@@ -74,7 +76,6 @@ class OlvidContextServer {
 
 	/**
 	 * @param string $apiKeyToRevoke
-	 * @return false
 	 */
 	public function revokeApiKeyNoFail(string $apiKeyToRevoke): bool {
 		try {

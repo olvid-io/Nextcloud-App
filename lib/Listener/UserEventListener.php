@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Olvid\Listener;
 
 use Exception;
-use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Models\JsonRevocationData;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;

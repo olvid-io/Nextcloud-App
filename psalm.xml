@@ -1,18 +1,31 @@
 <?xml version="1.0"?>
 <psalm
-    errorLevel="1"
-    resolveFromConfigFile="true"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="https://getpsalm.org/schema/config"
-    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
-    findUnusedBaselineEntry="true"
-    findUnusedCode="true"
-	phpVersion="8.1"
+	totallyTyped="true"
+	errorLevel="5"
+	resolveFromConfigFile="true"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="https://getpsalm.org/schema/config"
+	xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
 >
-    <projectFiles>
-        <directory name="lib" />
-    </projectFiles>
+	<projectFiles>
+		<directory name="lib" />
+	</projectFiles>
 	<extraFiles>
-		<directory name="vendor-bin"/>
+		<directory name="vendor-bin" />
 	</extraFiles>
+	<issueHandlers>
+		<UndefinedClass>
+			<errorLevel type="suppress">
+				<referencedClass name="OCP" />
+			</errorLevel>
+		</UndefinedClass>
+		<UndefinedDocblockClass>
+			<errorLevel type="suppress">
+				<referencedClass name="Doctrine\DBAL\Schema\Schema" />
+				<referencedClass name="Doctrine\DBAL\Schema\SchemaException" />
+				<referencedClass name="Doctrine\DBAL\Driver\Statement" />
+				<referencedClass name="Doctrine\DBAL\Schema\Table" />
+			</errorLevel>
+		</UndefinedDocblockClass>
+	</issueHandlers>
 </psalm>

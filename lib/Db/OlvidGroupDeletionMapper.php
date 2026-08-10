@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Db;
 
-use Firebase\JWT\JWT;
 use OCA\Olvid\Models\JsonGroupDeletionData;
 use OCA\Olvid\Utils\Context\OlvidContext;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;

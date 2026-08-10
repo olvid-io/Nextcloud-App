@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\Directory;
 
 use Exception;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
@@ -17,7 +18,7 @@ use OCP\IUser;
  * to /requestChallenge and /magicSession.
  */
 abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHandler {
-	public function handle(?array $jsonParameters = null): Response {
+	public function handle(?array $jsonParameters = null): Response|JSONResponse {
 		// check authentication
 		$this->user = $this->requiresAuth();
 		if ($this->user === null) {

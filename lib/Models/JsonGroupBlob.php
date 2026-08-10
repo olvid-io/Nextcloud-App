@@ -4,13 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Models;
 
-use Exception;
 use JsonSerializable;
-use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Db\OlvidGroup;
-use OCA\Olvid\Utils\Context\OlvidContext;
-use OCA\Olvid\Utils\RandomUtil;
-use OCA\Olvid\Utils\TimeUtil;
 
 class JsonGroupBlob implements JsonSerializable {
 	use JsonSerializableTrait;

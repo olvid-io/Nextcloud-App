@@ -9,7 +9,6 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 /**
@@ -20,7 +19,7 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 	 * @throws \OCP\DB\Exception
 	 * @throws MultipleObjectsReturnedException
 	 */
-	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// parse request (don't fail on parse error)
 		try {
 			$requestTimestamp = array_key_exists(Constants::GROUPS_REQUEST_TIMESTAMP, $jsonParameters) ? $jsonParameters[Constants::GROUPS_REQUEST_TIMESTAMP] : null;

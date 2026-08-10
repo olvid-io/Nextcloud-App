@@ -2,7 +2,6 @@
 
 namespace OCA\Olvid\Api\App;
 
-use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\Exception;

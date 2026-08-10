@@ -11,14 +11,13 @@ use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class Me extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws \OCP\DB\Exception
 	 */
-	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// parse request (don't fail on parse error)
 		try {
 			// $deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;

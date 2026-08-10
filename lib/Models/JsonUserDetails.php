@@ -4,8 +4,6 @@ namespace OCA\Olvid\Models;
 
 use JsonSerializable;
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Db\OlvidUser;
-use OCA\Olvid\Utils\TimeUtil;
 
 class JsonUserDetails implements JsonSerializable {
 	use JsonSerializableTrait;

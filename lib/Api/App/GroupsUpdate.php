@@ -3,7 +3,6 @@
 namespace OCA\Olvid\Api\App;
 
 use OCA\Olvid\Db\OlvidGroup;
-use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;

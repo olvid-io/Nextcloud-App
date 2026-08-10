@@ -8,14 +8,13 @@ use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws \OCP\DB\Exception
 	 */
-	public function handler(array $jsonParameters, ?IUser $nextcloudUser): Response {
+	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
 			$timestamp = (int)($jsonParameters[Constants::LIST_USERS_REQUEST_TIMESTAMP] ?? 0);
 		} catch (Exception $e) {
