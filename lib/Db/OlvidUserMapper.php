@@ -9,6 +9,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\Types;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 
@@ -31,7 +32,7 @@ class OlvidUserMapper extends QBMapper {
 	public function getByUserId(string $userId): OlvidUser {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
 		return $this->findEntity($qb);
 	}
 
@@ -85,7 +86,7 @@ class OlvidUserMapper extends QBMapper {
 	public function searchNonce(string $nonce): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('nonce', $qb->createNamedParameter($nonce)));
+			->where($qb->expr()->eq('nonce', $qb->createNamedParameter($nonce, Types::STRING)));
 		return $this->findEntities($qb);
 	}
 
@@ -97,7 +98,7 @@ class OlvidUserMapper extends QBMapper {
 		try {
 			$qb = $this->db->getQueryBuilder();
 			$qb->select('id')->from($this->getTableName())
-				->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)))
+				->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)))
 				->andWhere($qb->expr()->isNotNull('bytes_identity'));
 			$this->findOneQuery($qb);
 			return true;

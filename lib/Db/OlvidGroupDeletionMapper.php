@@ -48,7 +48,7 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	public function getByBytesGroupUid(string $bytesGroupUid): OlvidGroupDeletion {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::STRING)));
+			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BLOB)));
 		return $this->findEntity($qb);
 	}
 

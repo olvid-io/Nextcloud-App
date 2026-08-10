@@ -46,7 +46,7 @@ class OlvidGroupKickedMapper extends QBMapper {
 	private function getByBytesGroupUidAndUserId(string $bytesGroupUid, string $userId): ?OlvidGroupKicked {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::STRING)))
+			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BLOB)))
 			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
 		return $this->findEntity($qb);
 	}
@@ -70,7 +70,7 @@ class OlvidGroupKickedMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->gt('timestamp', $qb->createNamedParameter($earliestRevocationTimestamp, Types::BIGINT)))
-			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
 		return $this->findEntities($qb);
 	}
 

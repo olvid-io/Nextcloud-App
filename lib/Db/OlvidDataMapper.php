@@ -8,6 +8,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
+use OCP\DB\Types;
 use OCP\IDBConnection;
 
 /**
@@ -52,7 +53,7 @@ class OlvidDataMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('bytes_data_uid', $qb->createNamedParameter($bytesDataUid)));
+			->where($qb->expr()->eq('bytes_data_uid', $qb->createNamedParameter($bytesDataUid, Types::BLOB)));
 		return $this->findEntity($qb);
 	}
 

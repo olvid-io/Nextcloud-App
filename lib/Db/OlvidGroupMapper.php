@@ -8,6 +8,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
+use OCP\DB\Types;
 use OCP\IDBConnection;
 
 /** @template-extends QBMapper<OlvidGroup> */
@@ -26,7 +27,7 @@ class OlvidGroupMapper extends QBMapper {
 	public function getByGroupId(string $groupId): OlvidGroup {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('group_id', $qb->createNamedParameter($groupId)));
+			->where($qb->expr()->eq('group_id', $qb->createNamedParameter($groupId, Types::STRING)));
 		return $this->findEntity($qb);
 	}
 
