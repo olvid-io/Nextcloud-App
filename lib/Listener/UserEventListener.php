@@ -52,61 +52,62 @@ class UserEventListener implements IEventListener {
 			}
 		}
 
-		// check user use Olvid
+		// if user use olvid revoke it's identity and remove it from groups
 		if (!$olvidUser?->hasIdentity()) {
-			return;
-		}
-
-		// revoke identity
-		try {
-			$this->context->db->revocation->computeAndSaveRevocation($userId, $olvidUser->getBytesIdentity(), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->context);
-		} catch (Exception $exception) {
-			$this->logger->error('UserEventListener: userDeletedHandler: cannot create revocation', ['exception' => $exception]);
-		}
-
-		// keep bytesIdentity before deletion to compute group kicks
-		$bytesUserIdentity = $olvidUser->getBytesIdentity();
-		// delete user in database and clean database
-		try {
-			$this->context->db->user->delete($olvidUser);
-		} catch (\OCP\DB\Exception $exception) {
-			$this->logger->error('UserEventListener: userDeletedHandler: cannot delete olvid user in db', ['exception' => $exception]);
-		}
-
-		// notify every user (ignore exceptions)
-		$globalPushTopic = $this->context->nextcloud->appManager->getGlobalPushTopic();
-		if ($globalPushTopic !== null) {
-			$this->context->olvidServer->sendGroupNotificationNoFail($globalPushTopic);
-		}
-
-		// remove user from Olvid groups (ignore exceptions)
-		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($event->getUser());
-		foreach ($nextcloudGroups as $nextcloudGroup) {
+			// revoke identity
 			try {
-				$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
-				if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
-					continue;
-				}
-
-				// create group kick in database
-				$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $userId, $bytesUserIdentity, $this->context);
-
-				// update group blob
-				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
-				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
-				$olvidGroup->setSignedGroupBlob($signedBlob);
-				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-				$olvidGroup = $this->context->db->group->update($olvidGroup);
-
-				// notify users
-				if ($olvidGroup->getPushTopic() !== null) {
-					// we can use push topic to notify members and removed user
-					$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
-				}
+				$this->context->db->revocation->computeAndSaveRevocation($userId, $olvidUser->getBytesIdentity(), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->context);
 			} catch (Exception $exception) {
-				$this->logger->error('UserEventListener: userDeletedHandler: cannot kick user from group', ['exception' => $exception]);
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot create revocation', ['exception' => $exception]);
+			}
+
+			// keep bytesIdentity before deletion to compute group kicks
+			$bytesUserIdentity = $olvidUser->getBytesIdentity();
+			// delete user in database and clean database
+			try {
+				$this->context->db->user->delete($olvidUser);
+			} catch (\OCP\DB\Exception $exception) {
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot delete olvid user in db', ['exception' => $exception]);
+			}
+
+			// notify every user (ignore exceptions)
+			$globalPushTopic = $this->context->nextcloud->appManager->getGlobalPushTopic();
+			if ($globalPushTopic !== null) {
+				$this->context->olvidServer->sendGroupNotificationNoFail($globalPushTopic);
+			}
+
+			// remove user from Olvid groups (ignore exceptions)
+			$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($event->getUser());
+			foreach ($nextcloudGroups as $nextcloudGroup) {
+				try {
+					$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
+					if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
+						continue;
+					}
+
+					// create group kick in database
+					$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $userId, $bytesUserIdentity, $this->context);
+
+					// update group blob
+					$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+					$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
+					$olvidGroup->setSignedGroupBlob($signedBlob);
+					$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+					$olvidGroup = $this->context->db->group->update($olvidGroup);
+
+					// notify users
+					if ($olvidGroup->getPushTopic() !== null) {
+						// we can use push topic to notify members and removed user
+						$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
+					}
+				} catch (Exception $exception) {
+					$this->logger->error('UserEventListener: userDeletedHandler: cannot kick user from group', ['exception' => $exception]);
+				}
 			}
 		}
+
+		// delete olvid user in database
+		$this->context->db->user->delete($olvidUser);
 	}
 
 	public function userChangedHandler(UserChangedEvent $event): void {

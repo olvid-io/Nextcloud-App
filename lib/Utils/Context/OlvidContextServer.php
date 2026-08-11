@@ -106,13 +106,30 @@ class OlvidContextServer {
 	 * @return void
 	 * @noinspection PhpUnused
 	 */
-	public function revokePushTopic(String $pushTopic): void {
+	public function revokePushTopic(String $pushTopic): bool {
 		// not implemented server side
 		//		$query = new JsonOlvidServerRequest();
 		//		$query->query = JsonOlvidServerRequest::QUERY_DELETE_PUSH_TOPIC;
 		//		$query->pushTopic = $pushTopic;
 		//		$this->serverApiRequest($query);
 		//		$this->logger->info('OlvidServer:: revokePushTopic');
+	}
+
+	/**
+	 * @param String $pushTopic
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function revokePushTopicNoFail(String $pushTopic): bool {
+		try {
+			return $this->revokePushTopic($pushTopic);
+		} catch (InvalidConfigurationException) {
+			$this->logger->error('Olvid: revokePushTopic: invalid server configuration');
+			return false;
+		} catch (OlvidServerException $e) {
+			$this->logger->error('Olvid: revokePushTopic: unexpected server exception', ['exception' => $e]);
+			return false;
+		}
 	}
 
 	/**
@@ -135,7 +152,6 @@ class OlvidContextServer {
 	 * @throws InvalidConfigurationException
 	 */
 	private function sendSingleUserNotification(String $base64UserIdentity): bool {
-
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_NOTIFY_SINGLE_USER;
 		$query->userIdentity = $base64UserIdentity;
@@ -176,6 +192,22 @@ class OlvidContextServer {
 		}
 	}
 
+
+	/**
+	 * @param string[] $knownApiKeys
+	 * @param string[] $knownPushTopics
+	 * @throws OlvidServerException
+	 * @throws InvalidConfigurationException
+	 */
+	public function serverSynchronization(array $knownApiKeys, array $knownPushTopics): array {
+		$query = new JsonOlvidServerRequest();
+		$query->q = JsonOlvidServerRequest::QUERY_API_KEY_SYNCHRONIZATION;
+		$query->knownApiKeys = $knownApiKeys;
+		$query->knownPushTopics = $knownPushTopics;
+		$this->logger->info('OlvidServer:: serverSynchronization');
+		return $this->serverApiRequest($query);
+	}
+
 	/**
 	 * @throws NetworkException|OlvidServerException|InvalidConfigurationException
 	 */
@@ -199,7 +231,8 @@ class OlvidContextServer {
 			]);
 			$jsonResponse = json_decode($response->getBody(), associative: true);
 		} catch (Exception $e) {
-			throw new NetworkException($e->getMessage());
+			$this->logger->error("OlvidContextServer: serverApiRequest: exception (query: $jsonRequest->q)", ['exception' => $e]);
+			throw new NetworkException("$e");
 		}
 
 		if ($jsonResponse != null && array_key_exists('error', $jsonResponse) && $jsonResponse['error']) {

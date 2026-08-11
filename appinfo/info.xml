@@ -43,10 +43,13 @@
 		</navigation>
 	</navigations>
 	<repair-steps>
-		<install><step>OCA\Olvid\Migration\OlvidRepairStep</step></install>
-		<pre-migration><step>OCA\Olvid\Migration\OlvidRepairStep</step></pre-migration>
-		<post-migration><step>OCA\Olvid\Migration\OlvidRepairStep</step></post-migration>
+		<install><step>OCA\Olvid\Migration\InstallRepairStep</step></install>
+		<uninstall><step>OCA\Olvid\Migration\UninstallRepairStep</step></uninstall>
+		<post-migration><step>OCA\Olvid\Migration\RepairStep</step></post-migration>
 	</repair-steps>
+	<background-jobs>
+		<job>OCA\Olvid\Cron\OlvidServerSynchronizationTask</job>
+	</background-jobs>
 	<settings>
 		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
 	</settings>
