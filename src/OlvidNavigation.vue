@@ -7,7 +7,7 @@
 			:active="$route.name === 'profile'"
 			@click="$router.push({ name: 'profile' }).catch(() => {})">
 			<template #icon>
-				<AccountIcon :size="20" />
+				<IconAccount :size="20" />
 			</template>
 		</NcAppNavigationItem>
 
@@ -17,7 +17,7 @@
 			:active="$route.name === 'users' || $route.name === 'user-detail'"
 			@click="$router.push({ name: 'users' }).catch(() => {})">
 			<template #icon>
-				<AccountMultipleIcon :size="20" />
+				<IconAccountMultiple :size="20" />
 			</template>
 		</NcAppNavigationItem>
 
@@ -27,28 +27,64 @@
 			:active="$route.name === 'groups' || $route.name === 'group-detail'"
 			@click="$router.push({ name: 'groups' }).catch(() => {})">
 			<template #icon>
-				<AccountGroupIcon :size="20" />
+				<IconAccountGroup :size="20" />
 			</template>
 		</NcAppNavigationItem>
+
+		<template #footer>
+			<ul class="app-navigation-entry__settings">
+				<NcAppNavigationItem
+					:name="t('olvid', 'Olvid Settings')"
+					data-cy-olvid-navigation-settings-button
+					@click="settingsOpened = !settingsOpened">
+					<template #icon>
+						<IconCog :size="20" />
+					</template>
+				</NcAppNavigationItem>
+			</ul>
+		</template>
+
+		<OlvidAppSettings
+			data-cy-olvid-navigation-settings
+			:open.sync="settingsOpened"
+			@close="settingsOpened = false" />
 	</NcAppNavigation>
 </template>
 
 <script>
-import AccountIcon from 'vue-material-design-icons/Account.vue'
-import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
-import AccountMultipleIcon from 'vue-material-design-icons/AccountMultiple.vue'
+import IconAccount from 'vue-material-design-icons/AccountOutline.vue'
+import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
+import IconCog from 'vue-material-design-icons/CogOutline.vue'
+import IconAccountMultiple from 'vue-material-design-icons/AccountMultipleOutline.vue'
 import NcAppNavigation from '@nextcloud/vue/dist/Components/NcAppNavigation.js'
 import NcAppNavigationCaption from '@nextcloud/vue/dist/Components/NcAppNavigationCaption.js'
 import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationItem.js'
+import OlvidAppSettings from './components/OlvidAppSettings.vue'
 
 export default {
 	name: 'OlvidNavigation',
-	components: { NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, AccountIcon, AccountGroupIcon, AccountMultipleIcon },
+	components: { NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, IconAccount, IconAccountGroup, IconCog, IconAccountMultiple, OlvidAppSettings },
 	props: {
 		isAdmin: {
 			type: Boolean,
 			default: false,
 		},
 	},
+	data() {
+		return {
+			settingsOpened: false,
+		}
+	},
 }
 </script>
+
+<style scoped lang="css">
+
+.app-navigation-entry__settings {
+	height: auto !important;
+	overflow: hidden !important;
+	padding-top: 0 !important;
+	flex: 0 0 auto;
+}
+
+</style>
