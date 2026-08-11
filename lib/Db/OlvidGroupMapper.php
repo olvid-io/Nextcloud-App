@@ -13,8 +13,10 @@ use OCP\IDBConnection;
 
 /** @template-extends QBMapper<OlvidGroup> */
 class OlvidGroupMapper extends QBMapper {
+	public const TABLE_NAME = 'olvid_group';
+
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'olvid_group', OlvidGroup::class);
+		parent::__construct($db, self::TABLE_NAME, OlvidGroup::class);
 	}
 
 	/**
@@ -50,6 +52,13 @@ class OlvidGroupMapper extends QBMapper {
 	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
+
+	public function getEnabledGroups(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->eq('enabled', $qb->createNamedParameter(true, Types::BOOLEAN)));
 		return $this->findEntities($qb);
 	}
 

@@ -80,8 +80,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// global push topic not set try to request one
 		if (!$globalPushTopic) {
 			try {
-				$globalPushTopic = $this->context->olvidServer->requestNewPushTopic();
-				$this->context->nextcloud->appManager->setGlobalPushTopic($globalPushTopic);
+				$this->context->nextcloud->appManager->setGlobalPushTopic($this->context->olvidServer->requestNewPushTopic());
 			} catch (InvalidConfigurationException) {
 				$this->logger->error('Me: cannot create global push topic: invalid configuration');
 			} catch (Exception $e) {

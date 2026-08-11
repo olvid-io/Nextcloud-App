@@ -21,8 +21,10 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<OlvidData>
  */
 class OlvidDataMapper extends QBMapper {
+	public const TABLE_NAME = 'olvid_data';
+
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'olvid_data', OlvidData::class);
+		parent::__construct($db, self::TABLE_NAME, OlvidData::class);
 	}
 
 	/** @return OlvidData[]

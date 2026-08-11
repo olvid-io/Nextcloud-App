@@ -16,8 +16,10 @@ use OCP\IDBConnection;
 
 /** @template-extends QBMapper<OlvidGroupDeletion> */
 class OlvidGroupDeletionMapper extends QBMapper {
+	public const TABLE_NAME = 'olvid_group_deletion';
+
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'olvid_group_deletion', OlvidGroupDeletion::class);
+		parent::__construct($db, self::TABLE_NAME, OlvidGroupDeletion::class);
 	}
 
 	/**

@@ -16,8 +16,10 @@ use OCP\IDBConnection;
 
 /** @template-extends QBMapper<OlvidGroupKicked> */
 class OlvidGroupKickedMapper extends QBMapper {
+	public const TABLE_NAME = 'olvid_group_kicked';
+
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'olvid_group_kicked', OlvidGroupKicked::class);
+		parent::__construct($db, self::TABLE_NAME, OlvidGroupKicked::class);
 	}
 
 	/** @return OlvidGroupKicked[]

@@ -15,11 +15,13 @@ use Psr\Log\LoggerInterface;
 
 /** @template-extends QBMapper<OlvidUser> */
 class OlvidUserMapper extends QBMapper {
+	public const TABLE_NAME = 'olvid_user';
+
 	public function __construct(
 		IDBConnection $db,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct($db, 'olvid_user', OlvidUser::class);
+		parent::__construct($db, self::TABLE_NAME, OlvidUser::class);
 	}
 
 	/**
@@ -129,6 +131,17 @@ class OlvidUserMapper extends QBMapper {
 	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName());
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @return OlvidUser[]
+	 * @throws Exception
+	 */
+	public function getAllWithIdentity(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->isNotNull('bytes_identity'));
 		return $this->findEntities($qb);
 	}
 

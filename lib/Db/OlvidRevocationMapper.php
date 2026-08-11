@@ -17,11 +17,13 @@ use Psr\Log\LoggerInterface;
 
 /** @template-extends QBMapper<OlvidRevocation> */
 class OlvidRevocationMapper extends QBMapper {
+	public const TABLE_NAME = 'olvid_revocation';
+
 	public function __construct(
 		IDBConnection $db,
 		protected readonly LoggerInterface $logger,
 	) {
-		parent::__construct($db, 'olvid_revocation', OlvidRevocation::class);
+		parent::__construct($db, self::TABLE_NAME, OlvidRevocation::class);
 	}
 
 	/** @return OlvidRevocation[]
