@@ -103,8 +103,10 @@ class DirectoryApiController extends OCSController {
 	public function openid(): Response {
 		$discoveryPayload = [
 			'issuer' => $this->urlGenerator->getBaseUrl(),
-			'authorization_endpoint' => '',
-			'token_endpoint' => '',
+//			TODO set to fake value to pass desktop current use but not supposed to be set ...
+			'authorization_endpoint' => 'authorization_endpoint',
+//			TODO set to fake value to pass desktop current use but not supposed to be set ...
+			'token_endpoint' => 'token_endpoint',
 			'userinfo_endpoint' => '',
 			'jwks_uri' => $this->urlGenerator->linkToOCSRouteAbsolute('olvid.directoryApi.jwks'),
 			'scopes_supported' => [],

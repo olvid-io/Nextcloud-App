@@ -24,7 +24,7 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 
 		$response = [
 			Constants::SEARCH_RESPONSE_RESULTS => [],
-			Constants::SEARCH_RESPONSE_RESULTS_UNACTIVATED_USERS => 0,
+			Constants::SEARCH_RESPONSE_RESULTS_UNACTIVATED_USERS => [],
 			Constants::SEARCH_RESPONSE_COUNT => 0,
 			Constants::SEARCH_RESPONSE_COUNT_UNACTIVATED_USERS => 0,
 		];
