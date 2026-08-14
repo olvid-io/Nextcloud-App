@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
@@ -55,11 +56,43 @@ class OlvidGroupMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	/**
+	 * @return OlvidGroup[]
+	 * @throws Exception
+	 */
 	public function getEnabledGroups(): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->eq('enabled', $qb->createNamedParameter(true, Types::BOOLEAN)));
 		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @return OlvidGroup[]
+	 * @throws Exception
+	 */
+	public function getGroupsWithPhoto(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->isNotNull('bytes_group_photo_uid'));
+		return $this->findEntities($qb);
+	}
+
+	/*
+	 * On a group deletion we can automatically delete associated OlvidData for group photo
+	 */
+	public function delete(Entity|OlvidGroup $entity): Entity {
+		parent::delete($entity);
+		// delete associated data
+		if ($entity->getBytesGroupPhotoUid()) {
+			try {
+				$dataMapper = new OlvidDataMapper($this->db);
+				$olvidData = $dataMapper->getByUid($entity->getBytesGroupPhotoUid());
+				$dataMapper->delete($olvidData);
+			} catch (DoesNotExistException|MultipleObjectsReturnedException|Exception) {
+			}
+		}
+		return $entity;
 	}
 
 	/**

@@ -53,7 +53,7 @@ class UserEventListener implements IEventListener {
 		}
 
 		// if user use olvid revoke it's identity and remove it from groups
-		if (!$olvidUser?->hasIdentity()) {
+		if ($olvidUser?->hasIdentity()) {
 			// revoke identity
 			try {
 				$this->context->db->revocation->computeAndSaveRevocation($userId, $olvidUser->getBytesIdentity(), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->context);

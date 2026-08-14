@@ -113,6 +113,7 @@ class OlvidContextServer {
 		//		$query->pushTopic = $pushTopic;
 		//		$this->serverApiRequest($query);
 		//		$this->logger->info('OlvidServer:: revokePushTopic');
+		return true;
 	}
 
 	/**

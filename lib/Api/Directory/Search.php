@@ -12,7 +12,8 @@ use OCP\IUser;
 class Search extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
-			$filter = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (string)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
+			/** @var [String] $filter */
+			$filters = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (array)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
 		} catch (Exception $e) {
 			$this->logger->warning('search: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();

@@ -86,19 +86,26 @@ class GroupsUpdate {
 			}
 
 			/*
-			 * we can now recompute blob and store it database
+			 * if group is enabled we can now recompute blob and store it database
+			 * else we can delete blob
 			 */
-			$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
-			$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
-			$olvidGroup->setSignedGroupBlob($signedBlob);
-			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-			$olvidGroup = $this->context->db->group->update($olvidGroup);
+			if ($enabled) {
+				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
+				$olvidGroup->setSignedGroupBlob($signedBlob);
+				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+				$olvidGroup = $this->context->db->group->update($olvidGroup);
+			} elseif ($olvidGroup->getSignedGroupBlob()) {
+				$olvidGroup->setSignedGroupBlob(null);
+				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+				$olvidGroup = $this->context->db->group->update($olvidGroup);
+			}
 
 			/*
 			** send notifications
 			 */
 			if (!$olvidGroup->getEnabled() && !$enableStatusChanged) {
-				// if group is not enabled and was not disabled now, do not send a notification
+				// if group is disabled and was not disabled now, do not send a notification
 			} else {
 				// notify users individually
 				if ($newlyCreatedPushTopic || $olvidGroup->getPushTopic() === null) {
@@ -114,6 +121,13 @@ class GroupsUpdate {
 				else {
 					$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 				}
+			}
+
+			// delete push topic for disabled group
+			if (!$olvidGroup->getEnabled() && !$olvidGroup->getPushTopic() !== null) {
+				$this->context->olvidServer->revokePushTopicNoFail($olvidGroup->getPushTopic());
+				$olvidGroup->setPushTopic(null);
+				$olvidGroup = $this->context->db->group->update($olvidGroup);
 			}
 
 			return new DataResponse($olvidGroup);
