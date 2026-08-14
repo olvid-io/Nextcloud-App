@@ -3,6 +3,7 @@
 namespace OCA\Olvid\Migration;
 
 use Exception;
+use OCA\Olvid\Cron\OlvidDatabaseSynchronizationTask;
 use OCA\Olvid\Cron\OlvidServerSynchronizationTask;
 use OCA\Olvid\Listener\EveryoneGroupEventListener;
 use OCA\Olvid\Utils\Context\OlvidContext;
@@ -44,13 +45,17 @@ class RepairStep implements IRepairStep {
 		/*
 		 * Sync database
 		 */
-		// TODO sync database
+		try {
+			(new OlvidDatabaseSynchronizationTask($this->context, $this->logger))->run();
+		} catch (Exception $exception) {
+			$this->logger->error('RepairStep: OlvidDatabaseSynchronizationTask: unexpected exception', ['exception' => $exception]);
+		}
 
 		/*
 		 * Sync with olvid server (api keys and push topics)
 		 */
 		try {
-			OlvidServerSynchronizationTask::staticRun($this->context, $this->logger);
+			(new OlvidServerSynchronizationTask($this->context, $this->logger))->run();
 		} catch (Exception $exception) {
 			$this->logger->error('RepairStep: OlvidServerSynchronizationTask: unexpected exception', ['exception' => $exception]);
 		}

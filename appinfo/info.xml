@@ -48,7 +48,7 @@
 		<post-migration><step>OCA\Olvid\Migration\RepairStep</step></post-migration>
 	</repair-steps>
 	<background-jobs>
-		<job>OCA\Olvid\Cron\OlvidServerSynchronizationTask</job>
+		<job>OCA\Olvid\Cron\SyncCronTask</job>
 	</background-jobs>
 	<settings>
 		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>

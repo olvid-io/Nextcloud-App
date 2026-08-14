@@ -9,6 +9,7 @@ use OCA\Olvid\Listener\EveryoneGroupEventListener;
 use OCA\Olvid\Listener\GroupEventListener;
 use OCA\Olvid\Listener\UserEventListener;
 use OCA\Olvid\Profile\OlvidProfileLinkAction;
+use OCA\Olvid\SetupCheck\OlvidConfigurationSetupCheck;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -32,6 +33,7 @@ class Application extends App implements IBootstrap {
 	public function register(IRegistrationContext $context): void {
 		$context->registerDeclarativeSettings(Admin::class);
 		$context->registerProfileLinkAction(OlvidProfileLinkAction::class);
+		$context->registerSetupCheck(OlvidConfigurationSetupCheck::class);
 
 		// user events
 		$context->registerEventListener(UserDeletedEvent::class, UserEventListener::class);
