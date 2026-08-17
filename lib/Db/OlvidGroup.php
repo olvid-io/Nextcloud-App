@@ -128,7 +128,7 @@ class OlvidGroup extends Entity {
 
 			$signedUserDetails = $olvidUserMember->getSignedDetails();
 			if ($signedUserDetails === null) {
-				$jsonUserDetails = $olvidUserMember->computeJsonUserDetails($context->nextcloud->userManager->getDisplayName($olvidUserMember->getUserId()));
+				$jsonUserDetails = $olvidUserMember->computeJsonUserDetails();
 				$signedUserDetails = $context->signatory->sign($jsonUserDetails->jsonSerialize());
 				$olvidUserMember->setSignedDetails($signedUserDetails);
 			}

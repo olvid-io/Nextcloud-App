@@ -61,22 +61,22 @@ class OlvidUserMapper extends QBMapper {
 			return null;
 		} catch (MultipleObjectsReturnedException|Exception $e) {
 			$this->logger->error('OlvidUserMapper: getByUserIdOrNull: unexpected exception', ['exception' => $e]);
-			return OlvidUser::create($userId);
+			return OlvidUser::create($userId, '');
 		}
 	}
 
 	/**
 	 * @param string $userId
+	 * @param string $nextcloudDisplayName
 	 * @return OlvidUser
-	 *
 	 */
-	public function getOrCreate(string $userId): OlvidUser {
+	public function getOrCreate(string $userId, string $nextcloudDisplayName): OlvidUser {
 		try {
 			$user = $this->getByUserIdOrNull($userId);
-			return $user === null ? $this->insert(OlvidUser::create($userId)) : $user;
+			return $user === null ? $this->insert(OlvidUser::create($userId, $nextcloudDisplayName)) : $user;
 		} catch (Exception $e) {
 			$this->logger->error('OlvidUserMapper: getOrCreate: unexpected exception', ['exception' => $e]);
-			return OlvidUser::create($userId);
+			return OlvidUser::create($userId, $nextcloudDisplayName);
 		}
 	}
 

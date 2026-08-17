@@ -82,9 +82,11 @@ class OlvidUser extends Entity {
 		$this->addType('fullSearchField', Types::STRING);
 	}
 
-	public static function create(string $userId): OlvidUser {
+	public static function create(string $userId, string $nextcloudDisplayName): OlvidUser {
 		$user = new OlvidUser();
 		$user->setUserId($userId);
+		// always set firstname, user details must not be empty
+		$user->setFirstname(($nextcloudDisplayName == null || !trim($nextcloudDisplayName)) ? $userId : trim($nextcloudDisplayName));
 		return $user;
 	}
 
@@ -93,20 +95,14 @@ class OlvidUser extends Entity {
 	}
 
 	/**
-	 * @param string $fallbackName: pass nextcloud Display Name, it is used if user do not set its Olvid details
 	 * @return JsonUserDetails
 	 */
-	public function computeJsonUserDetails(string $fallbackName): JsonUserDetails {
+	public function computeJsonUserDetails(): JsonUserDetails {
 		// get user details from attributes
 		$firstname = trim($this->getFirstname() ?? '');
 		$lastname = trim($this->getLastname() ?? '');
 		$position = trim($this->getPosition() ?? '');
 		$company = trim($this->getCompany() ?? '');
-
-		// fallback: if user does not set any of firstname and lastname we use display name as a first name
-		if (!$firstname && !$lastname) {
-			$firstname = $fallbackName;
-		}
 
 		$base64Identity = base64_encode($this->getBytesIdentity() ?? '');
 		// set identity to null and not to an empty string, else android think we already have an identity on server ...

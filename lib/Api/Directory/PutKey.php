@@ -81,7 +81,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$olvidUser->setBytesIdentity($bytesIdentity);
 
 				// sign user details and store them
-				$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
+				$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 				$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 
 				// save user in database
@@ -127,7 +127,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				}
 
 				// sign user details and store them
-				$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
+				$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 				$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 				$olvidUser = $this->context->db->user->update($olvidUser);
 			}
@@ -163,7 +163,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$olvidUser->setBytesIdentity($bytesIdentity);
 
 				// sign user details and store them
-				$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
+				$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 				$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 
 				// save olvid user in database

@@ -129,7 +129,7 @@ class UserEventListener implements IEventListener {
 			}
 
 			// re-compute details and sign them
-			$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
+			$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 			$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 			// update full search field
 			$olvidUser->setFullSearchField($jsonUserDetails->computeFullSearchString());

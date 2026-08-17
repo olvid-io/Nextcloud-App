@@ -29,10 +29,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$currentTimestamp = TimeUtil::currentTimeMillis();
 
 		// get or create the base OlvidUser
-		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID());
+		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 
 		// compute user details
-		$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
+		$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 
 		// set or update full search string attributes
 		$olvidUser->setFullSearchField($jsonUserDetails->computeFullSearchString());

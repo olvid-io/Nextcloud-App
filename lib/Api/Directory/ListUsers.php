@@ -32,7 +32,7 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 		foreach ($olvidUsers as $olvidUser) {
 			// only add users with a valid identity on server
 			if ($olvidUser->hasIdentity()) {
-				$response[Constants::LIST_USERS_RESPONSE_USERS][] = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
+				$response[Constants::LIST_USERS_RESPONSE_USERS][] = $olvidUser->computeJsonUserDetails();
 			}
 		}
 

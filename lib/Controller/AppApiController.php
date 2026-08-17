@@ -62,8 +62,10 @@ class AppApiController extends OCSController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/me')]
 	public function meGet(): DataResponse {
-		$olvidUser = $this->context->db->user->getOrCreate($this->userId);
+		$nextcloudUser = $this->userSession->getUser();
+		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 		return new DataResponse([
+			'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
 			'firstname' => $olvidUser->getFirstname(),
 			'lastname' => $olvidUser->getLastname(),
 			'position' => $olvidUser->getPosition(),
@@ -329,11 +331,11 @@ class AppApiController extends OCSController {
 		$nextcloudUsers = $this->context->nextcloud->userManager->search($query, 20);
 
 		$result = [];
-		foreach ($nextcloudUsers as $user) {
+		foreach ($nextcloudUsers as $nextcloudUser) {
 			$result[] = [
-				'id' => $user->getUID(),
-				'displayName' => $user->getDisplayName(),
-				'useOlvid' => $this->context->db->user->hasUserAnIdentity($user->getUID()),
+				'id' => $nextcloudUser->getUID(),
+				'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
+				'useOlvid' => $this->context->db->user->hasUserAnIdentity($nextcloudUser->getUID()),
 			];
 		}
 		return new DataResponse(['users' => $result]);
@@ -356,6 +358,7 @@ class AppApiController extends OCSController {
 			$olvidUser = $this->context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
 			$result[] = [
 				'id' => $nextcloudUser->getUID(),
+				'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
 				'firstname' => $olvidUser?->getFirstname(),
 				'lastname' => $olvidUser?->getLastname(),
 				'position' => $olvidUser?->getPosition(),
@@ -391,6 +394,7 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'user already exists'], Http::STATUS_BAD_REQUEST);
 		}
 
+		// create nextcloud user
 		try {
 			$nextcloudUser = $this->context->nextcloud->userManager->createUser($uid, $password);
 			if ($nextcloudUser === false) {
@@ -401,7 +405,8 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		$olvidUser = $this->context->db->user->getOrCreate($uid);
+		// create Olvid user
+		$olvidUser = $this->context->db->user->getOrCreate($uid, $nextcloudUser->getDisplayName());
 
 		if (trim($firstname) !== '') {
 			$olvidUser->setFirstname(trim($firstname));
@@ -418,7 +423,7 @@ class AppApiController extends OCSController {
 
 		return new DataResponse([
 			'id' => $nextcloudUser->getUID(),
-			'displayName' => $nextcloudUser->getDisplayName(),
+			'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
 			'useOlvid' => $olvidUser->hasIdentity(),
 			'firstname' => $olvidUser->getFirstname(),
 			'lastname' => $olvidUser->getLastname(),
@@ -476,6 +481,7 @@ class AppApiController extends OCSController {
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupRef>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @noinspection PhpUnused
+	 * @throws \OCP\DB\Exception
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/groups')]
 	public function getUserGroups(string $userId): DataResponse {

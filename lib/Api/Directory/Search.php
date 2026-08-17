@@ -41,7 +41,7 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 			if (!$otherOlvidUser?->hasIdentity()) {
 				continue ;
 			}
-			$response[Constants::SEARCH_RESPONSE_RESULTS][] = $otherOlvidUser->computeJsonUserDetails($otherNextcloudUser->getDisplayName());
+			$response[Constants::SEARCH_RESPONSE_RESULTS][] = $otherOlvidUser->computeJsonUserDetails();
 		}
 
 		return new JSONResponse($response);

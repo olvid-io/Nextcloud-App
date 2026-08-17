@@ -73,7 +73,7 @@ class OlvidDatabaseSynchronizationTask {
 				// re-compute user details if user does not have it
 				if (!$olvidUser->getSignedDetails()) {
 					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no signed details: ${userId}");
-					$jsonUserDetails = $olvidUser->computeJsonUserDetails($allNextcloudUsers[$olvidUser->getUserId()]->getDisplayName());
+					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 				}
 				// else check user details signature is valid
@@ -85,7 +85,7 @@ class OlvidDatabaseSynchronizationTask {
 					}
 					if (!$verified) {
 						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: cannot parse signed user details, re-computing them: ${userId}");
-						$jsonUserDetails = $olvidUser->computeJsonUserDetails($allNextcloudUsers[$olvidUser->getUserId()]->getDisplayName());
+						$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 						$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 					}
 				}
@@ -99,7 +99,7 @@ class OlvidDatabaseSynchronizationTask {
 				// request an api key if necessary
 				if (!$olvidUser->getApiKey()) {
 					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no api key: ${userId}");
-					$jsonUserDetails = $olvidUser->computeJsonUserDetails($allNextcloudUsers[$olvidUser->getUserId()]->getDisplayName());
+					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 				}
 			}

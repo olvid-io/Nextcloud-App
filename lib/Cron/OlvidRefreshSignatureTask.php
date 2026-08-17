@@ -32,18 +32,13 @@ class OlvidRefreshSignatureTask {
 		$allEnabledOlvidUsers = $this->context->db->user->getAllWithIdentity();
 		$count = 0;
 		foreach ($allEnabledOlvidUsers as $olvidUser) {
-			$nextcloudUser = $this->context->nextcloud->userManager->get($olvidUser->getUserId());
-			if ($nextcloudUser) {
-				$jsonUserDetails = $olvidUser->computeJsonUserDetails($nextcloudUser->getDisplayName());
-				$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
-				try {
-					$this->context->db->user->update($olvidUser);
-					$count++;
-				} catch (Exception $e) {
-					$this->logger->error('OlvidRefreshSignatureTask: refreshUserSignature: cannot update user details in db', ['exception' => $e]);
-				}
-			} else {
-				$this->logger->error('OlvidRefreshSignatureTask: refreshUserSignature: associated Nextcloud user not found');
+			$jsonUserDetails = $olvidUser->computeJsonUserDetails();
+			$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
+			try {
+				$this->context->db->user->update($olvidUser);
+				$count++;
+			} catch (Exception $e) {
+				$this->logger->error('OlvidRefreshSignatureTask: refreshUserSignature: cannot update user details in db', ['exception' => $e]);
 			}
 		}
 		$this->logger->info("OlvidRefreshSignatureTask: refreshUserSignature: refreshed ${count} user signatures");

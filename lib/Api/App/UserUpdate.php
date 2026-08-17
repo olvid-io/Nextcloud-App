@@ -20,8 +20,8 @@ class UserUpdate {
 	 *
 	 * @throws Exception
 	 */
-	public function handle(IUser $user, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): DataResponse {
-		$olvidUser = $this->context->db->user->getOrCreate($user->getUID());
+	public function handle(IUser $nextcloudUser, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): DataResponse {
+		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 
 		// update details
 		$updated = false;
@@ -42,13 +42,18 @@ class UserUpdate {
 			$updated = true;
 		}
 
+		// If none of firstname and lastname is set return an error
+		if (!$olvidUser->getFirstname() && !$olvidUser->getLastname()) {
+			return new DataResponse('At least one of firstname and lastname must be set', 400);
+		}
+
 		// details did not change, stop here
 		if (!$updated) {
 			return new DataResponse([]);
 		}
 
 		// re-compute details and sign them
-		$userDetails = $olvidUser->computeJsonUserDetails($user->getDisplayName());
+		$userDetails = $olvidUser->computeJsonUserDetails();
 		$olvidUser->setSignedDetails($this->context->signatory->sign($userDetails->jsonSerialize()));
 
 		// update full search field
