@@ -26,9 +26,24 @@ class SyncCronTask extends TimedJob {
 	 */
 	public function run($argument): void {
 		// Clean and sync local database first
-		(new OlvidDatabaseSynchronizationTask($this->context, $this->logger))->run();
+		try {
+			(new OlvidDatabaseSynchronizationTask($this->context, $this->logger))->run();
+		} catch (Exception $exception) {
+			$this->logger->error('SyncCronTask: OlvidDatabaseSynchronizationTask: unexpected exception', ['exception' => $exception]);
+		}
 
 		// then we can sync with olvid server
-		(new OlvidServerSynchronizationTask($this->context, $this->logger))->run();
+		try {
+			(new OlvidServerSynchronizationTask($this->context, $this->logger))->run();
+		} catch (Exception $exception) {
+			$this->logger->error('SyncCronTask: OlvidServerSynchronizationTask: unexpected exception', ['exception' => $exception]);
+		}
+
+		// Renew all server signatures
+		try {
+			(new OlvidRefreshSignatureTask($this->context, $this->logger))->run();
+		} catch (Exception $exception) {
+			$this->logger->error('SyncCronTask: OlvidRefreshSignatureTask: unexpected exception', ['exception' => $exception]);
+		}
 	}
 }

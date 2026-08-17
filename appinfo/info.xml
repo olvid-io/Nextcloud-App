@@ -17,7 +17,7 @@
 	<category>integration</category>
 	<category>social</category>
 	<dependencies>
-		<nextcloud min-version="30" max-version="33"/>
+		<nextcloud min-version="30" max-version="35"/>
 	</dependencies>
 
 	<author mail="bot@olvid.io" homepage="https://olvid.io">Olvid</author>

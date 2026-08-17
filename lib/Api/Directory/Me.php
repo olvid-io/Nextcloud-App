@@ -37,10 +37,8 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// set or update full search string attributes
 		$olvidUser->setFullSearchField($jsonUserDetails->computeFullSearchString());
 
-		// get signed user details (or sign user details if necessary)
-		if ($olvidUser->getSignedDetails() === null) {
-			$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
-		}
+		// re-sign user details (compute or refresh them, they expire every	 two months)
+		$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 		$response[Constants::ME_RESPONSE_SIGNATURE] = $olvidUser->getSignedDetails();
 
 		// if identity was already uploaded create an api key if necessary

@@ -4,6 +4,7 @@ namespace OCA\Olvid\Migration;
 
 use Exception;
 use OCA\Olvid\Cron\OlvidDatabaseSynchronizationTask;
+use OCA\Olvid\Cron\OlvidRefreshSignatureTask;
 use OCA\Olvid\Cron\OlvidServerSynchronizationTask;
 use OCA\Olvid\Listener\EveryoneGroupEventListener;
 use OCA\Olvid\Utils\Context\OlvidContext;
@@ -56,6 +57,15 @@ class RepairStep implements IRepairStep {
 		 */
 		try {
 			(new OlvidServerSynchronizationTask($this->context, $this->logger))->run();
+		} catch (Exception $exception) {
+			$this->logger->error('RepairStep: OlvidServerSynchronizationTask: unexpected exception', ['exception' => $exception]);
+		}
+
+		/*
+		 * Refresh all server signatures
+		 */
+		try {
+			(new OlvidRefreshSignatureTask($this->context, $this->logger))->run();
 		} catch (Exception $exception) {
 			$this->logger->error('RepairStep: OlvidServerSynchronizationTask: unexpected exception', ['exception' => $exception]);
 		}
