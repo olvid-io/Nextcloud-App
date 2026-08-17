@@ -139,7 +139,7 @@ class AppApiController extends OCSController {
 			$bytesPhotoUid = $olvidGroup?->getBytesGroupPhotoUid();
 			$result[] = [
 				'id' => $gid,
-				'displayName' => $group->getDisplayName(),
+				'displayName' => $group->getDisplayName() ?? $group->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 			];
@@ -168,7 +168,7 @@ class AppApiController extends OCSController {
 			foreach ($nextcloudGroup->getUsers() as $member) {
 				$members[] = [
 					'id' => $member->getUID(),
-					'displayName' => $member->getDisplayName(),
+					'displayName' => $member->getDisplayName() ?? $member->getUID(),
 					// TODO this can be optimized (build a user cache ? batch member requests ?)
 					'useOlvid' => $this->context->db->user->hasUserAnIdentity($member->getUID()),
 				];
@@ -177,7 +177,7 @@ class AppApiController extends OCSController {
 			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$response['groups'][] = [
 				'id' => $gid,
-				'displayName' => $nextcloudGroup->getDisplayName(),
+				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'customName' => $olvidGroup?->getDiscussionName() ?? null,
 				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
@@ -212,7 +212,7 @@ class AppApiController extends OCSController {
 
 		return new DataResponse([
 			'id' => $groupId,
-			'displayName' => $nextcloudGroup->getDisplayName(),
+			'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 			'enabled' => false,
 			'customName' => null,
 			'description' => null,
@@ -355,15 +355,15 @@ class AppApiController extends OCSController {
 
 		$result = [];
 		foreach ($nextcloudUsers as $nextcloudUser) {
-			$olvidUser = $this->context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
+			$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 			$result[] = [
 				'id' => $nextcloudUser->getUID(),
 				'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
-				'firstname' => $olvidUser?->getFirstname(),
-				'lastname' => $olvidUser?->getLastname(),
-				'position' => $olvidUser?->getPosition(),
-				'company' => $olvidUser?->getCompany(),
-				'useOlvid' => $olvidUser?->hasIdentity() ?? false,
+				'firstname' => $olvidUser->getFirstname(),
+				'lastname' => $olvidUser->getLastname(),
+				'position' => $olvidUser->getPosition(),
+				'company' => $olvidUser->getCompany(),
+				'useOlvid' => $olvidUser->hasIdentity() ?? false,
 				'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
 			];
 		}
@@ -500,7 +500,7 @@ class AppApiController extends OCSController {
 			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$result[] = [
 				'id' => $nextcloudGroup->getGID(),
-				'displayName' => $nextcloudGroup->getDisplayName(),
+				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'customName' => $olvidGroup?->getDiscussionName() ?? null,
 				'description' => $olvidGroup?->getDiscussionDescription() ?? null,

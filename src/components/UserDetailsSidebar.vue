@@ -1,23 +1,24 @@
 <template>
 	<NcAppSidebar
 		:name="user.displayName"
-		:subname="user.id"
 		@close="$emit('close')">
-
 		<!-- Profile tab -->
-		<NcAppSidebarTab id="profile" :name="t('olvid', 'Profile')" :order="0">
+		<NcAppSidebarTab id="profile" :name="t('olvid', 'Olvid Profile')" :order="0">
 			<div class="user-sidebar__fields">
-				<NcTextField
-					:value="user.displayName"
-					:label="t('olvid', 'Nextcloud display name')"
-					:disabled="true" />
-				<NcTextField
-					:value="user.id"
-					:label="t('olvid', 'User ID')"
-					:disabled="true" />
+				<div style="display: flex; justify-content: center;">
+					<OlvidAvatar :user="user.id"
+						:display-name="user.displayName"
+						:use-olvid="user.useOlvid"
+						:size="64" />
+				</div>
 
-				<hr class="user-sidebar__separator" />
+				<div style="display: flex; justify-content: center;">
+					<div>{{ user.displayName }}</div>
+				</div>
 
+				<hr class="user-sidebar__separator">
+
+				<div>{{ t('olvid', 'Olvid Profile') }}</div>
 				<NcTextField
 					:value.sync="form.firstname"
 					:label="t('olvid', 'First name')" />
@@ -31,10 +32,14 @@
 					:value.sync="form.company"
 					:label="t('olvid', 'Company')" />
 
-				<p v-if="saveError" class="user-sidebar__error">{{ saveError }}</p>
-				<p v-if="saveSuccess" class="user-sidebar__success">{{ t('olvid', 'Saved.') }}</p>
+				<p v-if="saveError" class="user-sidebar__error">
+					{{ saveError }}
+				</p>
+				<p v-if="saveSuccess" class="user-sidebar__success">
+					{{ t('olvid', 'Saved.') }}
+				</p>
 
-				<NcButton :disabled="saving" @click="save">
+				<NcButton :disabled="saving || (!form.firstname.trim() && !form.lastname.trim())" @click="save">
 					{{ t('olvid', 'Save') }}
 				</NcButton>
 
@@ -100,7 +105,7 @@
 						</template>
 					</NcListItem>
 					<li v-if="!groups.length" class="user-sidebar__empty">
-						{{ t('olvid', 'Not in any group.') }}
+						{{ user.displayName }} {{ t('olvid', 'is not in any group.') }}
 					</li>
 				</ul>
 			</div>
@@ -114,7 +119,9 @@
 			@update:open="showDeleteConfirm = $event">
 			<p>{{ t('olvid', 'Are you sure you want to delete {name}? This action cannot be undone.', { name: user.displayName }) }}</p>
 			<template #actions>
-				<NcButton @click="showDeleteConfirm = false">{{ t('olvid', 'Cancel') }}</NcButton>
+				<NcButton @click="showDeleteConfirm = false">
+					{{ t('olvid', 'Cancel') }}
+				</NcButton>
 				<NcButton type="error" :disabled="deleting" @click="deleteUser">
 					{{ deleting ? t('olvid', 'Deleting…') : t('olvid', 'Delete') }}
 				</NcButton>
@@ -239,6 +246,10 @@ export default {
 				!currentIds.has(g.id)
 				&& (g.displayName.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)),
 			)
+		},
+
+		buildGroupAvatarUrl(group) {
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`)
 		},
 
 		async addToGroup(group) {

@@ -53,7 +53,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		// create Olvid user if it does not exist
-		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID());
+		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 
 		try {
 			$base64PreviousIdentity = base64_encode($olvidUser->getBytesIdentity() ?? '');
