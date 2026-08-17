@@ -159,11 +159,11 @@ class AppApiController extends OCSController {
 		$nextcloudGroups = $this->context->nextcloud->groupManager->search('');
 
 		$response = ['groups' => []];
-		foreach ($nextcloudGroups as $group) {
-			$gid = $group->getGID();
+		foreach ($nextcloudGroups as $nextcloudGroup) {
+			$gid = $nextcloudGroup->getGID();
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($gid);
 			$members = [];
-			foreach ($group->getUsers() as $member) {
+			foreach ($nextcloudGroup->getUsers() as $member) {
 				$members[] = [
 					'id' => $member->getUID(),
 					'displayName' => $member->getDisplayName(),
@@ -175,7 +175,7 @@ class AppApiController extends OCSController {
 			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$response['groups'][] = [
 				'id' => $gid,
-				'displayName' => $group->getDisplayName(),
+				'displayName' => $nextcloudGroup->getDisplayName(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'customName' => $olvidGroup?->getDiscussionName() ?? null,
 				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
@@ -484,11 +484,21 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
 		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
+		$olvidGroups = $this->context->db->group->getAll();
+		$olvidGroupMap = array_combine(array_map(function ($og) { return $og->getGroupId(); }, $olvidGroups), $olvidGroups);
+
 		$result = [];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
+			$olvidGroup = array_key_exists($nextcloudGroup->getGID(), $olvidGroupMap) ? $olvidGroupMap[$nextcloudGroup->getGID()] : null;
+			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
+			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$result[] = [
 				'id' => $nextcloudGroup->getGID(),
 				'displayName' => $nextcloudGroup->getDisplayName(),
+				'enabled' => $olvidGroup?->getEnabled() ?? false,
+				'customName' => $olvidGroup?->getDiscussionName() ?? null,
+				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
+				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 			];
 		}
 		return new DataResponse(['groups' => $result]);

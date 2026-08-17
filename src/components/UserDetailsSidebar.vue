@@ -82,8 +82,14 @@
 					<NcListItem
 						v-for="group in groups"
 						:key="group.id"
-						:name="group.displayName"
-						compact>
+						:name="group.displayName">
+						<template #icon>
+							<OlvidAvatar
+								:display-name="group.displayName"
+								:is-no-user="true"
+								:use-olvid="group.enabled"
+								:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
+						</template>
 						<template #subname>
 							{{ group.id }}
 						</template>

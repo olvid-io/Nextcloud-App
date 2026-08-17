@@ -1,6 +1,6 @@
 <template>
 	<span class="olvid-avatar">
-		<NcAvatar v-bind="$attrs" v-on="$listeners" />
+		<NcAvatar v-bind="$attrs" hide-status="true" v-on="$listeners" />
 		<img
 			v-if="useOlvid"
 			:src="badgeUrl"
