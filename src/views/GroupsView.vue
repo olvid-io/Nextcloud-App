@@ -3,7 +3,10 @@
 		<div class="groups-view__header">
 			<span class="groups-view__title" />
 			<NcButton type="primary" @click="showCreateModal = true">
-				{{ t('olvid', '+ Create Group') }}
+				<template #icon>
+					<IconPlus :size="20" />
+				</template>
+				{{ t('olvid', 'Create Group') }}
 			</NcButton>
 		</div>
 
@@ -23,7 +26,6 @@
 					:active="$route.params.groupId === group.id"
 					:force-display-actions="true"
 					@click="$emit('open-group-sidebar', group)">
-
 					<template #icon>
 						<OlvidAvatar
 							:display-name="group.displayName"
@@ -76,10 +78,11 @@ import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import CreateGroupModal from '../components/CreateGroupModal.vue'
+import IconPlus from 'vue-material-design-icons/Plus.vue'
 
 export default {
 	name: 'GroupsView',
-	components: { OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
+	components: { IconPlus, OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
 
 	emits: ['open-group-sidebar'],
 
@@ -145,7 +148,7 @@ export default {
 		},
 
 		buildGroupAvatarUrl(group) {
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`);
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`)
 		},
 	},
 }

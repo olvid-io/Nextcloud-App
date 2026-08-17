@@ -3,7 +3,10 @@
 		<div class="users-view__header">
 			<span class="users-view__title" />
 			<NcButton type="primary" @click="showCreateModal = true">
-				{{ t('olvid', '+ Create User') }}
+				<template #icon>
+					<IconPlus :size="20" />
+				</template>
+				{{ t('olvid', 'Create User') }}
 			</NcButton>
 		</div>
 
@@ -96,13 +99,14 @@ import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import IconPlus from 'vue-material-design-icons/Plus.vue'
 import CreateUserModal from '../components/CreateUserModal.vue'
 import MagicLinkModal from '../components/MagicLinkModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 
 export default {
 	name: 'UsersView',
-	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal },
+	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal, IconPlus },
 
 	emits: ['open-user-sidebar'],
 

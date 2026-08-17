@@ -46,8 +46,8 @@ namespace OCA\Olvid;
  *   id: string,
  *   displayName: string,
  *   enabled: bool,
- *   customName: string|null,
- *   description: string|null,
+ *   discussionName: string,
+ *   discussionDescription: string|null,
  *   photoUid: string|null,
  *   members: list<OlvidUser>,
  * }

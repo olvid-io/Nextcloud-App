@@ -84,7 +84,7 @@ class GroupAvatarUpload {
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 			// create a new minimal olvid group entity, might be updated properly on group updates
 			if ($olvidGroup === null) {
-				$olvidGroup = OlvidGroup::create($groupId);
+				$olvidGroup = OlvidGroup::create($groupId, $nextcloudGroup->getDisplayName());
 				$olvidGroup->setSignedGroupBlob(null);
 				$olvidGroup->setBytesGroupPhotoUid($photoUid);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -96,7 +96,7 @@ class GroupAvatarUpload {
 			}
 
 			// re-compute Olvid blob
-			$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+			$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 			$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

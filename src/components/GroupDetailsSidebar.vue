@@ -1,7 +1,7 @@
 <template>
 	<NcAppSidebar
-		:name="form.customName || group.displayName"
-		:subname="form.customName ? group.displayName : ''"
+		:name="group.displayName"
+		:subname="group.id"
 		@close="$emit('close')">
 		<!-- Details tab -->
 		<NcAppSidebarTab id="details" :name="t('olvid', 'Details')" :order="0">
@@ -23,30 +23,26 @@
 					:id="`group-enabled-${group.id}`"
 					:checked="group.enabled"
 					type="switch"
-					:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.displayName })"
+					:aria-label="t('olvid', 'Enable Olvid for {name} group', { name: group.id })"
 					@update:checked="enableOlvidDiscussionForGroup(group, $event)"
 					@click.native.stop>
 					{{ t('olvid', 'Olvid Discussion') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField
-					:value="group.displayName"
-					:label="t('olvid', 'Nextcloud name')"
-					:disabled="true" />
-				<NcTextField
-					:value.sync="form.customName"
-					:label="t('olvid', 'Custom name')"
-					:placeholder="t('olvid', 'Override group name in Olvid')" />
+					:value.sync="form.discussionName"
+					:label="t('olvid', 'Olvid discussion name')"
+					:placeholder="t('olvid', 'Set Olvid discussion name')" />
 				<div class="group-sidebar__field">
-					<label class="group-sidebar__label">{{ t('olvid', 'Description') }}</label>
+					<label class="group-sidebar__label">{{ t('olvid', 'Olvid discussion description') }}</label>
 					<textarea
-						v-model="form.description"
+						v-model="form.discussionDescription"
 						class="group-sidebar__textarea"
 						rows="4"
 						:placeholder="t('olvid', 'Group description in Olvid')" />
 				</div>
 				<p v-if="saveError" class="group-sidebar__error">{{ saveError }}</p>
 				<p v-if="saveSuccess" class="group-sidebar__success">{{ t('olvid', 'Saved.') }}</p>
-				<NcButton :disabled="saving" @click="save">
+				<NcButton :disabled="saving || !form.discussionName" @click="save">
 					{{ t('olvid', 'Save') }}
 				</NcButton>
 			</div>
@@ -138,8 +134,8 @@ export default {
 	data() {
 		return {
 			form: {
-				customName: this.group.customName ?? '',
-				description: this.group.description ?? '',
+				discussionName: this.group.discussionName ?? '',
+				discussionDescription: this.group.discussionDescription ?? '',
 			},
 			members: [...(this.group.members ?? [])],
 			saving: false,
@@ -161,14 +157,14 @@ export default {
 		 */
 		currentAvatarUrl() {
 			if (!this.group.photoUid) return null
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar?photoUid=${encodeURIComponent(this.group.photoUid)}`);
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar?photoUid=${encodeURIComponent(this.group.photoUid)}`)
 		},
 	},
 
 	watch: {
 		group(newGroup) {
-			this.form.customName = newGroup.customName ?? ''
-			this.form.description = newGroup.description ?? ''
+			this.form.discussionName = newGroup.discussionName ?? ''
+			this.form.discussionDescription = newGroup.discussionDescription ?? ''
 			this.members = [...(newGroup.members ?? [])]
 		},
 		searchQuery(val) {
@@ -185,6 +181,7 @@ export default {
 		/**
 		 * Called by AvatarPicker when the user selects a new image.
 		 * Uploads immediately — no need to click the Save button for the avatar.
+		 * @param {string} dataUrl dataUrl
 		 */
 		async handleAvatarChange(dataUrl) {
 			this.avatarUploading = true
@@ -210,8 +207,8 @@ export default {
 			this.saveSuccess = false
 			try {
 				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}`), {
-					customName: this.form.customName,
-					description: this.form.description,
+					discussionName: this.form.discussionName,
+					discussionDescription: this.form.discussionDescription,
 				})
 				this.saveSuccess = true
 				this.$emit('updated', { id: this.group.id, ...this.form })

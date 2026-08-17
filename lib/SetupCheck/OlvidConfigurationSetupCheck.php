@@ -31,7 +31,9 @@ class OlvidConfigurationSetupCheck implements ISetupCheck {
 
 		try {
 			$pushTopic = $this->context->olvidServer->requestNewPushTopic();
-			$this->context->olvidServer->revokePushTopicNoFail($pushTopic);
+			if ($pushTopic) {
+				$this->context->olvidServer->revokePushTopicNoFail($pushTopic);
+			}
 			return SetupResult::success($this->l10n->t('Olvid app is properly configured.'));
 		} catch (Exception) {
 			// TODO improve error message

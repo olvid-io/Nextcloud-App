@@ -45,8 +45,8 @@ use ReflectionException;
  * @method string|null getSerializedSharedSettings()
  * @method void setSerializedSharedSettings(string|null $serializedSharedSettings)
  *
- * @method string|null getDiscussionName()
- * @method void setDiscussionName(string|null $discussionName)
+ * @method string getDiscussionName()
+ * @method void setDiscussionName(string $discussionName)
  *
  * @method string|null getDiscussionDescription()
  * @method void setDiscussionDescription(string|null $discussionDescription)
@@ -80,22 +80,23 @@ class OlvidGroup extends Entity {
 		$this->addType('discussionDescription', Types::TEXT);
 	}
 
-	public static function create(string $groupId): OlvidGroup {
+	public static function create(string $groupId, ?string $nextcloudDisplayName): OlvidGroup {
 		$group = new OlvidGroup();
 		$group->setGroupId($groupId);
+		// always set discussion name with something not null
+		$group->setDiscussionName($nextcloudDisplayName != null && trim($nextcloudDisplayName) ? trim($nextcloudDisplayName) : $groupId);
 		$group->setBytesGroupUid(RandomUtil::random_bytes(Constants::UID_SIZE));
 		$group->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 		return $group;
 	}
 
 	/**
-	 * @param String $defaultName
 	 * @param IUser[] $groupMembers
 	 * @param OlvidContext $context
 	 * @return JsonGroupBlob
 	 * @throws Exception
 	 */
-	public function computeBlob(String $defaultName, array $groupMembers, OlvidContext $context): JsonGroupBlob {
+	public function computeBlob(array $groupMembers, OlvidContext $context): JsonGroupBlob {
 		$previousMembers = [];
 		if ($this->getSignedGroupBlob()) {
 			try {
@@ -142,9 +143,6 @@ class OlvidGroup extends Entity {
 			);
 		}
 
-		// compute group name
-		$blobGroupName = $this->getDiscussionName() === null || !trim($this->getDiscussionName()) ? $defaultName : $this->getDiscussionName();
-
 		$blob = new JsonGroupBlob();
 		$blob->groupId = $this->getGroupId();
 		$blob->bytesGroupUid = $this->getBytesGroupUid();
@@ -158,7 +156,7 @@ class OlvidGroup extends Entity {
 			} catch (MultipleObjectsReturnedException|Exception) {
 			}
 		}
-		$blob->groupDetails = new JsonGroupDetails($blobGroupName, $this->getDiscussionDescription());
+		$blob->groupDetails = new JsonGroupDetails($this->getDiscussionName(), $this->getDiscussionDescription());
 		$blob->pushTopic = $this->getPushTopic();
 		$blob->groupMembersAndPermissions = $groupMembersAndPermissions;
 		$blob->timestamp = TimeUtil::currentTimeMillis();

@@ -6,8 +6,8 @@
 		<div class="create-group-modal">
 			<NcTextField
 				:value.sync="form.id"
-				:label="t('olvid', 'Group ID')"
-				:placeholder="t('olvid', 'e.g. engineering')"
+				:label="t('olvid', 'Group Name')"
+				:placeholder="t('olvid', 'e.g. members')"
 				:required="true" />
 
 			<p v-if="error" class="create-group-modal__error">{{ error }}</p>

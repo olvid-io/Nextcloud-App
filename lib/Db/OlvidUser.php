@@ -82,11 +82,11 @@ class OlvidUser extends Entity {
 		$this->addType('fullSearchField', Types::STRING);
 	}
 
-	public static function create(string $userId, string $nextcloudDisplayName): OlvidUser {
+	public static function create(string $userId, ?string $nextcloudDisplayName): OlvidUser {
 		$user = new OlvidUser();
 		$user->setUserId($userId);
 		// always set firstname, user details must not be empty
-		$user->setFirstname(($nextcloudDisplayName == null || !trim($nextcloudDisplayName)) ? $userId : trim($nextcloudDisplayName));
+		$user->setFirstname($nextcloudDisplayName !== null && trim($nextcloudDisplayName) ? trim($nextcloudDisplayName) : $userId);
 		return $user;
 	}
 

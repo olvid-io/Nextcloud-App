@@ -1,15 +1,20 @@
 <template>
-	<span class="olvid-avatar">
-		<NcAvatar v-bind="$attrs" hide-status="true" v-on="$listeners" />
+	<div class="olvid-avatar">
+		<NcAvatar
+			v-bind="$attrs"
+			hide-status="true"
+			:size="size"
+			v-on="$listeners" />
 		<img
 			v-if="useOlvid"
 			:src="badgeUrl"
-			:width="badgeSize"
-			:height="badgeSize"
+			:width="Math.round(size / 3)"
+			:height="Math.round(size / 3)"
 			:title="useOlvid ? t('olvid', 'Enrolled with Olvid') : t('olvid', 'Not enrolled with Olvid')"
 			aria-hidden="true"
-			class="olvid-avatar__badge" />
-	</span>
+			class="olvid-avatar__badge"
+			alt="olvid badge">
+	</div>
 </template>
 
 <script>
@@ -27,9 +32,9 @@ export default {
 			type: Boolean,
 			required: true,
 		},
-		badgeSize: {
+		size: {
 			type: Number,
-			default: 14,
+			default: 32,
 		},
 	},
 

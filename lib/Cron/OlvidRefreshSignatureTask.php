@@ -53,7 +53,7 @@ class OlvidRefreshSignatureTask {
 		foreach ($allEnabledOlvidGroups as $olvidGroup) {
 			$nextcloudGroup = $this->context->nextcloud->groupManager->get($olvidGroup->getGroupId());
 			if ($nextcloudGroup) {
-				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 				$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
 				try {
 					$this->context->db->group->update($olvidGroup);

@@ -176,7 +176,7 @@
 									:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 							</template>
 							<template #subname>
-								{{ group.enabled ? t('olvid', 'Olvid discussion active') : t('olvid', 'No Olvid discussion') }}
+								{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
 							</template>
 						</NcListItem>
 					</ul>

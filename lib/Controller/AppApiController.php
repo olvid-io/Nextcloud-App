@@ -179,8 +179,8 @@ class AppApiController extends OCSController {
 				'id' => $gid,
 				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'customName' => $olvidGroup?->getDiscussionName() ?? null,
-				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
+				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
+				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 				'members' => $members,
 			];
@@ -214,8 +214,8 @@ class AppApiController extends OCSController {
 			'id' => $groupId,
 			'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 			'enabled' => false,
-			'customName' => null,
-			'description' => null,
+			'discussionName' => null,
+			'discussionDescription' => null,
 			'photoUid' => null,
 			'members' => [],
 		]);
@@ -226,14 +226,37 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $groupId Group ID (URL path)
 	 * @param bool|null $enabled Enable or disable the Olvid discussion for this group
-	 * @param string|null $customName Override the discussion display name (null clears the override)
-	 * @param string|null $description Discussion description
+	 * @param string|null $discussionName Override the Olvid discussion name (ignored if null or empty)
+	 * @param string|null $discussionDescription Discussion description
 	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
-	public function groupsPut(string $groupId, ?bool $enabled, ?string $customName, ?string $description): DataResponse {
-		return $this->updateGroupsHandler->handle($groupId, $enabled, $customName, $description);
+	public function groupsPut(string $groupId, ?bool $enabled, ?string $discussionName, ?string $discussionDescription): DataResponse {
+		return $this->updateGroupsHandler->handle($groupId, $enabled, $discussionName, $discussionDescription);
+	}
+
+	/**
+	 * Delete a Nextcloud group.
+	 *
+	 * @param string $groupId Group ID (URL path)
+	 * @return DataResponse<Http::STATUS_OK, OlvidGroupRef, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}|DataResponse<Http::INTERNAL_ERROR, array{}, array{}>
+	 * @noinspection PhpUnused
+	 */
+	#[ApiRoute(verb: 'DELETE', url: '/app/groups/{groupId}')]
+	public function groupsDelete(string $groupId): DataResponse {
+		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
+		if ($nextcloudGroup === null) {
+			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
+		}
+		if ($nextcloudGroup->delete()) {
+			return new DataResponse([
+				'id' => $groupId,
+				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
+			], Http::STATUS_OK);
+		} else {
+			return new DataResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	/**
@@ -502,8 +525,8 @@ class AppApiController extends OCSController {
 				'id' => $nextcloudGroup->getGID(),
 				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'customName' => $olvidGroup?->getDiscussionName() ?? null,
-				'description' => $olvidGroup?->getDiscussionDescription() ?? null,
+				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
+				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 			];
 		}

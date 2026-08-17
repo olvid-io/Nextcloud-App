@@ -9,11 +9,15 @@
 				:style="{ width: size + 'px', height: size + 'px' }"
 				class="avatar-picker__img"
 				:alt="displayName" />
-			<NcAvatar
+			<OlvidAvatar
 				v-else
 				:display-name="displayName"
 				:is-no-user="true"
 				:size="size" />
+		</div>
+
+		<div style="display: flex; justify-content: center;">
+			<div>{{ displayName }}</div>
 		</div>
 
 		<!-- Hidden <input type="file"> — triggered programmatically by the Local file button -->
@@ -42,7 +46,7 @@ import axios from '@nextcloud/axios'
 import { FilePickerClosed, getFilePickerBuilder } from '@nextcloud/dialogs'
 import '@nextcloud/dialogs/style.css'
 import { generateRemoteUrl } from '@nextcloud/router'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+import OlvidAvatar from './OlvidAvatar.vue'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 
 // Maximum side length of the output square in pixels
@@ -50,7 +54,7 @@ const MAX_PIXEL_SIZE = 1080
 
 export default {
 	name: 'AvatarPicker',
-	components: { NcAvatar, NcButton },
+	components: { OlvidAvatar, NcButton },
 
 	props: {
 		/**

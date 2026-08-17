@@ -172,7 +172,7 @@ class OlvidDatabaseSynchronizationTask {
 				if (!$olvidGroup->getSignedGroupBlob()) {
 					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no blob: {$groupId}");
 					try {
-						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 						$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 						$olvidGroup->setSignedGroupBlob($signedBlob);
 					} catch (Exception $e) {

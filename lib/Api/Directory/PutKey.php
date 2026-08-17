@@ -98,7 +98,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 
 					try {
 						// re-compute group blob and save in db
-						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 						$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
 						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 						$this->context->db->group->update($olvidGroup);
@@ -180,7 +180,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 
 					try {
 						// re-compute group blob and save in db
-						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 						$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
 						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 						$this->context->db->group->update($olvidGroup);

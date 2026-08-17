@@ -46,7 +46,7 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 			$t->addColumn('push_topic', Types::STRING, ['notnull' => false]);
 			$t->addColumn('bytes_group_photo_uid', Types::BLOB, ['notnull' => false]);
 			$t->addColumn('serialized_shared_settings', Types::TEXT, ['notnull' => false]);
-			$t->addColumn('discussion_name', Types::TEXT, ['notnull' => false]);
+			$t->addColumn('discussion_name', Types::TEXT, ['notnull' => true]);
 			$t->addColumn('discussion_description', Types::TEXT, ['notnull' => false]);
 
 			$t->setPrimaryKey(['id']);

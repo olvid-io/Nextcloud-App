@@ -59,7 +59,7 @@ class GroupEventListener implements IEventListener {
 
 		// if group have no custom name we must change it, update blob and notify members
 		if ($olvidGroup->getDiscussionName() === null || trim($olvidGroup->getDiscussionName()) === '') {
-			$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->context);
+			$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getUsers(), $this->context);
 			$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -110,7 +110,7 @@ class GroupEventListener implements IEventListener {
 		}
 
 		// update group blob
-		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->context);
+		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getUsers(), $this->context);
 		$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -145,7 +145,7 @@ class GroupEventListener implements IEventListener {
 		$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $olvidUser->getUserId(), $olvidUser->getBytesIdentity(), $this->context);
 
 		// update group blob
-		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getDisplayName(), $event->getGroup()->getUsers(), $this->context);
+		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getUsers(), $this->context);
 		$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

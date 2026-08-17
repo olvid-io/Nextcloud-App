@@ -22,7 +22,14 @@ class GroupsUpdate {
 	) {
 	}
 
-	public function handle(string $groupId, ?bool $enabled, ?string $customName, ?string $description): DataResponse {
+	/*
+	 * Update an OlvidGroup task
+	 * - enabled: if not null update enable status for the group.
+	 * - $discussionName: if not null and not empty update discussion name in Olvid.
+	 * - $discussionName: if not null update discussion description in Olvid.
+	 * This task notify Olvid concerned Olvid devices if necessary
+	 */
+	public function handle(string $groupId, ?bool $enabled, ?string $discussionName, ?string $discussionDescription): DataResponse {
 		// group status (enable/disabled) have been changed in this update
 		$enableStatusChanged = false;
 		// if the push topic is new we notify users individually, as they do not had time to register to it
@@ -37,7 +44,7 @@ class GroupsUpdate {
 			// get or create OlvidGroup entity in database
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 			if ($olvidGroup === null) {
-				$olvidGroup = $this->context->db->group->insert(OlvidGroup::create($groupId));
+				$olvidGroup = $this->context->db->group->insert(OlvidGroup::create($groupId, $nextcloudGroup->getDisplayName()));
 			}
 
 			$updated = false;
@@ -46,12 +53,12 @@ class GroupsUpdate {
 				$enableStatusChanged = true;
 				$updated = true;
 			}
-			if ($customName !== null && $customName !== $olvidGroup->getDiscussionName()) {
-				$olvidGroup->setDiscussionName($customName);
+			if ($discussionName !== null && trim($discussionName) && $discussionName !== $olvidGroup->getDiscussionName()) {
+				$olvidGroup->setDiscussionName($discussionName);
 				$updated = true;
 			}
-			if ($description !== null && $description !== $olvidGroup->getDiscussionDescription()) {
-				$olvidGroup->setDiscussionDescription($description);
+			if ($discussionDescription !== null && $discussionDescription !== $olvidGroup->getDiscussionDescription()) {
+				$olvidGroup->setDiscussionDescription($discussionDescription);
 				$updated = true;
 			}
 
@@ -59,6 +66,8 @@ class GroupsUpdate {
 			if (!$updated) {
 				return new DataResponse(null, Http::STATUS_OK);
 			}
+			// always save current group state to be sure modifications are saved in all cases
+			$this->context->db->group->update($olvidGroup);
 
 			// group was enabled or disabled, manage groupDeletion in database
 			if ($enableStatusChanged) {
@@ -90,7 +99,7 @@ class GroupsUpdate {
 			 * else we can delete blob
 			 */
 			if ($enabled) {
-				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getDisplayName(), $nextcloudGroup->getUsers(), $this->context);
+				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 				$olvidGroup->setSignedGroupBlob($signedBlob);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -124,7 +133,7 @@ class GroupsUpdate {
 			}
 
 			// delete push topic for disabled group
-			if (!$olvidGroup->getEnabled() && !$olvidGroup->getPushTopic() !== null) {
+			if (!$olvidGroup->getEnabled() && $olvidGroup->getPushTopic() !== null) {
 				$this->context->olvidServer->revokePushTopicNoFail($olvidGroup->getPushTopic());
 				$olvidGroup->setPushTopic(null);
 				$olvidGroup = $this->context->db->group->update($olvidGroup);
