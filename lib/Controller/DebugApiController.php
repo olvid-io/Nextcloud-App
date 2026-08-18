@@ -17,6 +17,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -26,6 +27,7 @@ use Psr\Log\LoggerInterface;
 class DebugApiController extends OCSController {
 	public function __construct(
 		IRequest $request,
+		private readonly IConfig $config,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
@@ -37,6 +39,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/debug')]
 	public function debug(): JSONResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JsonResponse([], 404);
+		}
+
 		$appFields = [];
 		try {
 			$appFields = $this->appConfig->getAllValues(Application::APP_ID);
@@ -61,6 +67,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/users')]
 	public function users(): JSONResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JsonResponse([], 404);
+		}
+
 		$users = [];
 		foreach ($this->context->nextcloud->userManager->search('') as $user) {
 			try {
@@ -82,6 +92,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/db')]
 	public function db(): JSONResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JsonResponse([], 404);
+		}
+
 		$response = [];
 
 		$response['user'] = [];
@@ -130,6 +144,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/groups')]
 	public function groups(): JSONResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JsonResponse([], 404);
+		}
+
 		$response = [];
 
 		$response['groups'] = [];
@@ -156,6 +174,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/groupsReset')]
 	public function groupsReset(): JSONResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JsonResponse([], 404);
+		}
+
 		$this->context->db->group->deleteAll();
 		$this->context->db->groupDeletion->deleteAll();
 		$this->context->db->groupKicked->deleteAll();
@@ -168,6 +190,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/reset')]
 	public function reset(): TextPlainResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new TextPlainResponse('', 404);
+		}
+
 		$olvidUser = $this->context->db->user->getByUserIdOrNull($this->userSession->getUser()->getUID());
 		if ($olvidUser !== null) {
 			$this->context->db->user->delete($olvidUser);
@@ -182,6 +208,10 @@ class DebugApiController extends OCSController {
 	#[NoCSRFRequired]
 	#[ApiRoute(verb: 'GET', url: '/debug/resetAll')]
 	public function resetAll(): JSONResponse {
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JSONResponse([], 404);
+		}
+
 		// do not reset app config, it's a pain and not useful
 		// reset app data
 		// $this->olvidAppConfig->deleteAppConfig();
@@ -219,7 +249,13 @@ class DebugApiController extends OCSController {
 	#[ApiRoute(verb: 'GET', url: '/debug/resetRevocations')]
 	public function resetRevocations(): JSONResponse {
 		$revocations = $this->context->db->revocation->getAll();
+		if ($this->config->getSystemValueBool('debug')) {
+			return new JSONResponse([], 404);
+		}
+
 		$this->context->db->revocation->deleteAll();
-		return new JSONResponse(['deletedRevocations' => array_map(function ($revocation) { return $revocation->getUserId(); }, $revocations)]);
+		return new JSONResponse(['deletedRevocations' => array_map(function ($revocation) {
+			return $revocation->getUserId();
+		}, $revocations)]);
 	}
 }
