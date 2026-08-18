@@ -34,8 +34,11 @@ use OCP\DB\Types;
  * @method int|null getSessionRevokedBefore()
  * @method void setSessionRevokedBefore(int|null $sessionRevokedBefore)
  *
+ * @method int|null getRegistrationTimestamp()
+ * @method void setRegistrationTimestamp(int|null $registrationTimestamp)
+ *
  * @method int|null getLastConnectionTimestamp()
- * @method void setLastConnectionTimestamp(int|null $sessionRevokedBefore)
+ * @method void setLastConnectionTimestamp(int|null $lastConnectionTimestamp)
  *
  * @method string|null getSignedDetails()
  * @method void setSignedDetails(string|null $signedDetails)
@@ -63,6 +66,7 @@ class OlvidUser extends Entity {
 	protected ?string $magicToken = null;
 	protected ?int $magicTokenExpiration = null;
 	protected ?int $sessionRevokedBefore = null;
+	protected ?int $registrationTimestamp = null;
 	protected ?int $lastConnectionTimestamp = null;
 	protected ?string $signedDetails = null;
 	protected ?string $firstname = null;
@@ -79,6 +83,7 @@ class OlvidUser extends Entity {
 		$this->addType('magicToken', Types::STRING);
 		$this->addType('magicTokenExpiration', Types::BIGINT);
 		$this->addType('sessionRevokedBefore', Types::BIGINT);
+		$this->addType('registrationTimestamp', Types::BIGINT);
 		$this->addType('lastConnectionTimestamp', Types::BIGINT);
 		$this->addType('signedDetails', Types::STRING);
 		$this->addType('firstname', Types::STRING);
@@ -139,6 +144,7 @@ class OlvidUser extends Entity {
 			'magicToken' => $this->getMagicToken(),
 			'magicTokenExpiration' => $this->getMagicTokenExpiration(),
 			'sessionRevokedBefore' => $this->getSessionRevokedBefore(),
+			'registrationTimestamp' => $this->getRegistrationTimestamp(),
 			'lastConnectionTimestamp' => $this->getLastConnectionTimestamp(),
 			'signedDetails' => $this->getSignedDetails(),
 			'firstname' => $this->getFirstname(),
@@ -159,6 +165,7 @@ class OlvidUser extends Entity {
 			. ', magicToken=' . $this->magicToken
 			. ', magicTokenExpiration=' . $this->magicTokenExpiration
 			. ', sessionRevokedBefore=' . $this->sessionRevokedBefore
+			. ', registrationTimestamp=' . $this->registrationTimestamp
 			. ', lastConnectionTimestamp=' . $this->lastConnectionTimestamp
 			. ', signedDetails=' . $this->signedDetails
 			. ', firstname=' . $this->firstname

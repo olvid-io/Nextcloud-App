@@ -23,7 +23,8 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 			$t->addColumn('nonce', Types::STRING, ['notnull' => false]);
 			$t->addColumn('magic_token', Types::STRING, ['notnull' => false]);
 			$t->addColumn('magic_token_expiration', Types::BIGINT, ['notnull' => false, 'default' => null]);
- 			$t->addColumn('last_connection_timestamp', Types::BIGINT, ['notnull' => false, 'default' => null]);
+			$t->addColumn('registration_timestamp', Types::BIGINT, ['notnull' => false, 'default' => null]);
+			$t->addColumn('last_connection_timestamp', Types::BIGINT, ['notnull' => false, 'default' => null]);
 			$t->addColumn('session_revoked_before', Types::BIGINT, ['notnull' => false, 'default' => null]);
 			$t->addColumn('signed_details', Types::TEXT, ['notnull' => false]);
 			$t->addColumn('firstname', Types::STRING, ['notnull' => false]);

@@ -81,11 +81,37 @@ class OlvidUserMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $nonce
-	 * @return array[OlvidUser]
+	 * @param string[] $filters
+	 * @return OlvidUser[]
 	 * @throws Exception
 	 */
-	public function searchNonce(string $nonce): array {
+	public function searchEnabledUsers(array $filters): array {
+		$qb = $this->db->getQueryBuilder()->select('*')->from($this->getTableName());
+		$qb = $qb->where($qb->expr()->isNotNull('bytes_identity'));
+		foreach ($filters as $filter) {
+			$qb = $qb->andWhere($qb->expr()->like('full_search_field', $qb->createNamedParameter("%" . strtolower($filter) . "%", Types::STRING)));
+		}
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param int $timestamp
+	 * @return OlvidUser[]
+	 * @throws Exception
+	 */
+	public function listRegisteredUsersSince(int $timestamp): array {
+		$qb = $this->db->getQueryBuilder()->select('*')->from($this->getTableName());
+		$qb = $qb->where($qb->expr()->isNotNull('bytes_identity'))
+			->andWhere($qb->expr()->gt('registration_timestamp', $qb->createNamedParameter($timestamp, Types::INTEGER)));
+		return $this->findEntities($qb);
+	}
+
+	/**
+	 * @param string $nonce
+	 * @return OlvidUser[]
+	 * @throws Exception
+	 */
+	public function getByNonce(string $nonce): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->eq('nonce', $qb->createNamedParameter($nonce, Types::STRING)));

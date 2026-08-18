@@ -77,8 +77,9 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					$this->logger->warning('PutKey: cannot create user api key: unexpected exception', ['exception' => $e]);
 				}
 
-				// set user identity
+				// set user identity, and registration timestamp
 				$olvidUser->setBytesIdentity($bytesIdentity);
+				$olvidUser->setRegistrationTimestamp(TimeUtil::currentTimeMillis());
 
 				// sign user details and store them
 				$jsonUserDetails = $olvidUser->computeJsonUserDetails();
@@ -159,8 +160,9 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 					$this->logger->warning('PutKey: cannot create user api key: unexpected exception', ['exception' => $e]);
 				}
 
-				// we can now set new identity
+				// we can now set new identity and update registration timestamp
 				$olvidUser->setBytesIdentity($bytesIdentity);
+				$olvidUser->setRegistrationTimestamp(TimeUtil::currentTimeMillis());
 
 				// sign user details and store them
 				$jsonUserDetails = $olvidUser->computeJsonUserDetails();

@@ -22,13 +22,10 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 			return $this->invalidRequest();
 		}
 
-		// TODO: handle request: add a user attribute with the registration timestamp
-		// then we can filter to return only users that registered since $listUsersRequests->timestamp
-
 		$response = [
 			Constants::LIST_USERS_RESPONSE_USERS => [],
 		];
-		$olvidUsers = $this->context->db->user->getAll();
+		$olvidUsers = $this->context->db->user->listRegisteredUsersSince($timestamp);
 		foreach ($olvidUsers as $olvidUser) {
 			// only add users with a valid identity on server
 			if ($olvidUser->hasIdentity()) {

@@ -15,35 +15,32 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 			/** @var [String] $filter */
 			$filters = isset($jsonParameters[Constants::SEARCH_REQUEST_FILTER]) ? (array)$jsonParameters[Constants::SEARCH_REQUEST_FILTER] : null;
 		} catch (Exception $e) {
-			$this->logger->warning('search: parse error: ', ['exception' => $e]);
+			$this->logger->warning('search: parse error', ['exception' => $e]);
 			return $this->invalidRequest();
 		}
 
-		// TODO feature handle searchResultCount
-
-		// TODO handle filters
-
 		$response = [
 			Constants::SEARCH_RESPONSE_RESULTS => [],
-			Constants::SEARCH_RESPONSE_RESULTS_UNACTIVATED_USERS => [],
 			Constants::SEARCH_RESPONSE_COUNT => 0,
+			Constants::SEARCH_RESPONSE_RESULTS_UNACTIVATED_USERS => [],
 			Constants::SEARCH_RESPONSE_COUNT_UNACTIVATED_USERS => 0,
 		];
 
-		$otherNextcloudUsers = $this->context->nextcloud->userManager->search('');
-		foreach ($otherNextcloudUsers as $otherNextcloudUser) {
-			// do not add yourself
-			if ($otherNextcloudUser->getUID() == $nextcloudUser->getUID()) {
-				continue ;
+		try {
+			$searchedOlvidUsers = $this->context->db->user->searchEnabledUsers($filters, $this->logger);
+			for ($i = 0; $i < min(count($searchedOlvidUsers), Constants::SEARCH_COUNT_LIMIT); $i++) {
+				$searchedOlvidUser = $searchedOlvidUsers[$i];
+				// do not add yourself
+				if ($searchedOlvidUser->getUserId() == $nextcloudUser->getUID()) {
+					continue;
+				}
+				$response[Constants::SEARCH_RESPONSE_RESULTS][] = $searchedOlvidUser->computeJsonUserDetails();
 			}
-			$otherOlvidUser = $this->context->db->user->getByUserIdOrNull($otherNextcloudUser->getUID());
-			// only add users with a valid identity on server
-			if (!$otherOlvidUser?->hasIdentity()) {
-				continue ;
-			}
-			$response[Constants::SEARCH_RESPONSE_RESULTS][] = $otherOlvidUser->computeJsonUserDetails();
+			$response[Constants::SEARCH_RESPONSE_COUNT] = count($searchedOlvidUsers);
+			return new JSONResponse($response);
+		} catch (\OCP\DB\Exception $e) {
+			$this->logger->error('search: database error', ['exception' => $e]);
+			return self::internalError();
 		}
-
-		return new JSONResponse($response);
 	}
 }

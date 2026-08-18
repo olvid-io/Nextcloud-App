@@ -24,10 +24,10 @@ class JsonUserDetails implements JsonSerializable {
 	public int $timestamp;
 
 	public function computeFullSearchString(): String {
-		return JsonUserDetails::unAccent($this->firstname == null ? '' : $this->firstname) . ' '
+		return strtolower(JsonUserDetails::unAccent($this->firstname == null ? '' : $this->firstname) . ' '
 			. ($this->lastname == null ? '': $this->lastname) . ' '
 			. ($this->position == null ? '': $this->position) . ' '
-			. ($this->company == null ? '': $this->company);
+			. ($this->company == null ? '': $this->company));
 	}
 
 	# taken from https://gist.github.com/lohic/d01c458e69be636c2365

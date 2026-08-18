@@ -44,7 +44,7 @@ class RevocationTest extends AbstractEngineApiHandler {
 		}
 
 		// get user associated with this nonce
-		$olvidUsersForNonce = $this->context->db->user->searchNonce($nonce);
+		$olvidUsersForNonce = $this->context->db->user->getByNonce($nonce);
 		if (count($olvidUsersForNonce) === 0) {
 			$this->logger->error('revocationTest: nonce not found');
 			return new BinaryResponse("\x01");
