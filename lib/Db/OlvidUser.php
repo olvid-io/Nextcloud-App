@@ -115,7 +115,7 @@ class OlvidUser extends Entity {
 		$details->lastname = $lastname;
 		$details->position = $position;
 		$details->company = $company;
-		$details->identity = $base64Identity;
+		$details->base64Identity = $base64Identity;
 		$details->timestamp = TimeUtil::currentTimeMillis();
 		return $details;
 	}

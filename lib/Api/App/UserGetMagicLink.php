@@ -60,7 +60,7 @@ class UserGetMagicLink {
 					'server' => $nextcloudUrl,
 				],
 				'magic' => [
-					'username' => $userId,
+					'username' => $nextcloudUser->getUID(),
 					'token' => $token,
 				],
 			];

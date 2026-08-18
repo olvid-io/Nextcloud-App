@@ -11,7 +11,7 @@ class JsonUserDetails implements JsonSerializable {
 	#[JsonField(Constants::DETAILS_KEY_ID)]
 	public String $id;
 	#[JsonField(Constants::DETAILS_KEY_IDENTITY)]
-	public ?String $identity;
+	public ?String $base64Identity;
 	#[JsonField(Constants::DETAILS_KEY_FIRST_NAME)]
 	public String $firstname;
 	#[JsonField(Constants::DETAILS_KEY_LAST_NAME)]

@@ -41,11 +41,12 @@ class Verify extends AbstractEngineApiHandler {
 		try {
 			$decodedPayload = $this->context->signatory->verify($signature);
 			$jsonUserDetails = JsonUserDetails::fromArray((array)$decodedPayload);
-			if ($jsonUserDetails?->id === null || $jsonUserDetails?->identity === null) {
+			/** @noinspection PhpConditionAlreadyCheckedInspection */
+			if ($jsonUserDetails?->id === null || $jsonUserDetails?->base64Identity === null) {
 				throw new Exception('Missing id or identity in JWT payload');
 			}
 			$userId = $jsonUserDetails->id;
-			$base64Identity = $jsonUserDetails->identity;
+			$base64Identity = $jsonUserDetails->base64Identity;
 
 			// Check identity matches stored value
 			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);

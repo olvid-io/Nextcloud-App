@@ -64,7 +64,7 @@ class UserUpdate {
 
 		// notify user for change (if he registered)
 		if ($olvidUser->hasIdentity()) {
-			$this->context->olvidServer->sendSingleUserNotificationNoFail($userDetails->identity);
+			$this->context->olvidServer->sendSingleUserNotificationNoFail($userDetails->base64Identity);
 		}
 
 		return new DataResponse();
