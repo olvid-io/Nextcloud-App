@@ -74,12 +74,14 @@
 			:open="!!deleteTarget"
 			@update:open="closeDeleteDialog">
 			<p>{{ t('olvid', 'Are you sure you want to delete {name}? This action cannot be undone.', { name: deleteTarget.displayName }) }}</p>
-			<NcCheckboxRadioSwitch :checked.sync="deleteRevoke" class="users-view__revoke-checkbox">
-				{{ t('olvid', 'This Olvid profile was lost or replaced') }}
-			</NcCheckboxRadioSwitch>
-			<p class="users-view__revoke-checkbox-desc">
-				{{ t('olvid', 'Warning: this action is not reversible. The Olvid identity will be blocked for every other users in this directory. They will no longer be able to reach the user through this identity, and it can never be re-registered. He will need to create a new Olvid profile and re-enroll.') }}
-			</p>
+			<div v-if="deleteTarget.useOlvid">
+				<NcCheckboxRadioSwitch :checked.sync="deleteRevoke" class="users-view__revoke-checkbox">
+					{{ t('olvid', 'This Olvid profile was lost or replaced') }}
+				</NcCheckboxRadioSwitch>
+				<p class="users-view__revoke-checkbox-desc">
+					{{ t('olvid', 'Warning: this action is not reversible. The Olvid identity will be blocked for every other users in this directory. They will no longer be able to reach the user through this identity, and it can never be re-registered. He will need to create a new Olvid profile and re-enroll.') }}
+				</p>
+			</div>
 			<template #actions>
 				<NcButton @click="closeDeleteDialog">
 					{{ t('olvid', 'Cancel') }}

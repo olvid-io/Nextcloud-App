@@ -14,6 +14,7 @@ use OCA\Olvid\Api\App\UserUpdate;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidContext;
+use OCA\Olvid\Utils\RandomUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -399,24 +400,40 @@ class AppApiController extends OCSController {
 	 * Creates a new Nextcloud user with optional Olvid profile fields
 	 *
 	 * @param string $uid User ID (required)
-	 * @param string $password Initial password (required)
-	 * @param string $firstname First name
-	 * @param string $lastname Last name
-	 * @param string $position Job position
-	 * @param string $company Company name
+	 * @param string $firstname First name (optional)
+	 * @param string $lastname Last name (optional)
+	 * @param string $position Job position (optional)
+	 * @param string $company Company name (optional)
+	 * @param ?string $password Initial password (optional)
+	 * @param ?string[] $groups Groups to add user to (optional)
 	 * @return DataResponse<Http::STATUS_OK, OlvidUserFull, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'POST', url: '/app/users')]
-	public function usersPost(string $uid = '', string $password = '', string $firstname = '', string $lastname = '', string $position = '', string $company = ''): DataResponse {
+	public function usersPost(string $uid = '', ?string $password = '', string $firstname = '', string $lastname = '', string $position = '', string $company = '', ?array $groups = []): DataResponse {
 		$uid = trim($uid);
 
-		if ($uid === '' || $password === '') {
-			return new DataResponse(['error' => 'uid and password are required'], Http::STATUS_BAD_REQUEST);
+		if ($uid === '') {
+			return new DataResponse(['error' => 'uid is required'], Http::STATUS_BAD_REQUEST);
 		}
 
+		// check argument validity
 		if ($this->context->nextcloud->userManager->get($uid) !== null) {
 			return new DataResponse(['error' => 'user already exists'], Http::STATUS_BAD_REQUEST);
+		}
+		$nextcloudGroups = [];
+		if ($groups !== null && count($groups) > 0) {
+			foreach ($groups as $group) {
+				$nextcloudGroup = $this->context->nextcloud->groupManager->get($group);
+				if ($nextcloudGroup === null) {
+					return new DataResponse(['error' => "group does not exists: $group"], Http::STATUS_BAD_REQUEST);
+				}
+				$nextcloudGroups[] = $nextcloudGroup;
+			}
+		}
+
+		if ($password === null || trim($password) === '') {
+			$password = RandomUtil::uuid_create();
 		}
 
 		// create nextcloud user
@@ -444,6 +461,11 @@ class AppApiController extends OCSController {
 		}
 		if (trim($company) !== '') {
 			$olvidUser->setCompany(trim($company));
+		}
+
+		// add user to groups
+		foreach ($nextcloudGroups as $nextcloudGroup) {
+			$nextcloudGroup->addUser($nextcloudUser);
 		}
 
 		return new DataResponse([
