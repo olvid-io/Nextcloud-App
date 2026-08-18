@@ -11,6 +11,8 @@ class Constants {
 	public const IDENTITY_SESSION_DURATION_S = 3600 * 24; // 1 day
 	public const MAGIC_SESSION_DURATION_S = 3600; // 1 hour
 	public const MAGIC_LINK_DURATION_S = 300; // 5 min
+	// for statistics only, duration since last connection to consider a user as inactive
+	public const INACTIVE_USER_DURATION_S = 1209600; // 2 weeks
 
 	// Minimum build numbers supporting this version of the keycloak plugin API
 	public const MIN_BUILD_ANDROID = 200;

@@ -31,6 +31,16 @@
 			</template>
 		</NcAppNavigationItem>
 
+		<NcAppNavigationItem
+			v-if="isAdmin"
+			:name="t('olvid', 'Statistics')"
+			:active="$route.name === 'statistics'"
+			@click="$router.push({ name: 'statistics' }).catch(() => {})">
+			<template #icon>
+				<IconChartBar :size="20" />
+			</template>
+		</NcAppNavigationItem>
+
 		<template #footer>
 			<ul class="app-navigation-entry__settings">
 				<NcAppNavigationItem
@@ -56,6 +66,7 @@ import IconAccount from 'vue-material-design-icons/AccountOutline.vue'
 import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
 import IconCog from 'vue-material-design-icons/CogOutline.vue'
 import IconAccountMultiple from 'vue-material-design-icons/AccountMultipleOutline.vue'
+import IconChartBar from 'vue-material-design-icons/ChartBar.vue'
 import NcAppNavigation from '@nextcloud/vue/dist/Components/NcAppNavigation.js'
 import NcAppNavigationCaption from '@nextcloud/vue/dist/Components/NcAppNavigationCaption.js'
 import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationItem.js'
@@ -63,7 +74,7 @@ import OlvidAppSettings from './components/OlvidAppSettings.vue'
 
 export default {
 	name: 'OlvidNavigation',
-	components: { NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, IconAccount, IconAccountGroup, IconCog, IconAccountMultiple, OlvidAppSettings },
+	components: { NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, IconAccount, IconAccountGroup, IconCog, IconAccountMultiple, IconChartBar, OlvidAppSettings },
 	props: {
 		isAdmin: {
 			type: Boolean,

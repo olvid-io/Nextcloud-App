@@ -57,6 +57,15 @@ namespace OCA\Olvid;
  *   displayName: string,
  * }
  *
+ * ── Statistics API ───────────────────────────────────────────────────────────
+ * @psalm-type Statistics = array{
+ *     olvidUsersCount: int,
+ *     nextcloudUsersCount: int,
+ *     olvidInactiveUsers: int,
+ *     olvidGroupsCount: int,
+ *     nextcloudGroupsCount: int,
+ * }
+ *
  * ── Directory API ────────────────────────────────────────────────────────────
  *
  * All directory API endpoints return HTTP 200 regardless of success or error.

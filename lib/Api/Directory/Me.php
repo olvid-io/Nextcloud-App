@@ -20,8 +20,8 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// parse request (don't fail on parse error)
 		try {
-			// $deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
 			$timestamp = (int)($jsonParameters[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
+			// $deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
 		} catch (Exception $e) {
 			$this->logger->warning('me: parse error: ', ['exception' => $e]);
 		}
@@ -61,6 +61,9 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			$response[Constants::ME_RESPONSE_NONCE] = base64_encode($olvidUser->getNonce());
 		}
 
+		// update user last connection timestamp
+		$olvidUser->setLastConnectionTimestamp(TimeUtil::currentTimeMillis());
+
 		// save olvid user to database
 		$this->context->db->user->update($olvidUser);
 
@@ -90,7 +93,9 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// list every revocation since timestamp passed in request
 		$signedRevocations = $this->context->db->revocation->getSinceTimestampOrNull($timestamp);
 
-		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) { return $revocation->getSignedRevocation(); }, $signedRevocations ?? []);
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) {
+			return $revocation->getSignedRevocation();
+		}, $signedRevocations ?? []);
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS]) !== 0 ? $response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] : null;
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;

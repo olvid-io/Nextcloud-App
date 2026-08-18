@@ -33,6 +33,7 @@ use Psr\Log\LoggerInterface;
  * @psalm-import-type OlvidGroupFull from ResponseDefinitions
  * @psalm-import-type OlvidGroup from ResponseDefinitions
  * @psalm-import-type OlvidGroupRef from ResponseDefinitions
+ * @psalm-import-type Statistics from ResponseDefinitions
  */
 class AppApiController extends OCSController {
 	public function __construct(
@@ -514,7 +515,9 @@ class AppApiController extends OCSController {
 		}
 		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
 		$olvidGroups = $this->context->db->group->getAll();
-		$olvidGroupMap = array_combine(array_map(function ($og) { return $og->getGroupId(); }, $olvidGroups), $olvidGroups);
+		$olvidGroupMap = array_combine(array_map(function ($og) {
+			return $og->getGroupId();
+		}, $olvidGroups), $olvidGroups);
 
 		$result = [];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
@@ -564,5 +567,45 @@ class AppApiController extends OCSController {
 	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}/identity')]
 	public function usersIdentityDelete(string $userId, bool $revoke = false): DataResponse {
 		return $this->userDeleteIdentity->handle($userId, $revoke);
+	}
+
+	// ── Statistics endpoints (admin only) ───────────────────────────────
+	/**
+	 * Unlinks the Olvid identity of a specific user
+	 * When $revoke is true the identity is also permanently blocked for all contacts
+	 *
+	 * @return DataResponse<Http::STATUS_OK, array{Statistics}, array{}>>
+	 * @throws \OCP\DB\Exception
+	 * @noinspection PhpUnused
+	 */
+	#[ApiRoute(verb: 'GET', url: '/app/statistics')]
+	public function getStatistics(): DataResponse {
+		$allNextcloudUsers = $this->context->nextcloud->userManager->search('');
+		$allOlvidUsers = $this->context->db->user->getAll();
+
+		$olvidUsersCount = count(array_filter($allOlvidUsers, function ($olvidUser) {
+			return $olvidUser->hasIdentity();
+		}));
+		$nextcloudUsersCount = count($allNextcloudUsers);
+		$olvidInactiveUsersCount = count(array_filter($allOlvidUsers, function ($olvidUser) {
+			return $olvidUser->hasIdentity() && $olvidUser->isInactive();
+		}));
+
+		$allNextcloudGroups = $this->context->nextcloud->groupManager->search('');
+		$allOlvidGroups = $this->context->db->group->getAll();
+
+		$olvidGroupsCount = count(array_filter($allOlvidGroups, function ($olvidGroup) {
+			return $olvidGroup->getEnabled();
+		}));
+		$nextcloudGroupsCount = count($allNextcloudGroups);
+
+		return new DataResponse([
+			'olvidUsersCount' => $olvidUsersCount,
+			'nextcloudUsersCount' => $nextcloudUsersCount,
+			'olvidInactiveUsers' => $olvidInactiveUsersCount,
+
+			'olvidGroupsCount' => $olvidGroupsCount,
+			'nextcloudGroupsCount' => $nextcloudGroupsCount,
+		]);
 	}
 }

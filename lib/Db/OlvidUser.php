@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Db;
 
+use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\Entity;
@@ -33,6 +34,9 @@ use OCP\DB\Types;
  * @method int|null getSessionRevokedBefore()
  * @method void setSessionRevokedBefore(int|null $sessionRevokedBefore)
  *
+ * @method int|null getLastConnectionTimestamp()
+ * @method void setLastConnectionTimestamp(int|null $sessionRevokedBefore)
+ *
  * @method string|null getSignedDetails()
  * @method void setSignedDetails(string|null $signedDetails)
  *
@@ -59,6 +63,7 @@ class OlvidUser extends Entity {
 	protected ?string $magicToken = null;
 	protected ?int $magicTokenExpiration = null;
 	protected ?int $sessionRevokedBefore = null;
+	protected ?int $lastConnectionTimestamp = null;
 	protected ?string $signedDetails = null;
 	protected ?string $firstname = null;
 	protected ?string $lastname = null;
@@ -74,6 +79,7 @@ class OlvidUser extends Entity {
 		$this->addType('magicToken', Types::STRING);
 		$this->addType('magicTokenExpiration', Types::BIGINT);
 		$this->addType('sessionRevokedBefore', Types::BIGINT);
+		$this->addType('lastConnectionTimestamp', Types::BIGINT);
 		$this->addType('signedDetails', Types::STRING);
 		$this->addType('firstname', Types::STRING);
 		$this->addType('lastname', Types::STRING);
@@ -92,6 +98,10 @@ class OlvidUser extends Entity {
 
 	public function hasIdentity(): bool {
 		return $this->bytesIdentity !== null;
+	}
+
+	public function isInactive(): bool {
+		return $this->lastConnectionTimestamp === null || ($this->lastConnectionTimestamp < (TimeUtil::currentTimeMillis() - Constants::INACTIVE_USER_DURATION_S * 1000));
 	}
 
 	/**
@@ -129,6 +139,7 @@ class OlvidUser extends Entity {
 			'magicToken' => $this->getMagicToken(),
 			'magicTokenExpiration' => $this->getMagicTokenExpiration(),
 			'sessionRevokedBefore' => $this->getSessionRevokedBefore(),
+			'lastConnectionTimestamp' => $this->getLastConnectionTimestamp(),
 			'signedDetails' => $this->getSignedDetails(),
 			'firstname' => $this->getFirstname(),
 			'lastname' => $this->getLastname(),
@@ -148,6 +159,7 @@ class OlvidUser extends Entity {
 			. ', magicToken=' . $this->magicToken
 			. ', magicTokenExpiration=' . $this->magicTokenExpiration
 			. ', sessionRevokedBefore=' . $this->sessionRevokedBefore
+			. ', lastConnectionTimestamp=' . $this->lastConnectionTimestamp
 			. ', signedDetails=' . $this->signedDetails
 			. ', firstname=' . $this->firstname
 			. ', lastname=' . $this->lastname

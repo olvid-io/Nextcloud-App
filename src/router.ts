@@ -4,6 +4,7 @@ import Router from 'vue-router'
 import GroupsView from './views/GroupsView.vue'
 import ProfileView from './views/ProfileView.vue'
 import UsersView from './views/UsersView.vue'
+import StatisticsView from './views/StatisticsView.vue';
 
 Vue.use(Router)
 
@@ -17,5 +18,6 @@ export default new Router({
 		{ path: '/groups/:groupId', name: 'group-detail', component: GroupsView, props: true },
 		{ path: '/users', name: 'users', component: UsersView },
 		{ path: '/users/:userId', name: 'user-detail', component: UsersView, props: true },
+		{ path: '/statistics', name: 'statistics', component: StatisticsView, props: true },
 	],
 })
