@@ -9,6 +9,7 @@
 					<OlvidAvatar :user="user.id"
 						:display-name="user.displayName"
 						:use-olvid="user.useOlvid"
+						:is-inactive="user.isInactive"
 						:size="64" />
 				</div>
 

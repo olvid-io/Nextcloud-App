@@ -25,9 +25,11 @@
 					:name="user.displayName"
 					:active="$route.params.userId === user.id"
 					@click="$emit('open-user-sidebar', user)">
-
 					<template #icon>
-						<OlvidAvatar :user="user.id" :display-name="user.displayName" :use-olvid="user.useOlvid" />
+						<OlvidAvatar :user="user.id"
+							:display-name="user.displayName"
+							:use-olvid="user.useOlvid"
+							:is-inactive="user.isInactive" />
 					</template>
 
 					<template #subname>
@@ -79,7 +81,9 @@
 				{{ t('olvid', 'Warning: this action is not reversible. The Olvid identity will be blocked for every other users in this directory. They will no longer be able to reach the user through this identity, and it can never be re-registered. He will need to create a new Olvid profile and re-enroll.') }}
 			</p>
 			<template #actions>
-				<NcButton @click="closeDeleteDialog">{{ t('olvid', 'Cancel') }}</NcButton>
+				<NcButton @click="closeDeleteDialog">
+					{{ t('olvid', 'Cancel') }}
+				</NcButton>
 				<NcButton type="error" :disabled="deleting" @click="executeDelete">
 					{{ deleting ? t('olvid', 'Deleting…') : (deleteRevoke ? t('olvid', 'Delete and block') : t('olvid', 'Delete')) }}
 				</NcButton>

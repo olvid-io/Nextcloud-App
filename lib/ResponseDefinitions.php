@@ -28,6 +28,7 @@ namespace OCA\Olvid;
  *   id: string,
  *   displayName: string,
  *   useOlvid: bool,
+ *   isInactive: bool,
  *   firstname: string,
  *   lastname: string,
  *   position: string,

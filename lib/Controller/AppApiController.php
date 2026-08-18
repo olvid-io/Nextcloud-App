@@ -388,6 +388,7 @@ class AppApiController extends OCSController {
 				'position' => $olvidUser->getPosition(),
 				'company' => $olvidUser->getCompany(),
 				'useOlvid' => $olvidUser->hasIdentity() ?? false,
+				'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
 				'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
 			];
 		}
@@ -449,6 +450,7 @@ class AppApiController extends OCSController {
 			'id' => $nextcloudUser->getUID(),
 			'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
 			'useOlvid' => $olvidUser->hasIdentity(),
+			'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
 			'firstname' => $olvidUser->getFirstname(),
 			'lastname' => $olvidUser->getLastname(),
 			'position' => $olvidUser->getPosition(),

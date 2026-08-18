@@ -1,8 +1,8 @@
 <template>
 	<div class="olvid-avatar">
 		<NcAvatar
+			:preloaded-user-status="isInactive ? status.inactive : null"
 			v-bind="$attrs"
-			hide-status="true"
 			:size="size"
 			v-on="$listeners" />
 		<img
@@ -32,10 +32,26 @@ export default {
 			type: Boolean,
 			required: true,
 		},
+		isInactive: {
+			type: Boolean,
+			default: false,
+		},
 		size: {
 			type: Number,
 			default: 32,
 		},
+	},
+
+	data() {
+		return {
+			status: {
+				inactive: {
+					icon: '🔴',
+					status: 'inactive',
+					message: 'Inactive',
+				},
+			},
+		}
 	},
 
 	computed: {
