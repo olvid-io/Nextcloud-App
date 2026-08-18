@@ -31,8 +31,8 @@ class Admin implements IDeclarativeSettingsForm {
 			'fields' => [
 				[
 					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_URL,
-					'title' => $this->l->t('Olvid Server'),
-					'description' => $this->l->t('Optionally specify an alternative olvid distribution server to use'),
+					'title' => $this->l->t('Olvid Server url'),
+					'description' => $this->l->t('Olvid distribution server url.'),
 					'type' => DeclarativeSettingsTypes::URL,
 					'options' => '',
 					'default' => Constants::DEFAULT_OLVID_SERVER,
@@ -41,7 +41,7 @@ class Admin implements IDeclarativeSettingsForm {
 				[
 					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_API_KEY,
 					'title' => $this->l->t('Olvid Server Api Key'),
-					'description' => $this->l->t('Optional api key used to generate Olvid+ licenses for users'),
+					'description' => $this->l->t('Api Key used to communicate with your Olvid distribution server. Send us an email to get one: contact@olvid.io'),
 					'type' => DeclarativeSettingsTypes::PASSWORD,
 					'options' => '',
 					'default' => '',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Db;
 
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\Models\GroupPermission;
 use OCA\Olvid\Models\JsonGroupBlob;
 use OCA\Olvid\Models\JsonGroupDetails;
 use OCA\Olvid\Models\JsonGroupMemberAndPermissions;
@@ -123,7 +124,7 @@ class OlvidGroup extends Entity {
 				$permissions = $previousMembers[$olvidUserMember->getUserId()]->permissions;
 				$invitationNonce = $previousMembers[$olvidUserMember->getUserId()]->groupInvitationNonce;
 			} else {
-				$permissions = ['eo', 'sm']; // TODO improve default set
+				$permissions = GroupPermission::getDefaultGroupPermissions();
 				$invitationNonce = RandomUtil::random_bytes(Constants::GROUP_INVITATION_NONCE_SIZE);
 			}
 

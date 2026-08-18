@@ -25,8 +25,7 @@ class OlvidConfigurationSetupCheck implements ISetupCheck {
 
 	public function run(): SetupResult {
 		if (!$this->context->nextcloud->appManager->getOlvidServerApiKey()) {
-			// TODO improve error message
-			return SetupResult::error($this->l10n->t('Olvid server api key is not configured, Olvid App cannot work properly'));
+			return SetupResult::error($this->l10n->t('Olvid server Api Key is not configured. Set it up in Olvid Admin settings section, or send us an email to get one: contact@olvid.io'));
 		}
 
 		try {
@@ -36,8 +35,7 @@ class OlvidConfigurationSetupCheck implements ISetupCheck {
 			}
 			return SetupResult::success($this->l10n->t('Olvid app is properly configured.'));
 		} catch (Exception) {
-			// TODO improve error message
-			return SetupResult::error($this->l10n->t('Olvid server is unreachable or not properly configured.'));
+			return SetupResult::error($this->l10n->t('Olvid server is unreachable or not properly configured, check parameters in Olvid Admin settings section.'));
 		}
 	}
 }

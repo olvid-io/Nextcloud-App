@@ -31,8 +31,8 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// Parse request
 		try {
-			$nextcloudUserId = $jsonParameters['username'] ?? null;
-			$token = $jsonParameters['token'] ?? null;
+			$nextcloudUserId = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_USERNAME] ?? null;
+			$token = $jsonParameters[Constants::GET_MAGIC_SESSION_REQUEST_TOKEN] ?? null;
 			if ($nextcloudUserId === null || $token === null) {
 				throw new Exception('Missing username or token');
 			}

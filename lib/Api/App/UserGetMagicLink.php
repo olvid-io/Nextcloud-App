@@ -11,7 +11,9 @@ use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IURLGenerator;
+use OCP\IUser;
 use Psr\Log\LoggerInterface;
 
 class UserGetMagicLink {
@@ -24,6 +26,8 @@ class UserGetMagicLink {
 
 	/**
 	 * Build the magic configuration link URL.
+	 * We use a nextcloudUser as parameter to be sure Nextcloud user still exists and do
+	 * not create a magic link for a non existing user.
 	 *
 	 * Link payload format (JSON, base64-encoded after the '#'):
 	 * {
@@ -34,9 +38,10 @@ class UserGetMagicLink {
 	 *
 	 * @throws Exception
 	 */
-	public function handle(string $userId): DataResponse {
+	public function handle(IUser $nextcloudUser): Response|DataResponse {
 		try {
-			$olvidUser = $this->context->db->user->getOrCreate($userId);
+			// get or create olvid user in database
+			$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 
 			// create token and store in db
 			$token = RandomUtil::uuid_create();

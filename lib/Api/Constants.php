@@ -10,7 +10,7 @@ class Constants {
 	 */
 	public const IDENTITY_SESSION_DURATION_S = 3600 * 24; // 1 day
 	public const MAGIC_SESSION_DURATION_S = 3600; // 1 hour
-	public const MAGIC_LINK_DURATION_S = 300; // 5 min // TODO implements
+	public const MAGIC_LINK_DURATION_S = 300; // 5 min
 
 	// Minimum build numbers supporting this version of the keycloak plugin API
 	public const MIN_BUILD_ANDROID = 200;
@@ -65,10 +65,6 @@ class Constants {
 	public const ME_RESPONSE_MINIMUM_BUILD_VERSIONS = 'min-build-versions';
 	public const ME_RESPONSE_MINIMUM_BUILD_VERSION_ANDROID_LABEL = 'android';
 	public const ME_RESPONSE_MINIMUM_BUILD_VERSION_IOS_LABEL = 'ios';
-	public const MY_DEVICES_DEVICES = 'devices';
-	public const MY_DEVICES_DEVICE_UID = 'deviceUid';
-	public const MY_DEVICES_PLATFORM = 'platform';
-	public const MY_DEVICES_UNKNOWN = 'unknown';
 
 	// /getKey constants
 	public const GET_KEY_REQUEST_USER_ID = 'user-id';
@@ -80,8 +76,6 @@ class Constants {
 	// /search constants
 	public const SEARCH_REQUEST_FILTER = 'filter';
 	public const SEARCH_COUNT_LIMIT = 50;
-	public const OLD_DEVICE_TIME_LIMIT = 30;
-	public const KEYCLOAK_SEARCH_COUNT_LIMIT = 10;
 	public const SEARCH_RESPONSE_RESULTS = 'results';
 	public const SEARCH_RESPONSE_RESULTS_UNACTIVATED_USERS = 'resultsUnactivatedUsers';
 	public const SEARCH_RESPONSE_COUNT = 'count';
@@ -89,11 +83,6 @@ class Constants {
 
 	// /verify constants
 	public const VERIFY_REQUEST_SIGNATURE = 'signature';
-
-	// /transferProof constants
-	public const TRANSFER_PROOF_REQUEST_SESSION_ID = 'session_id';
-	public const TRANSFER_PROOF_REQUEST_SAS = 'sas';
-	public const TRANSFER_PROOF_RESPONSE_SIGNATURE = 'signature';
 
 	// /revocationTest constants
 	public const REVOCATION_TEST_REQUEST_NONCE = 'nonce';

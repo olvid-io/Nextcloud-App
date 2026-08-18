@@ -102,7 +102,7 @@ class AppApiController extends OCSController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/me/getMagicLink')]
 	public function meGetMagicLink(): DataResponse {
-		return $this->userGetMagicLink->handle($this->userId);
+		return $this->userGetMagicLink->handle($this->userSession->getUser());
 	}
 
 	/**
@@ -543,11 +543,11 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/magicLink')]
 	public function usersGetMagicLink(string $userId): DataResponse {
-		$nextcloudGroup = $this->context->nextcloud->userManager->get($userId);
-		if ($nextcloudGroup === null) {
+		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
+		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
-		return $this->userGetMagicLink->handle($userId);
+		return $this->userGetMagicLink->handle($nextcloudUser);
 	}
 
 	/**
