@@ -12,7 +12,6 @@ use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCP\User\Events\UserChangedEvent;
 use OCP\User\Events\UserDeletedEvent;
 use Psr\Log\LoggerInterface;
 
@@ -28,9 +27,6 @@ class UserEventListener implements IEventListener {
 		if ($event instanceof UserDeletedEvent) {
 			$this->logger->info('UserEventListener: UserDeletedEvent: ' . $event->getUser()->getUID());
 			$this->userDeletedHandler($event);
-		} elseif ($event instanceof UserChangedEvent) {
-			$this->logger->info('UserEventListener: UserChangedEvent: ' . $event->getUser()->getUID());
-			$this->userChangedHandler($event);
 		}
 	}
 
@@ -108,36 +104,5 @@ class UserEventListener implements IEventListener {
 
 		// delete olvid user in database
 		$this->context->db->user->delete($olvidUser);
-	}
-
-	public function userChangedHandler(UserChangedEvent $event): void {
-		$nextcloudUser = $event->getUser();
-
-		if ($event->getFeature() == 'displayName') {
-			// check user use Olvid
-			$olvidUser = $this->context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
-			if (!$olvidUser?->hasIdentity()) {
-				return;
-			}
-
-			$firstname = trim($olvidUser->getFirstname() ?? '');
-			$lastname = trim($olvidUser->getLastname() ?? '');
-
-			// if user set firstname or lastname it does not use nextcloud display name, do nothing
-			if ($firstname || $lastname) {
-				return;
-			}
-
-			// re-compute details and sign them
-			$jsonUserDetails = $olvidUser->computeJsonUserDetails();
-			$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
-			// update full search field
-			$olvidUser->setFullSearchField($jsonUserDetails->computeFullSearchString());
-			// update user in database
-			$this->context->db->user->updateNoFail($olvidUser);
-
-			// notify user
-			$this->context->olvidServer->sendSingleUserNotificationNoFail(base64_encode($olvidUser->getBytesIdentity()));
-		}
 	}
 }

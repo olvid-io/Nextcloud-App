@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\AppInfo;
 
 use OCA\Olvid\DeclarativeSettings\Admin;
-use OCA\Olvid\Listener\EveryoneGroupEventListener;
+use OCA\Olvid\Listener\EveryoneGroupsEventListener;
 use OCA\Olvid\Listener\GroupEventListener;
 use OCA\Olvid\Listener\UserEventListener;
 use OCA\Olvid\Profile\OlvidProfileLinkAction;
@@ -18,8 +18,6 @@ use OCP\Group\Events\GroupChangedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
-use OCP\Settings\Events\DeclarativeSettingsSetValueEvent;
-use OCP\User\Events\UserChangedEvent;
 use OCP\User\Events\UserCreatedEvent;
 use OCP\User\Events\UserDeletedEvent;
 
@@ -37,7 +35,6 @@ class Application extends App implements IBootstrap {
 
 		// user events
 		$context->registerEventListener(UserDeletedEvent::class, UserEventListener::class);
-		$context->registerEventListener(UserChangedEvent::class, UserEventListener::class);
 
 		// group events
 		$context->registerEventListener(GroupChangedEvent::class, GroupEventListener::class);
@@ -46,8 +43,7 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(UserRemovedEvent::class, GroupEventListener::class);
 
 		// everyone group management
-		$context->registerEventListener(EveryoneGroupEventListener::class, UserCreatedEvent::class);
-		$context->registerEventListener(EveryoneGroupEventListener::class, DeclarativeSettingsSetValueEvent::class);
+		$context->registerEventListener(UserCreatedEvent::class, EveryoneGroupsEventListener::class);
 	}
 
 	public function boot(IBootContext $context): void {

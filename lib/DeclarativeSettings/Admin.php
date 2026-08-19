@@ -8,6 +8,7 @@ namespace OCA\Olvid\DeclarativeSettings;
 
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\Settings\DeclarativeSettingsTypes;
 use OCP\Settings\IDeclarativeSettingsForm;
@@ -15,19 +16,20 @@ use OCP\Settings\IDeclarativeSettingsForm;
 class Admin implements IDeclarativeSettingsForm {
 	public function __construct(
 		private readonly IL10N $l,
+		private readonly IGroupManager $groupManager,
 	) {
 	}
 
 	public function getSchema(): array {
 		return [
-			'id' => 'olvid', // unique form id
-			'priority' => 10, // declarative section priority (ordering)
-			'section_type' => DeclarativeSettingsTypes::SECTION_TYPE_ADMIN, // admin, personal
-			'section_id' => 'olvid', // existing section id or your custom section id
-			'storage_type' => DeclarativeSettingsTypes::STORAGE_TYPE_INTERNAL, // external, internal (handled by core to store in appconfig and preferences)
-			'title' => 'Olvid', // NcSettingsSection name
+			'id' => 'olvid',
+			'priority' => 10,
+			'section_type' => DeclarativeSettingsTypes::SECTION_TYPE_ADMIN,
+			'section_id' => 'olvid',
+			'storage_type' => DeclarativeSettingsTypes::STORAGE_TYPE_INTERNAL,
+			'title' => 'Olvid',
 			'description' => $this->l->t('Configure Olvid application.'),
-			'doc_url' => '', // NcSettingsSection doc_url for documentation or help page, empty string if not needed
+			'doc_url' => '',
 			'fields' => [
 				[
 					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_URL,
@@ -48,22 +50,15 @@ class Admin implements IDeclarativeSettingsForm {
 					'placeholder' => '',
 				],
 				[
-					'id' => OlvidAppConfigManager::APP_CONFIG_ENABLE_EVERYONE_GROUP,
-					'title' => 'Enable Everyone Group',
-					'description' => 'Create and maintain a Nextcloud group with every user. You can then create an Olvid discussion in your Olvid Groups console.',
-					'type' => DeclarativeSettingsTypes::SELECT,
-					'options' => ['false', 'true'],
-					'default' => 'false',
+					'id' => OlvidAppConfigManager::APP_CONFIG_EVERYONE_GROUP_IDS,
+					'title' => $this->l->t('Automatic groups'),
+					'description' => $this->l->t('Automatically add new Nextcloud accounts to those groups. This is useful for maintaining Olvid discussions with all users.'),
+					'type' => DeclarativeSettingsTypes::MULTI_SELECT,
+					'options' => array_map(function ($ng) {
+						return $ng->getGID();
+					}, $this->groupManager->search('')),
+					'default' => []
 				],
-				// TODO implements using checkbox when this is issue is fix https://github.com/nextcloud/server/issues/60903
-				//				[
-				//					'id' => OlvidAppConfigManager::APP_CONFIG_ENABLE_EVERYONE_GROUP,
-				//					'title' => 'Enable Everyone Group',
-				//					'description' => 'Create and maintain a Nextcloud group with every user. You can then create an Olvid discussion in your Olvid Groups console.',
-				//					'type' => DeclarativeSettingsTypes::CHECKBOX,
-				//					'options' => [false, true],
-				//					'default' => false,
-				//				],
 			]
 		];
 	}
