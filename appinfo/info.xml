@@ -3,7 +3,7 @@
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>olvid</id>
 	<name>Olvid</name>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<summary>Use Nextcloud as an Olvid directory.</summary>
 	<description>Use your Nextcloud instance as an Olvid directory.
 

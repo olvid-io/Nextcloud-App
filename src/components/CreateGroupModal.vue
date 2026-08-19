@@ -56,6 +56,7 @@ export default {
 			try {
 				const res = await axios.post(generateOcsUrl('/apps/olvid/app/groups'), this.form)
 				this.$emit('created', res.data)
+				this.$router.push({ name: 'group-detail', params: { groupId: res.data.id } }).catch(() => {})
 				this.$emit('close')
 			} catch (e) {
 				this.error = e.response?.data?.error ?? e.message

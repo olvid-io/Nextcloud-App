@@ -609,7 +609,7 @@ class AppApiController extends OCSController {
 	#[ApiRoute(verb: 'GET', url: '/app/isAppConfigurationValid')]
 	public function isAppConfigurationValid(): DataResponse {
 		$isConfigurationValid = true;
-		if (!trim($this->context->nextcloud->appManager->getOlvidServerUrl()) || !trim($this->context->nextcloud->appManager->getOlvidServerApiKey())) {
+		if (!$this->context->nextcloud->appManager->getOlvidServerUrl() || !$this->context->nextcloud->appManager->getOlvidServerApiKey()) {
 			$isConfigurationValid = false;
 		}
 

@@ -52,8 +52,8 @@ class OlvidAppConfigManager {
 	 * Get fields set up in settings
 	 */
 	// olvid server url
-	public function getOlvidServerUrl(): string {
-		return $this->appConfig->getValueString(Application::APP_ID, self::APP_CONFIG_OLVID_SERVER_URL, Constants::DEFAULT_OLVID_SERVER);
+	public function getOlvidServerUrl(): ?string {
+		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_URL);
 	}
 	// api key
 	public function getOlvidServerApiKey(): ?string {
