@@ -51,7 +51,13 @@
 					</template>
 
 					<template #extra-actions>
-						<NcButton size="small" @click.stop="$emit('open-group-sidebar', group)">
+						<NcButton
+							size="small"
+							variant="primary"
+							@click.stop="$emit('open-group-sidebar', group)">
+							<template #icon>
+								<IconPencil :size="20" />
+							</template>
 							{{ t('olvid', 'Details') }}
 						</NcButton>
 					</template>
@@ -79,10 +85,11 @@ import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import CreateGroupModal from '../components/CreateGroupModal.vue'
 import IconPlus from 'vue-material-design-icons/Plus.vue'
+import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
 
 export default {
 	name: 'GroupsView',
-	components: { IconPlus, OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
+	components: { IconPencil, IconPlus, OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
 
 	emits: ['open-group-sidebar'],
 

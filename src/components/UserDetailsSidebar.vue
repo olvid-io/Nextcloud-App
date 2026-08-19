@@ -54,7 +54,10 @@
 				</div>
 
 				<div class="user-sidebar__danger">
-					<NcButton v-if="user.useOlvid" class="user-sidebar__button" type="error" @click="showUnlinkConfirm = true">
+					<NcButton v-if="user.useOlvid"
+						class="user-sidebar__button"
+						type="error"
+						@click="showUnlinkConfirm = true">
 						{{ t('olvid', 'Revoke user identity') }}
 					</NcButton>
 
@@ -169,7 +172,7 @@ import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import OlvidAvatar from './OlvidAvatar.vue'
-import MagicLinkModal from './MagicLinkModal.vue';
+import MagicLinkModal from './MagicLinkModal.vue'
 import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
 
 export default {

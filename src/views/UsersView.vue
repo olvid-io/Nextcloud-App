@@ -40,15 +40,20 @@
 						<NcButton
 							v-if="!user.useOlvid"
 							size="small"
+							variant="secondary"
 							:disabled="loadingMagicLink === user.id"
 							@click.stop="openMagicLink(user)">
 							{{ t('olvid', 'Magic Link') }}
 						</NcButton>
 						<NcButton
+							icon="pencil-outline"
 							size="small"
-							type="error"
-							@click.stop="confirmDeleteUser(user)">
-							{{ t('olvid', 'Delete') }}
+							variant="primary"
+							@click="$emit('open-user-sidebar', user)">
+							<template #icon>
+								<IconPencil :size="20" />
+							</template>
+							{{ t('olvid', 'Details') }}
 						</NcButton>
 					</template>
 				</NcListItem>
@@ -107,13 +112,14 @@ import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import IconPlus from 'vue-material-design-icons/Plus.vue'
+import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
 import CreateUserModal from '../components/CreateUserModal.vue'
 import MagicLinkModal from '../components/MagicLinkModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 
 export default {
 	name: 'UsersView',
-	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal, IconPlus },
+	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal, IconPlus, IconPencil },
 
 	emits: ['open-user-sidebar'],
 
@@ -125,9 +131,6 @@ export default {
 			magicLinkUrl: null,
 			loadingMagicLink: null,
 			showCreateModal: false,
-			deleteTarget: null,
-			deleteRevoke: false,
-			deleting: false,
 		}
 	},
 
@@ -173,34 +176,6 @@ export default {
 				console.error('Could not generate magic link', e)
 			} finally {
 				this.loadingMagicLink = null
-			}
-		},
-
-		confirmDeleteUser(user) {
-			this.deleteTarget = user
-		},
-
-		closeDeleteDialog() {
-			this.deleteTarget = null
-			this.deleteRevoke = false
-		},
-
-		async executeDelete() {
-			if (!this.deleteTarget) return
-			this.deleting = true
-			try {
-				// to revoke identity call the specific endpoint before deleting user
-				if (this.deleteRevoke) {
-					await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}/identity`), { data: { revoke: this.deleteRevoke } })
-				}
-				// delete nextcloud user
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.deleteTarget.id)}`))
-				this.removeUser(this.deleteTarget.id)
-				this.closeDeleteDialog()
-			} catch (e) {
-				console.error('Could not delete user', e)
-			} finally {
-				this.deleting = false
 			}
 		},
 
