@@ -38,6 +38,7 @@
 
 					<template #extra-actions>
 						<NcButton
+							v-if="!user.useOlvid"
 							size="small"
 							:disabled="loadingMagicLink === user.id"
 							@click.stop="openMagicLink(user)">
