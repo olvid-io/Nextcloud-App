@@ -241,7 +241,7 @@ export default {
 
 	computed: {
 		appLogoUrl() {
-			return generateFilePath('olvid', 'img', 'app.svg')
+			return generateFilePath('olvid', 'img', 'olvid.svg')
 		},
 		olvidEnabledUrl() {
 			return generateFilePath('olvid', 'img', 'olvid-enabled.svg')
