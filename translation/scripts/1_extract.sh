@@ -21,6 +21,9 @@ EXCLUDE_DIRS=(
     translations translationfiles
 )
 
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
 mkdir -p "$TRANS_DIR/templates"
 rm -f "$POT"
 # --join-existing requires the output file to already exist; write a minimal seed
@@ -55,11 +58,28 @@ done < <(find "$ROOT_DIR/appinfo" "$ROOT_DIR/lib" "$ROOT_DIR/templates" "${PRUNE
 #                  n(appId, singular, plural, count) → singular/plural are args 2,3
 echo "Extracting JS/Vue/TS strings..."
 while IFS= read -r -d '' file; do
+    extract_file="$file"
+    if [[ "$file" == *.vue ]]; then
+        # xgettext's JS lexer treats a template attribute binding like
+        # :name="t('olvid', 'Foo')" as one double-quoted string literal, so the
+        # t()/n() call inside it is never seen as code. Strip the outer quotes
+        # around any attribute value that contains a t(/n( call (in a same-line
+        # substitution, so line numbers stay valid) before extraction.
+        rel="${file#"$ROOT_DIR"/}"
+        tmp_file="$TMP_DIR/$rel"
+        mkdir -p "$(dirname "$tmp_file")"
+        perl -pe 's/="([^"]*\b(?:t|n)\([^"]*)"/=$1;/g' "$file" > "$tmp_file"
+        extract_file="$tmp_file"
+    fi
     echo "  - $file" && "${XGETTEXT_COMMON[@]}" \
         --keyword=t:2 --keyword=n:2,3 \
         --language=Javascript \
-        "$file" 2>/dev/null
+        "$extract_file" 2>/dev/null
 done < <(find "$ROOT_DIR/src" \( -name "*.js" -o -name "*.ts" -o -name "*.vue" \) -print0)
+
+# Location comments for .vue files point into $TMP_DIR; map them back to the
+# real source path.
+sed -i "s|$TMP_DIR/|$ROOT_DIR/|g" "$POT"
 
 echo "POT written: $POT"
 

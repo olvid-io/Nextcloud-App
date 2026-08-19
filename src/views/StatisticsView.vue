@@ -5,15 +5,15 @@
 		<div v-else style="display: flex;">
 			<section class="statistics-section" style="margin: auto;">
 				<div class="statistics">
-					<h3>Olvid Users</h3>
+					<h3>{{ t('olvid', 'Olvid Users') }}</h3>
 					<p>{{ statistics.olvidUsersCount }} / {{ statistics.nextcloudUsersCount }}</p>
 				</div>
 				<div class="statistics">
-					<h3>Olvid Groups</h3>
+					<h3>{{ t('olvid', 'Olvid Groups') }}</h3>
 					<p>{{ statistics.olvidGroupsCount }} / {{ statistics.nextcloudGroupsCount }}</p>
 				</div>
 				<div class="statistics">
-					<h3>Inactive Olvid users</h3>
+					<h3>{{ t('olvid', 'Inactive Olvid users') }}</h3>
 					<p>{{ statistics.olvidInactiveUsers }} / {{ statistics.olvidUsersCount }}</p>
 				</div>
 			</section>

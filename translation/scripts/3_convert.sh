@@ -141,19 +141,20 @@ def fmt_entry(key, value):
         v = '[' + ','.join(jdump(x) for x in value) + ']'
     else:
         v = jdump(value)
-    return f'    {k} : {v}'
+    return f'    {k}: {v}'
 
 def write_js(app_id, entries, plural_form, path):
     lines = [fmt_entry(k, v) for k, v in entries.items()]
     with open(path, 'w', encoding='utf-8') as f:
+        f.write('/* eslint-disable indent,quotes,quote-props,comma-spacing,comma-dangle */\n')
         f.write('OC.L10N.register(\n')
-        f.write(f'    "{app_id}",\n')
+        f.write(f'    \'{app_id}\',\n')
         f.write('    {\n')
         f.write(',\n'.join(lines))
         if lines:
             f.write('\n')
         f.write('},\n')
-        f.write(f'"{plural_form}");\n')
+        f.write(f'\'{plural_form}\')\n')
 
 def write_json(entries, plural_form, path):
     lines = [fmt_entry(k, v) for k, v in entries.items()]
