@@ -5,11 +5,13 @@
 		</div>
 
 		<div v-else class="profile-view">
-
 			<!-- ══ Step: install ═══════════════════════════════════════════════ -->
 			<template v-if="step === 'install'">
 				<div class="profile-view__step">
-					<img :src="appLogoUrl" class="profile-view__logo" alt="Olvid" aria-hidden="true" />
+					<img :src="appLogoUrl"
+						class="profile-view__logo"
+						alt="Olvid"
+						aria-hidden="true">
 					<h2>{{ t('olvid', 'Link your Olvid identity') }}</h2>
 					<p class="profile-view__desc">
 						{{ t('olvid', 'Olvid is a privacy friendly and secure messaging application. Link your Olvid profile to your Nextcloud account to appear in the directory and be part of Olvid discussions.') }}
@@ -17,7 +19,10 @@
 					<p class="profile-view__desc">
 						{{ t('olvid', 'If you do not have Olvid yet, download it first:') }}
 					</p>
-					<a href="https://olvid.io/download/fr/" target="_blank" rel="noopener noreferrer" class="profile-view__download-link">
+					<a href="https://olvid.io/download/fr/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="profile-view__download-link">
 						<NcButton>{{ t('olvid', 'Download Olvid') }}</NcButton>
 					</a>
 					<div class="profile-view__divider" />
@@ -63,7 +68,9 @@
 			<!-- ══ Step: link ══════════════════════════════════════════════════ -->
 			<template v-else-if="step === 'link'">
 				<div class="profile-view__step">
-					<h2>{{ t('olvid', 'Scan with Olvid') }}</h2>
+					<h2 style="margin: auto;">
+						{{ t('olvid', 'Scan with Olvid') }}
+					</h2>
 					<OlvidQrDisplay :configuration-url="magicLink" />
 					<p class="profile-view__polling-hint">
 						{{ t('olvid', 'Waiting for you to complete enrollment in the app…') }}
@@ -77,7 +84,10 @@
 			<!-- ══ Step: enrolled ══════════════════════════════════════════════ -->
 			<template v-else-if="step === 'enrolled'">
 				<div class="profile-view__step profile-view__step--centered">
-					<img :src="olvidEnabledUrl" class="profile-view__success-icon" alt="" aria-hidden="true" />
+					<img :src="olvidEnabledUrl"
+						class="profile-view__success-icon"
+						alt=""
+						aria-hidden="true">
 					<h2>{{ t('olvid', 'Identity linked!') }}</h2>
 					<p class="profile-view__desc">
 						{{ t('olvid', 'Your Olvid identity is now linked to your Nextcloud account. You will appear in the Olvid directory and can join group discussions.') }}
@@ -90,13 +100,16 @@
 
 			<!-- ══ Step: registered ════════════════════════════════════════════ -->
 			<template v-else-if="step === 'registered'">
-
 				<!-- Section: identity details ──────────────────────────────── -->
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
 						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
 						<span class="profile-view__enrolled-badge">
-							<img :src="olvidEnabledUrl" width="16" height="16" alt="" aria-hidden="true" />
+							<img :src="olvidEnabledUrl"
+								width="16"
+								height="16"
+								alt=""
+								aria-hidden="true">
 							{{ t('olvid', 'Enrolled') }}
 						</span>
 					</div>
@@ -108,8 +121,12 @@
 						<NcTextField :value.sync="form.company" :label="t('olvid', 'Company')" />
 					</div>
 
-					<p v-if="saveError" class="profile-view__error">{{ saveError }}</p>
-					<p v-if="saveSuccess" class="profile-view__success">{{ t('olvid', 'Profile saved.') }}</p>
+					<p v-if="saveError" class="profile-view__error">
+						{{ saveError }}
+					</p>
+					<p v-if="saveSuccess" class="profile-view__success">
+						{{ t('olvid', 'Profile saved.') }}
+					</p>
 
 					<div class="profile-view__actions">
 						<NcButton type="primary" :disabled="saving" @click="saveProfile">
@@ -119,35 +136,16 @@
 
 					<!-- Unlink/Revoke identity ───────────────────────────────────── -->
 					<div class="profile-view__revoke">
-						<NcButton type="error" @click="unlinkDialogOpen = true">
+						<NcButton type="error" @click="unlinkModalOpen = true">
 							{{ t('olvid', 'I no longer have access to my Olvid profile') }}
 						</NcButton>
 
-						<NcDialog
-							:open.sync="unlinkDialogOpen"
-							:name="t('olvid', 'I no longer have access to my Olvid profile')"
-							@update:open="closeUnlinkDialog">
-							<p class="profile-view__desc">
-								{{ t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.') }}
-							</p>
-							<NcCheckboxRadioSwitch
-								:checked.sync="unlinkRevoke"
-								class="profile-view__revoke-checkbox">
-								{{ t('olvid', 'My Olvid profile was lost or replaced') }}
-							</NcCheckboxRadioSwitch>
-							<p class="profile-view__revoke-checkbox-desc">
-								{{ t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.') }}
-							</p>
-							<p v-if="unlinkError" class="profile-view__error">{{ unlinkError }}</p>
-							<template #actions>
-								<NcButton @click="closeUnlinkDialog">
-									{{ t('olvid', 'Cancel') }}
-								</NcButton>
-								<NcButton type="error" :disabled="unlinking" @click="unlinkIdentity">
-									{{ unlinking ? t('olvid', 'Unlinking…') : (unlinkRevoke ? t('olvid', 'Unlink and block') : t('olvid', 'Unlink')) }}
-								</NcButton>
-							</template>
-						</NcDialog>
+						<UnlinkIdentityModal
+							v-if="unlinkModalOpen"
+							:user="currentUser"
+							is-self
+							@close="unlinkModalOpen = false"
+							@unlinked="onIdentityUnlinked" />
 					</div>
 				</section>
 
@@ -181,9 +179,7 @@
 						</NcListItem>
 					</ul>
 				</section>
-
 			</template>
-
 		</div>
 	</NcAppContent>
 </template>
@@ -193,18 +189,17 @@ import axios from '@nextcloud/axios'
 import { generateFilePath, generateOcsUrl } from '@nextcloud/router'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
+import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
 
 export default {
 	name: 'ProfileView',
-	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay },
+	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
 
 	emits: ['open-group-sidebar'],
 
@@ -214,6 +209,7 @@ export default {
 			// step: 'install' | 'identity' | 'link' | 'enrolled' | 'registered'
 			step: 'install',
 			form: { firstname: '', lastname: '', position: '', company: '' },
+			currentUser: null,
 
 			// identity step
 			formError: null,
@@ -230,10 +226,7 @@ export default {
 			saveSuccess: false,
 
 			// registered step — unlink/revoke identity
-			unlinkDialogOpen: false,
-			unlinkRevoke: false,
-			unlinking: false,
-			unlinkError: null,
+			unlinkModalOpen: false,
 
 			// registered step — groups
 			groups: [],
@@ -251,9 +244,20 @@ export default {
 		},
 	},
 
+	watch: {
+		step(newStep) {
+			if (newStep === 'link') {
+				this.startPolling()
+			} else {
+				this.stopPolling()
+			}
+		},
+	},
+
 	async mounted() {
 		try {
 			const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
+			this.currentUser = res.data
 			this.isAdmin = res.data.isAdmin ?? false
 			this.form = {
 				firstname: res.data.firstname ?? '',
@@ -270,16 +274,6 @@ export default {
 		} finally {
 			this.loading = false
 		}
-	},
-
-	watch: {
-		step(newStep) {
-			if (newStep === 'link') {
-				this.startPolling()
-			} else {
-				this.stopPolling()
-			}
-		},
 	},
 
 	beforeDestroy() {
@@ -315,6 +309,7 @@ export default {
 					const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
 					if (res.data.useOlvid) {
 						this.stopPolling()
+						this.currentUser = res.data
 						this.form = {
 							firstname: res.data.firstname ?? '',
 							lastname: res.data.lastname ?? '',
@@ -357,25 +352,11 @@ export default {
 		},
 
 		// ── registered — unlink ────────────────────────────────────────────────
-		closeUnlinkDialog() {
-			this.unlinkDialogOpen = false
-			this.unlinkRevoke = false
-			this.unlinkError = null
-		},
-
-		async unlinkIdentity() {
-			this.unlinking = true
-			this.unlinkError = null
-			try {
-				await axios.delete(generateOcsUrl('/apps/olvid/app/me/identity'), { data: { revoke: this.unlinkRevoke } })
-				this.closeUnlinkDialog()
-				this.magicLink = null
-				this.step = 'install'
-			} catch (e) {
-				this.unlinkError = t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
-			} finally {
-				this.unlinking = false
-			}
+		onIdentityUnlinked() {
+			this.unlinkModalOpen = false
+			this.currentUser = { ...this.currentUser, useOlvid: false }
+			this.magicLink = null
+			this.step = 'install'
 		},
 
 		// ── registered — groups ────────────────────────────────────────────────
@@ -392,7 +373,7 @@ export default {
 		},
 
 		buildGroupAvatarUrl(group) {
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`);
+			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`)
 		},
 	},
 }
@@ -510,18 +491,6 @@ export default {
 		margin-top: 8px;
 		padding-top: 16px;
 		border-top: 1px solid var(--color-border);
-	}
-
-	&__revoke-checkbox {
-		margin-top: 12px;
-	}
-
-	&__revoke-checkbox-desc {
-		margin: 4px 0 0;
-		padding-inline-start: 28px;
-		color: var(--color-text-maxcontrast);
-		font-size: 0.875em;
-		line-height: 1.4;
 	}
 
 	&__groups-list {

@@ -40,11 +40,9 @@ export default {
 	components: { NcDialog, NcButton, NcCheckboxRadioSwitch },
 
 	props: {
-		// Required unless isSelf is true, since it is only used to build the
-		// admin endpoint URL and to fill the other-user wording.
 		user: {
 			type: Object,
-			default: null,
+			required: true,
 		},
 		isSelf: {
 			type: Boolean,
@@ -90,9 +88,7 @@ export default {
 			this.unlinking = true
 			this.error = null
 			try {
-				const url = this.isSelf
-					? generateOcsUrl('/apps/olvid/app/me/identity')
-					: generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/identity`)
+				const url = generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/identity`)
 				await axios.delete(url, { data: { revoke: this.revoke } })
 				this.$emit('unlinked', { revoke: this.revoke })
 			} catch (e) {

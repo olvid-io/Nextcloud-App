@@ -44,8 +44,21 @@
 					{{ t('olvid', 'Save') }}
 				</NcButton>
 
+				<div class="user-sidebar__actions">
+					<NcButton
+						class="user-sidebar__button"
+						:disabled="loadingMagicLink === user.id"
+						@click.stop="openMagicLink(user)">
+						{{ t('olvid', 'Magic Link') }}
+					</NcButton>
+				</div>
+
 				<div class="user-sidebar__danger">
-					<NcButton type="error" @click="showDeleteConfirm = true">
+					<NcButton v-if="user.useOlvid" class="user-sidebar__button" type="error" @click="showUnlinkConfirm = true">
+						{{ t('olvid', 'Revoke user identity') }}
+					</NcButton>
+
+					<NcButton type="error" class="user-sidebar__button" @click="showDeleteConfirm = true">
 						{{ t('olvid', 'Delete user') }}
 					</NcButton>
 				</div>
@@ -112,6 +125,20 @@
 			</div>
 		</NcAppSidebarTab>
 
+		<!-- Magic link modal -->
+		<MagicLinkModal
+			v-if="magicLinkTarget"
+			:user="magicLinkTarget"
+			:configuration-url="magicLinkUrl"
+			@close="magicLinkTarget = null" />
+
+		<!-- Unlink/revoke identity modal -->
+		<UnlinkIdentityModal
+			v-if="showUnlinkConfirm"
+			:user="user"
+			@close="showUnlinkConfirm = false"
+			@unlinked="onIdentityUnlinked" />
+
 		<!-- Delete confirmation dialog -->
 		<NcDialog
 			v-if="showDeleteConfirm"
@@ -142,10 +169,12 @@ import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import OlvidAvatar from './OlvidAvatar.vue'
+import MagicLinkModal from './MagicLinkModal.vue';
+import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
 
 export default {
 	name: 'UserDetailsSidebar',
-	components: { NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, NcDialog, OlvidAvatar },
+	components: { MagicLinkModal, UnlinkIdentityModal, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, NcDialog, OlvidAvatar },
 
 	props: {
 		user: {
@@ -175,6 +204,10 @@ export default {
 			allGroups: [],
 			showDeleteConfirm: false,
 			deleting: false,
+			magicLinkTarget: null,
+			magicLinkUrl: null,
+			loadingMagicLink: null,
+			showUnlinkConfirm: false,
 		}
 	},
 
@@ -284,6 +317,24 @@ export default {
 				this.deleting = false
 			}
 		},
+
+		async openMagicLink(user) {
+			this.loadingMagicLink = user.id
+			try {
+				const res = await axios.get(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(user.id)}/magicLink`))
+				this.magicLinkUrl = res.data.configurationUrl
+				this.magicLinkTarget = user
+			} catch (e) {
+				console.error('Could not generate magic link', e)
+			} finally {
+				this.loadingMagicLink = null
+			}
+		},
+
+		onIdentityUnlinked() {
+			this.showUnlinkConfirm = false
+			this.$emit('updated', { id: this.user.id, useOlvid: false })
+		},
 	},
 }
 </script>
@@ -319,9 +370,7 @@ export default {
 		margin: 0;
 	}
 
-	&__danger {
-		margin-top: 16px;
-		padding-top: 16px;
+	&__danger, &__actions {
 		border-top: 1px solid var(--color-border);
 	}
 
@@ -358,6 +407,10 @@ export default {
 		color: var(--color-text-maxcontrast);
 		padding: 8px 0;
 		font-style: italic;
+	}
+
+	&__button {
+		margin: 5px;
 	}
 }
 </style>
