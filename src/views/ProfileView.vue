@@ -86,7 +86,7 @@
 			<!-- ══ Step: enrolled ══════════════════════════════════════════════ -->
 			<template v-else-if="step === 'enrolled'">
 				<div class="profile-view__step profile-view__step--centered">
-					<img :src="olvidEnabledUrl"
+					<img :src="appLogoUrl"
 						class="profile-view__success-icon"
 						alt=""
 						aria-hidden="true">
