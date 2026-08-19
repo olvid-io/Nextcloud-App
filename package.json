@@ -32,7 +32,7 @@
     "qrcode": "^1.5.4",
     "vue": "^2.7.16",
     "vue-material-design-icons": "^5.3.1",
-    "vue-router": "^3.6.5"
+    "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@nextcloud/browserslist-config": "^3.0.1",
