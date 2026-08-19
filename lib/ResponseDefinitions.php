@@ -8,14 +8,9 @@ namespace OCA\Olvid;
  * Shared psalm types for OpenAPI response shapes.
  * Used to document APIs and generate OpenAPI specifications.
  *
- * @psalm-type OlvidMe = array{
- *   firstname: string,
- *   lastname: string,
- *   position: string,
- *   company: string,
- *   useOlvid: bool,
+ * @psalm-type OlvidMe = OlvidUserFull|array{
  *   isAdmin: bool,
- * }
+ * })
  *
  * TODO is this structure really necessary ? Rename to OlvidUserMinimalist ?
  * @psalm-type OlvidUser = array{

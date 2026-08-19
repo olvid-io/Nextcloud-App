@@ -67,12 +67,14 @@ class AppApiController extends OCSController {
 		$nextcloudUser = $this->userSession->getUser();
 		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 		return new DataResponse([
+			'id' => $nextcloudUser->getUID(),
 			'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
 			'firstname' => $olvidUser->getFirstname(),
 			'lastname' => $olvidUser->getLastname(),
 			'position' => $olvidUser->getPosition(),
 			'company' => $olvidUser->getCompany(),
-			'useOlvid' => $olvidUser->hasIdentity(),
+			'useOlvid' => $olvidUser->hasIdentity() ?? false,
+			'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
 			'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
 		]);
 	}
@@ -211,6 +213,9 @@ class AppApiController extends OCSController {
 
 		// create nextcloud group
 		$nextcloudGroup = $this->context->nextcloud->groupManager->createGroup($groupId);
+		if ($nextcloudGroup === null) {
+			return new DataResponse(['error' => 'group not created'], Http::STATUS_BAD_REQUEST);
+		}
 
 		return new DataResponse([
 			'id' => $groupId,
