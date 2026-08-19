@@ -598,7 +598,26 @@ class AppApiController extends OCSController {
 		return $this->userDeleteIdentity->handle($userId, $revoke);
 	}
 
-	// ── Statistics endpoints (admin only) ───────────────────────────────
+	// ── Misc endpoints (admin only) ───────────────────────────────
+	/**
+	 * Unlinks the Olvid identity of a specific user
+	 * When $revoke is true the identity is also permanently blocked for all contacts
+	 *
+	 * @return DataResponse<Http::STATUS_OK, array{isConfigurationValid: boolean}, array{}>>
+	 * @noinspection PhpUnused
+	 */
+	#[ApiRoute(verb: 'GET', url: '/app/isAppConfigurationValid')]
+	public function isAppConfigurationValid(): DataResponse {
+		$isConfigurationValid = true;
+		if (!trim($this->context->nextcloud->appManager->getOlvidServerUrl()) || !trim($this->context->nextcloud->appManager->getOlvidServerApiKey())) {
+			$isConfigurationValid = false;
+		}
+
+		return new DataResponse([
+			'isConfigurationValid' => $isConfigurationValid,
+		]);
+	}
+
 	/**
 	 * Unlinks the Olvid identity of a specific user
 	 * When $revoke is true the identity is also permanently blocked for all contacts
