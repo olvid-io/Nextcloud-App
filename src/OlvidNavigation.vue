@@ -1,6 +1,6 @@
 <template>
 	<NcAppNavigation>
-		<NcAppNavigationCaption name="Olvid Console" />
+		<NcAppNavigationCaption :name="t('olvid', 'Olvid Console')" />
 
 		<NcAppNavigationItem
 			:name="t('olvid', 'Profile')"

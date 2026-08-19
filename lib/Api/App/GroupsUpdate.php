@@ -98,7 +98,7 @@ class GroupsUpdate {
 			 * if group is enabled we can now recompute blob and store it database
 			 * else we can delete blob
 			 */
-			if ($enabled) {
+			if ($olvidGroup->getEnabled()) {
 				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
 				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 				$olvidGroup->setSignedGroupBlob($signedBlob);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 12:40+0200\n"
+"POT-Creation-Date: 2026-08-19 12:46+0200\n"
 "PO-Revision-Date: 2026-06-30 15:24+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -585,8 +585,8 @@ msgid ""
 "This will disconnect the Olvid profile linked to {name} from this directory "
 "and allow a new one to be registered."
 msgstr ""
-"Cela déconnectera le profil Olvid lié à {name} de cet annuaire, cela permettra "
-"d’en enregistrer un nouveau."
+"Cela déconnectera le profil Olvid lié à {name} de cet annuaire, cela "
+"permettra d’en enregistrer un nouveau."
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UnlinkIdentityModal.vue:76
 msgid "My Olvid profile was lost or replaced"
@@ -644,6 +644,10 @@ msgstr "Rechercher des groupes…"
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:122
 msgid "is not in any group."
 msgstr "n’appartient à aucun groupe."
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/OlvidNavigation.vue:3
+msgid "Olvid Console"
+msgstr "Console Olvid"
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/OlvidNavigation.vue:6
 msgid "Profile"

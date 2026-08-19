@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 12:40+0200\n"
+"POT-Creation-Date: 2026-08-19 12:46+0200\n"
 "PO-Revision-Date: 2026-06-30 15:25+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -651,6 +651,11 @@ msgstr ""
 #, fuzzy
 msgid "is not in any group."
 msgstr "Not in any group."
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/OlvidNavigation.vue:3
+#, fuzzy
+msgid "Olvid Console"
+msgstr "Olvid Console"
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/OlvidNavigation.vue:6
 #, fuzzy
