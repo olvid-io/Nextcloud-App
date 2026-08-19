@@ -11,7 +11,7 @@
 			class="unlink-identity-modal__checkbox">
 			{{ checkboxLabel }}
 		</NcCheckboxRadioSwitch>
-		<p class="unlink-identity-modal__checkbox-desc">
+		<p v-if="revoke" class="unlink-identity-modal__checkbox-desc">
 			{{ warningText }}
 		</p>
 		<p v-if="error" class="unlink-identity-modal__error">
@@ -54,7 +54,7 @@ export default {
 
 	data() {
 		return {
-			revoke: false,
+			revoke: true,
 			unlinking: false,
 			error: null,
 		}

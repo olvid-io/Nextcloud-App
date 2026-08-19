@@ -51,16 +51,20 @@
 					class="create-user-modal__select"
 					:input-label="t('olvid', 'Member of the following groups')"
 					:placeholder="t('olvid', 'Set user groups')"
-					:options="allGroups"
+					:options="allGroupIds"
 					keep-open
 					:multiple="true" />
 			</div>
 
-			<p v-if="error" class="create-user-modal__error">{{ error }}</p>
+			<p v-if="error" class="create-user-modal__error">
+				{{ error }}
+			</p>
 		</div>
 
 		<template #actions>
-			<NcButton @click="$emit('close')">{{ t('olvid', 'Cancel') }}</NcButton>
+			<NcButton @click="$emit('close')">
+				{{ t('olvid', 'Cancel') }}
+			</NcButton>
 			<NcButton
 				type="primary"
 				:disabled="saving || !form.uid"
@@ -97,7 +101,7 @@ export default {
 				company: '',
 				groups: [],
 			},
-			allGroups: [],
+			allGroupIds: [],
 			saving: false,
 			error: null,
 		}
@@ -131,7 +135,7 @@ export default {
 			this.loading = true
 			try {
 				const res = await axios.get(generateOcsUrl('/apps/olvid/app/groups'))
-				this.allGroups = res.data.groups ?? []
+				this.allGroupIds = res.data.groups.map(g => g.id) ?? []
 			} catch (e) {
 				console.error('Could not load groups', e)
 			} finally {
