@@ -142,22 +142,12 @@
 			@close="showUnlinkConfirm = false"
 			@unlinked="onIdentityUnlinked" />
 
-		<!-- Delete confirmation dialog -->
-		<NcDialog
+		<!-- Delete confirmation modal -->
+		<DeleteUserModal
 			v-if="showDeleteConfirm"
-			:name="t('olvid', 'Delete user')"
-			:open="showDeleteConfirm"
-			@update:open="showDeleteConfirm = $event">
-			<p>{{ t('olvid', 'Are you sure you want to delete {name}? This action cannot be undone.', { name: user.displayName }) }}</p>
-			<template #actions>
-				<NcButton @click="showDeleteConfirm = false">
-					{{ t('olvid', 'Cancel') }}
-				</NcButton>
-				<NcButton type="error" :disabled="deleting" @click="deleteUser">
-					{{ deleting ? t('olvid', 'Deleting…') : t('olvid', 'Delete') }}
-				</NcButton>
-			</template>
-		</NcDialog>
+			:user="user"
+			@close="showDeleteConfirm = false"
+			@deleted="onUserDeleted" />
 	</NcAppSidebar>
 </template>
 
@@ -167,17 +157,17 @@ import { generateOcsUrl } from '@nextcloud/router'
 import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar.js'
 import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import OlvidAvatar from './OlvidAvatar.vue'
 import MagicLinkModal from './MagicLinkModal.vue'
 import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
+import DeleteUserModal from './DeleteUserModal.vue'
 
 export default {
 	name: 'UserDetailsSidebar',
-	components: { MagicLinkModal, UnlinkIdentityModal, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, NcDialog, OlvidAvatar },
+	components: { MagicLinkModal, UnlinkIdentityModal, DeleteUserModal, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, OlvidAvatar },
 
 	props: {
 		user: {
@@ -206,7 +196,6 @@ export default {
 			groupSearchTimer: null,
 			allGroups: [],
 			showDeleteConfirm: false,
-			deleting: false,
 			magicLinkTarget: null,
 			magicLinkUrl: null,
 			loadingMagicLink: null,
@@ -308,17 +297,9 @@ export default {
 			}
 		},
 
-		async deleteUser() {
-			this.deleting = true
-			try {
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}`))
-				this.$emit('deleted', this.user.id)
-			} catch (e) {
-				console.error('deleteUser failed', e)
-				this.showDeleteConfirm = false
-			} finally {
-				this.deleting = false
-			}
+		onUserDeleted(userId) {
+			this.showDeleteConfirm = false
+			this.$emit('deleted', userId)
 		},
 
 		async openMagicLink(user) {
