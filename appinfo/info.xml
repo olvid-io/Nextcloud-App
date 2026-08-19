@@ -28,10 +28,11 @@
 	  <user>https://github.com/olvid-io/Nextcloud-App</user>
 	  <developer>https://github.com/olvid-io/Nextcloud-App</developer>
 	</documentation>
-	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-profile.png</screenshot>
-	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-groups.png</screenshot>
-	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-users.png</screenshot>
-	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-onboarding.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-profile-1.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-profile-2.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-users-1.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-users-2.png</screenshot>
+	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-groups-1.png</screenshot>
 
 	<navigations>
 		<navigation>
