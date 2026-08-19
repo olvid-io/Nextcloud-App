@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-14 13:49+0200\n"
+"POT-Creation-Date: 2026-08-18 13:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,11 +23,11 @@ msgid "Configure Olvid application."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/DeclarativeSettings/Admin.php:34
-msgid "Olvid Server"
+msgid "Olvid Server url"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/DeclarativeSettings/Admin.php:35
-msgid "Optionally specify an alternative olvid distribution server to use"
+msgid "Olvid distribution server url."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/DeclarativeSettings/Admin.php:43
@@ -35,25 +35,47 @@ msgid "Olvid Server Api Key"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/DeclarativeSettings/Admin.php:44
-msgid "Optional api key used to generate Olvid+ licenses for users"
+msgid ""
+"Api Key used to communicate with your Olvid distribution server. Send us an "
+"email to get one: contact@olvid.io"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:6
-msgid "+ Create Group"
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/SetupCheck/OlvidConfigurationSetupCheck.php:19
+msgid "Olvid configuration"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:36
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/SetupCheck/OlvidConfigurationSetupCheck.php:28
+msgid ""
+"Olvid server Api Key is not configured. Set it up in Olvid Admin settings "
+"section, or send us an email to get one: contact@olvid.io"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/SetupCheck/OlvidConfigurationSetupCheck.php:36
+msgid "Olvid app is properly configured."
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/lib/SetupCheck/OlvidConfigurationSetupCheck.php:38
+msgid ""
+"Olvid server is unreachable or not properly configured, check parameters in "
+"Olvid Admin settings section."
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:9
+msgid "Create Group"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:38
 msgid "{n} member"
 msgid_plural "{n} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:47
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:49
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:29
 msgid "Olvid Discussion"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:53
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/GroupsView.vue:55
 msgid "Details"
 msgstr ""
 
@@ -126,6 +148,7 @@ msgid "View my profile"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:97
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:22
 msgid "Olvid Profile"
 msgstr ""
 
@@ -142,8 +165,8 @@ msgid "Saving…"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:116
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:38
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:50
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:44
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:46
 msgid "Save"
 msgstr ""
 
@@ -170,9 +193,9 @@ msgid ""
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:144
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:79
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:41
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:111
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:87
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:63
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:124
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateGroupModal.vue:17
 msgid "Cancel"
 msgstr ""
@@ -194,11 +217,11 @@ msgid "My Groups"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:179
-msgid "Olvid discussion active"
+msgid "Olvid discussion enabled"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:179
-msgid "No Olvid discussion"
+msgid "Olvid discussion disabled"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/ProfileView.vue:293
@@ -217,30 +240,30 @@ msgstr ""
 msgid "Could not unlink identity: {error}"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:6
-msgid "+ Create User"
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:9
+msgid "Create User"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:39
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:44
 msgid "Magic Link"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:45
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:81
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:113
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:50
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:90
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:127
 msgid "Delete"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:71
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:109
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:76
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:121
 msgid "Are you sure you want to delete {name}? This action cannot be undone."
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:73
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:79
 msgid "This Olvid profile was lost or replaced"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:76
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:82
 msgid ""
 "Warning: this action is not reversible. The Olvid identity will be blocked "
 "for every other users in this directory. They will no longer be able to "
@@ -248,54 +271,96 @@ msgid ""
 "will need to create a new Olvid profile and re-enroll."
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:81
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:113
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:90
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:127
 msgid "Deleting…"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:81
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/views/UsersView.vue:90
 msgid "Delete and block"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:19
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:15
 msgid "Olvid details (optional)"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:46
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:35
+msgid "Nextcloud password (optional)"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:38
+msgid "Leave blank if this user will only use Olvid and not Nextcloud."
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:39
+msgid ""
+"You can set a password later in Nextcloud account settings if you change "
+"your mind."
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:68
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateGroupModal.vue:22
 msgid "Creating…"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:46
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateUserModal.vue:68
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/CreateGroupModal.vue:22
 msgid "Create"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:35
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:48
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:40
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:44
 msgid "Saved."
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:43
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:49
 msgid "Delete user"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:72
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:78
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:78
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:74
 msgid "Add"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:92
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:100
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:104
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:96
 msgid "Remove"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:97
-msgid "Not in any group."
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/UserDetailsSidebar.vue:109
+msgid "is not in any group."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/MagicLinkModal.vue:12
 msgid "Close"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:34
+msgid "Local file"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:37
+msgid "From Nextcloud"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:125
+msgid "Select an image"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:129
+msgid "Choose"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:17
+msgid "Uploading…"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:36
+msgid "Olvid discussion description"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:101
+msgid "No members yet."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/OlvidQrDisplay.vue:7
@@ -334,32 +399,4 @@ msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/OlvidQrDisplay.vue:44
 msgid "You can also copy the link and paste it in Olvid manually."
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:30
-msgid "Local file"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:33
-msgid "From Nextcloud"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:121
-msgid "Select an image"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/AvatarPicker.vue:125
-msgid "Choose"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:17
-msgid "Uploading…"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:40
-msgid "Description"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud/workspace/server/apps-extra/olvid/src/components/GroupDetailsSidebar.vue:105
-msgid "No members yet."
 msgstr ""
