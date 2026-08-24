@@ -2,21 +2,13 @@
 
 namespace OCA\Olvid\Migration;
 
-use OCA\Olvid\Db\OlvidDataMapper;
-use OCA\Olvid\Db\OlvidGroupDeletionMapper;
-use OCA\Olvid\Db\OlvidGroupKickedMapper;
-use OCA\Olvid\Db\OlvidGroupMapper;
-use OCA\Olvid\Db\OlvidRevocationMapper;
-use OCA\Olvid\Db\OlvidUserMapper;
 use OCA\Olvid\Utils\Context\OlvidContext;
-use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 
 class UninstallRepairStep implements IRepairStep {
 	public function __construct(
 		private readonly OlvidContext $context,
-		private readonly IDBConnection $db,
 	) {
 	}
 
@@ -31,6 +23,8 @@ class UninstallRepairStep implements IRepairStep {
 		foreach ($olvidUsers as $olvidUser) {
 			if ($olvidUser->getApiKey()) {
 				$this->context->olvidServer->revokeApiKeyNoFail($olvidUser->getApiKey());
+				$olvidUser->setApiKey(null);
+				$this->context->db->user->update($olvidUser);
 			}
 		}
 
@@ -40,6 +34,8 @@ class UninstallRepairStep implements IRepairStep {
 		foreach ($olvidGroups as $olvidGroup) {
 			if ($olvidGroup->getPushTopic()) {
 				$this->context->olvidServer->revokePushTopic($olvidGroup->getPushTopic());
+				$olvidGroup->setPushTopic(null);
+				$this->context->db->group->update($olvidGroup);
 			}
 		}
 
@@ -47,19 +43,10 @@ class UninstallRepairStep implements IRepairStep {
 		$output->info('Olvid: revoking global push topics');
 		if ($this->context->nextcloud->appManager->getGlobalPushTopic()) {
 			$this->context->olvidServer->revokePushTopic($this->context->nextcloud->appManager->getGlobalPushTopic());
+			$this->context->nextcloud->appManager->setGlobalPushTopic(null);
 		}
 
-		// delete olvid app config
-		$output->info('Olvid: deleting app config');
-		$this->context->nextcloud->appManager->deleteAppConfig();
-
-		// delete tables in database
-		$output->info('Olvid: dropping database tables');
-		$this->db->dropTable(OlvidDataMapper::TABLE_NAME);
-		$this->db->dropTable(OlvidGroupDeletionMapper::TABLE_NAME);
-		$this->db->dropTable(OlvidGroupKickedMapper::TABLE_NAME);
-		$this->db->dropTable(OlvidGroupMapper::TABLE_NAME);
-		$this->db->dropTable(OlvidRevocationMapper::TABLE_NAME);
-		$this->db->dropTable(OlvidUserMapper::TABLE_NAME);
+		// do not delete application config and database tables anymore, as it causes issues to re-run the same migrations
+		// in a re-installation scenario.
 	}
 }
