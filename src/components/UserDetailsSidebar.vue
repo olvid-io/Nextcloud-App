@@ -45,7 +45,7 @@
 				</NcButton>
 
 				<div class="user-sidebar__actions">
-					<NcButton
+					<NcButton v-if="!user.useOlvid"
 						class="user-sidebar__button"
 						:disabled="loadingMagicLink === user.id"
 						@click.stop="openMagicLink(user)">
