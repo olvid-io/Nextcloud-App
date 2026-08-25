@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Utils;
 
-use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\IAppConfig;
 
@@ -16,6 +15,7 @@ class OlvidAppConfigManager {
 
 	// App options
 	public const APP_CONFIG_EVERYONE_GROUP_IDS = 'olvid-everyone-group-ids';
+	public const APP_CONFIG_FEDERATION_ENABLED = 'olvid-federation-enabled';
 
 	// json web key
 	private const APP_CONFIG_JWK_KEY_ID = 'olvid-jwk-key-id';
@@ -35,7 +35,8 @@ class OlvidAppConfigManager {
 		self::APP_CONFIG_JWK_PUBLIC_KEY,
 		self::APP_CONFIG_JWK_PUBLIC_KEY_X,
 		self::APP_CONFIG_JWK_PUBLIC_KEY_Y,
-		self::APP_CONFIG_EVERYONE_GROUP_IDS
+		self::APP_CONFIG_EVERYONE_GROUP_IDS,
+		self::APP_CONFIG_FEDERATION_ENABLED,
 	];
 
 	public function __construct(
@@ -72,6 +73,12 @@ class OlvidAppConfigManager {
 	 */
 	public function getEveryoneGroupIds(): ?array {
 		return json_decode($this->appConfig->getValueString(Application::APP_ID, self::APP_CONFIG_EVERYONE_GROUP_IDS));
+	}
+
+	// federation: single global toggle gating both serving /federations/* to trusted
+	// servers and this instance's own background sync pulling from them
+	public function isFederationEnabled(): bool {
+		return $this->appConfig->getValueString(Application::APP_ID, self::APP_CONFIG_FEDERATION_ENABLED) === 'enable';
 	}
 
 	/*

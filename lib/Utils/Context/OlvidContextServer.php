@@ -33,7 +33,7 @@ class OlvidContextServer {
 		}
 		return $this->cachedApiKey;
 	}
-	private function getCachedServerUrl(): string {
+	private function getCachedServerUrl(): ?string {
 		if ($this->cachedServerUrl === null) {
 			$this->cachedServerUrl = $this->olvidAppConfig->getOlvidServerUrl();
 		}
@@ -103,7 +103,9 @@ class OlvidContextServer {
 
 	/**
 	 * @param String $pushTopic
-	 * @return void
+	 *
+	 * @return true
+	 *
 	 * @noinspection PhpUnused
 	 */
 	public function revokePushTopic(String $pushTopic): bool {
@@ -118,7 +120,7 @@ class OlvidContextServer {
 
 	/**
 	 * @param String $pushTopic
-	 * @return void
+	 *
 	 * @noinspection PhpUnused
 	 */
 	public function revokePushTopicNoFail(String $pushTopic): bool {

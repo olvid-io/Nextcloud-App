@@ -6,11 +6,23 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
+use OCP\IRequest;
 use OCP\IUser;
+use OCP\Lock\ILockingProvider;
+use Psr\Log\LoggerInterface;
 
 class GetKey extends AbstractAuthenticatedDeviceApiHandler {
+	public function __construct(
+		IRequest $request,
+		LoggerInterface $logger,
+		ILockingProvider $lockingProvider,
+		OlvidContext $context,
+	) {
+		parent::__construct($request, $logger, $lockingProvider, $context);
+	}
+
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// Parse request
 		try {
@@ -21,6 +33,14 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 		} catch (Exception $e) {
 			$this->logger->warning('getKey: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();
+		}
+
+		// a federated identity (`remoteUid@domain`) is served straight from the local cache;
+		// see FederatedIdentityResolver for the domain-matching disambiguation rule
+		$federatedMatch = $this->context->federation->resolveFederatedUserOrNull($otherNextcloudUserId);
+		if ($federatedMatch !== null) {
+			$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $federatedMatch->user->getSignedDetails();
+			return new JSONResponse($response);
 		}
 
 		// get user in database

@@ -134,6 +134,33 @@ class DebugApiController extends OCSController {
 			$response['data'][] = $entity->jsonSerialize();
 		}
 
+		$response['federatedServer'] = [];
+		foreach ($this->context->db->federatedServer->getAll() as $server) {
+			$response['federatedServer'][] = [
+				'remoteUrl' => $server->getRemoteUrl(),
+				'enabled' => $server->getEnabled(),
+				'olvidCapable' => $server->getOlvidCapable(),
+				'jwksFetchedAt' => $server->getJwksFetchedAt(),
+				'lastSyncTimestamp' => $server->getLastSyncTimestamp(),
+				'lastRevocationSyncTimestamp' => $server->getLastRevocationSyncTimestamp(),
+				'lastSyncAttempt' => $server->getLastSyncAttempt(),
+				'lastSyncStatus' => $server->getLastSyncStatus(),
+			];
+		}
+
+		$response['federatedUser'] = [];
+		foreach ($this->context->db->federatedServer->getAll() as $server) {
+			foreach ($this->context->db->federatedUser->getAllByServer($server->getId()) as $federatedUser) {
+				$response['federatedUser'][] = [
+					'server' => $server->getRemoteUrl(),
+					'federatedId' => $federatedUser->computeFederatedId($server->getDomain()),
+					'firstname' => $federatedUser->getFirstname(),
+					'lastname' => $federatedUser->getLastname(),
+					'registrationTimestamp' => $federatedUser->getRegistrationTimestamp(),
+				];
+			}
+		}
+
 		return new JSONResponse($response);
 	}
 

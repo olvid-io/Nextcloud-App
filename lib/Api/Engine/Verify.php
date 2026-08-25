@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\Engine;
 
 use Exception;
+use Firebase\JWT\JWT;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Models\JsonUserDetails;
+use OCA\Olvid\Utils\Context\OlvidContext;
+use OCA\Olvid\Utils\Context\OlvidFederation\FederatedKeyRegistry;
 use OCA\Olvid\Utils\Encoded;
+use OCP\ICacheFactory;
+use Psr\Log\LoggerInterface;
 
 /**
  * POST /olvid-rest/verify
@@ -17,13 +22,27 @@ use OCA\Olvid\Utils\Encoded;
  *
  * Request body: {"signature": "<ES256 JWT>"}
  *
- * The JWT was signed by this app's EC P-256 key (same key exposed at /.well-known/jwks).
- * Payload contains "id" (Nextcloud UID) and "identity" (base64 Olvid identity).
+ * The JWT is signed either by this server's own key, or by a trusted federated server's
+ * key (identifiable via the JWT's `id` claim: `remoteUid@domain`, see
+ * OlvidUser::computeFederatedJsonUserDetails()). Both cases are verified against the same
+ * aggregated key set FederatedKeyRegistry publishes at /.well-known/jwks — the JWT
+ * header's `kid` selects the right key automatically, no manual domain routing needed for
+ * the signature check itself. Domain routing only decides which cache (local `olvid_user`
+ * vs the federated cache) to check the decoded identity against afterwards.
  *
  * Response: Encoded list [STATUS_OK=0x00, boolean] on success,
  *           Encoded list [STATUS_GENERAL_ERROR=0xff] on parse/crypto error.
  */
 class Verify extends AbstractEngineApiHandler {
+	public function __construct(
+		ICacheFactory $cacheFactory,
+		LoggerInterface $logger,
+		OlvidContext $context,
+		private readonly FederatedKeyRegistry $federatedKeyRegistry,
+	) {
+		parent::__construct($cacheFactory, $logger, $context);
+	}
+
 	protected function handler(string $rawInput): BinaryResponse {
 		// Parse request
 		try {
@@ -37,9 +56,9 @@ class Verify extends AbstractEngineApiHandler {
 			return $this->generalError();
 		}
 
-		// Verify JWT and check identity
+		// Verify JWT (own key or a trusted federated server's key) and check identity
 		try {
-			$decodedPayload = $this->context->signatory->verify($signature);
+			$decodedPayload = JWT::decode($signature, $this->federatedKeyRegistry->getAggregatedKeySet());
 			$jsonUserDetails = JsonUserDetails::fromArray((array)$decodedPayload);
 			/** @noinspection PhpConditionAlreadyCheckedInspection */
 			if ($jsonUserDetails?->id === null || $jsonUserDetails?->base64Identity === null) {
@@ -47,6 +66,15 @@ class Verify extends AbstractEngineApiHandler {
 			}
 			$userId = $jsonUserDetails->id;
 			$base64Identity = $jsonUserDetails->base64Identity;
+
+			$federatedMatch = $this->context->federation->resolveFederatedUserOrNull($userId);
+			if ($federatedMatch !== null) {
+				$identityMatches = base64_encode($federatedMatch->user->getBytesIdentity()) === $base64Identity;
+				if (!$identityMatches) {
+					$this->logger->debug('verify: federated identity mismatch for ' . $userId);
+				}
+				return $this->binaryResult($identityMatches);
+			}
 
 			// Check identity matches stored value
 			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
@@ -61,22 +89,6 @@ class Verify extends AbstractEngineApiHandler {
 			$this->logger->warning('verify: error: ', ['exception' => $e]);
 			return $this->generalError();
 		}
-	}
-
-	/**
-	 * Convert a raw ECDSA signature (R||S, 64 bytes) to DER format for openssl_verify.
-	 */
-	private static function rawToDer(string $raw): string {
-		$r = ltrim(substr($raw, 0, 32), "\x00") ?: "\x00";
-		$s = ltrim(substr($raw, 32, 32), "\x00") ?: "\x00";
-		if (ord($r[0]) >= 0x80) {
-			$r = "\x00" . $r;
-		}
-		if (ord($s[0]) >= 0x80) {
-			$s = "\x00" . $s;
-		}
-		$seq = "\x02" . chr(strlen($r)) . $r . "\x02" . chr(strlen($s)) . $s;
-		return "\x30" . chr(strlen($seq)) . $seq;
 	}
 
 	private function binaryResult(bool $value): BinaryResponse {

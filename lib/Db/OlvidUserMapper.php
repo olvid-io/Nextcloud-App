@@ -89,7 +89,7 @@ class OlvidUserMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder()->select('*')->from($this->getTableName());
 		$qb = $qb->where($qb->expr()->isNotNull('bytes_identity'));
 		foreach ($filters as $filter) {
-			$qb = $qb->andWhere($qb->expr()->like('full_search_field', $qb->createNamedParameter("%" . strtolower($filter) . "%", Types::STRING)));
+			$qb = $qb->andWhere($qb->expr()->like('full_search_field', $qb->createNamedParameter('%' . strtolower($filter) . '%', Types::STRING)));
 		}
 		return $this->findEntities($qb);
 	}

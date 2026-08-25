@@ -51,6 +51,7 @@
 	</repair-steps>
 	<background-jobs>
 		<job>OCA\Olvid\Cron\SyncCronTask</job>
+		<job>OCA\Olvid\Cron\OlvidFederationSyncTask</job>
 	</background-jobs>
 	<settings>
 		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>

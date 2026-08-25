@@ -18,7 +18,7 @@ use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\RevocationTest;
 use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\ResponseDefinitions;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,7 +50,7 @@ class DirectoryApiController extends OCSController {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
+		private readonly OlvidContext $context,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly Me $meHandler,
 		private readonly PutKey $putKeyHandler,
@@ -152,7 +152,7 @@ class DirectoryApiController extends OCSController {
 	}
 
 	/**
-	 * JWKS endpoint — exposes the server's EC public key for client signature verification
+	 * JWKS endpoint — exposes the server's trusted public keys for client signature verification
 	 *
 	 * @return DataResponse<Http::STATUS_OK, OlvidDirectoryJwks, array{}>
 	 * @noinspection PhpUnused
@@ -162,20 +162,22 @@ class DirectoryApiController extends OCSController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/.well-known/jwks')]
 	public function jwks(): Response {
-		$jwks = [
-			'keys' => [
-				[
-					'kty' => 'EC',
-					'crv' => 'P-256',
-					'x' => $this->olvidAppConfig->getJwkKeyPublicKeyX(),
-					'y' => $this->olvidAppConfig->getJwkKeyPublicKeyY(),
-					'use' => 'sig',
-					'kid' => $this->olvidAppConfig->getJwkKeyId(),
-					'alg' => 'ES256'
-				]
-			]
-		];
-		return new JSONResponse($jwks);
+		return new JSONResponse($this->context->federation->keyRegistry->getAggregatedJwks());
+	}
+
+	/**
+	 * Own JWKS endpoint — exposes the server's own public key only, used by other trusted servers to expose
+	 * as a trusted key.
+	 *
+	 * @return DataResponse<Http::STATUS_OK, OlvidDirectoryJwks, array{}>
+	 * @noinspection PhpUnused
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/.well-known/owned-jwks')]
+	public function ownJwks(): Response {
+		return new JSONResponse($this->context->federation->keyRegistry->getOwnJwks());
 	}
 
 	// ── Engine authentication API (binary protocol — excluded from OpenAPI spec) ──

@@ -105,4 +105,26 @@ class Constants {
 	public const LIST_USERS_REQUEST_TIMESTAMP = 'timestamp';
 	public const LIST_USERS_RESPONSE_USERS = 'users';
 	public const LIST_USERS_RESPONSE_TIMESTAMP = 'timestamp';
+
+	/*
+	 * Federation API (/federations/*): server-to-server, not device-facing
+	 */
+	public const FEDERATION_REQUEST_CALLER_URL = 'callerUrl';
+	public const FEDERATION_REQUEST_SHARED_SECRET = 'sharedSecret';
+	public const FEDERATION_REQUEST_TIMESTAMP = 'timestamp';
+	public const FEDERATION_RESPONSE_TIMESTAMP = 'timestamp';
+	public const FEDERATION_RESPONSE_ERROR = 'error';
+
+	// /federations/users
+	public const FEDERATION_USERS_RESPONSE_USERS = 'users';
+	public const FEDERATION_USER_SIGNED_DETAILS = 'signedDetails';
+	public const FEDERATION_USER_REGISTRATION_TIMESTAMP = 'registrationTimestamp';
+
+	// /federations/revocations
+	public const FEDERATION_REVOCATIONS_RESPONSE_REVOCATIONS = 'revocations';
+	public const FEDERATION_REVOCATION_REMOTE_USER_ID = 'remoteUserId';
+	public const FEDERATION_REVOCATION_BYTES_IDENTITY = 'bytesIdentity';
+	public const FEDERATION_REVOCATION_TYPE = 'revocationType';
+	public const FEDERATION_REVOCATION_SIGNED_REVOCATION = 'signedRevocation';
+	public const FEDERATION_REVOCATION_TIMESTAMP = 'timestamp';
 }

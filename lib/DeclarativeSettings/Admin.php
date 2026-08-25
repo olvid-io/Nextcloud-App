@@ -59,6 +59,15 @@ class Admin implements IDeclarativeSettingsForm {
 					}, $this->groupManager->search('')),
 					'default' => []
 				],
+				// Find a better way to handle until issue fix ... or add it to Olvid settings in Olvid App
+				[
+					'id' => OlvidAppConfigManager::APP_CONFIG_FEDERATION_ENABLED,
+					'title' => $this->l->t('Enable Olvid directory federation'),
+					'description' => $this->l->t('Share this directory with, and pull directories from, Nextcloud-trusted servers that also run Olvid (Settings > Sharing > Federated Cloud Sharing manages the trusted server list itself).'),
+					'type' => DeclarativeSettingsTypes::SELECT,
+					'options' => ['enable', 'disable'],
+					'default' => 'disable',
+				],
 			]
 		];
 	}

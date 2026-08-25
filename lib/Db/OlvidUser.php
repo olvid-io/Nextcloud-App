@@ -135,6 +135,17 @@ class OlvidUser extends Entity {
 		return $details;
 	}
 
+	/**
+	 * Same as computeJsonUserDetails(), but with `id` rewritten to `userId@originDomain`.
+	 * This is the only place a federated identity's origin server is encoded: the signed
+	 * JWT's `id` field itself, so the wire format seen by Olvid clients never changes.
+	 */
+	public function computeFederatedJsonUserDetails(string $originDomain): JsonUserDetails {
+		$details = $this->computeJsonUserDetails();
+		$details->id = $this->getUserId() . '@' . $originDomain;
+		return $details;
+	}
+
 	public function jsonSerialize(): array {
 		return [
 			'userId' => $this->getUserId(),

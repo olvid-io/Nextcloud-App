@@ -3,6 +3,9 @@
 namespace OCA\Olvid\Utils\Context;
 
 use OCA\Olvid\Db\OlvidDataMapper;
+use OCA\Olvid\Db\OlvidFederatedRevocationMapper;
+use OCA\Olvid\Db\OlvidFederatedServerMapper;
+use OCA\Olvid\Db\OlvidFederatedUserMapper;
 use OCA\Olvid\Db\OlvidGroupDeletionMapper;
 use OCA\Olvid\Db\OlvidGroupKickedMapper;
 use OCA\Olvid\Db\OlvidGroupMapper;
@@ -17,6 +20,9 @@ class OlvidContextDatabase {
 		public readonly OlvidGroupKickedMapper $groupKicked,
 		public readonly OlvidGroupDeletionMapper $groupDeletion,
 		public readonly OlvidDataMapper $data,
+		public readonly OlvidFederatedServerMapper $federatedServer,
+		public readonly OlvidFederatedUserMapper $federatedUser,
+		public readonly OlvidFederatedRevocationMapper $federatedRevocation,
 	) {
 	}
 
