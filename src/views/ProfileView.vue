@@ -106,14 +106,6 @@
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
 						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
-						<span class="profile-view__enrolled-badge">
-							<img :src="olvidEnabledUrl"
-								width="16"
-								height="16"
-								alt=""
-								aria-hidden="true">
-							{{ t('olvid', 'Enrolled') }}
-						</span>
 
 						<p class="profile-view__desc">
 							{{ t('olvid', 'Change here how you appear in Olvid application.') }}
@@ -306,9 +298,6 @@ export default {
 	computed: {
 		appLogoUrl() {
 			return generateFilePath('olvid', 'img', 'olvid.svg')
-		},
-		olvidEnabledUrl() {
-			return generateFilePath('olvid', 'img', 'olvid-enabled.svg')
 		},
 		olvidDisplayNameFromForm() {
 			const name = `${this.form.firstname} ${this.form.lastname}`.trim()
@@ -581,15 +570,6 @@ export default {
 		align-items: center;
 		gap: 12px;
 		flex-wrap: wrap;
-	}
-
-	&__enrolled-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		color: var(--color-success);
-		font-weight: 600;
-		font-size: 0.9rem;
 	}
 
 	&__form {

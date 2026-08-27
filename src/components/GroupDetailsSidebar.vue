@@ -77,7 +77,7 @@
 							<template #icon>
 								<OlvidAvatar :user="user.id" :display-name="user.displayName" :use-olvid="user.useOlvid" />
 							</template>
-							<template #subname>
+							<template v-if="user.id !== user.displayName" #subname>
 								{{ user.id }}
 							</template>
 							<template #extra-actions>
@@ -99,7 +99,7 @@
 						<template #icon>
 							<OlvidAvatar :user="member.id" :display-name="member.displayName" :use-olvid="member.useOlvid" />
 						</template>
-						<template #subname>
+						<template v-if="member.id !== member.displayName" #subname>
 							{{ member.id }}
 						</template>
 						<template #extra-actions>

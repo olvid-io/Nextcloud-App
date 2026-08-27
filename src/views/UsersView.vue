@@ -32,7 +32,7 @@
 							:is-inactive="user.isInactive" />
 					</template>
 
-					<template #subname>
+					<template v-if="user.id !== user.displayName" #subname>
 						{{ user.id }}
 					</template>
 

@@ -95,7 +95,7 @@
 							<template #icon>
 								<OlvidAvatar :display-name="group.displayName" :is-no-user="true" :use-olvid="group.enabled" />
 							</template>
-							<template #subname>
+							<template v-if="group.id !== group.displayName" #subname>
 								{{ group.id }}
 							</template>
 							<template #extra-actions>
@@ -121,7 +121,7 @@
 								:use-olvid="group.enabled"
 								:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 						</template>
-						<template #subname>
+						<template v-if="group.id !== group.displayName" #subname>
 							{{ group.id }}
 						</template>
 						<template #extra-actions>

@@ -58,7 +58,6 @@ OC.L10N.register(
     "View my profile": "Afficher mon profil",
     "Olvid Profile": "Profil Olvid",
     "Change here how you appear in Olvid application.": "Modifiez ici comment vous apparaissez dans l’application Olvid.",
-    "Enrolled": "Inscrit(e)",
     "Profile saved.": "Profil enregistré.",
     "Saving…": "Enregistrement…",
     "Save": "Enregistrer",
