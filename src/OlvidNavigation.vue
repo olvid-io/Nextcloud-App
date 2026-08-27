@@ -57,6 +57,7 @@
 		<OlvidAppSettings
 			data-cy-olvid-navigation-settings
 			:open.sync="settingsOpened"
+			:is-admin="isAdmin"
 			@close="settingsOpened = false" />
 	</NcAppNavigation>
 </template>

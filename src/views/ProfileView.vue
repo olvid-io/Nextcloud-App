@@ -106,6 +106,7 @@
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
 						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
+						<p class="profile-view__desc">{{ t('olvid', 'Change here how you appear in Olvid application.') }}</p>
 						<span class="profile-view__enrolled-badge">
 							<img :src="olvidEnabledUrl"
 								width="16"
@@ -149,37 +150,82 @@
 							@close="unlinkModalOpen = false"
 							@unlinked="onIdentityUnlinked" />
 					</div>
-				</section>
 
-				<!-- Section: groups ────────────────────────────────────────── -->
-				<section class="profile-view__section">
-					<h2>{{ t('olvid', 'My Groups') }}</h2>
+					<div class="profile-view__groups">
+						<!-- Section: groups ────────────────────────────────────────── -->
+						<NcLoadingIcon v-if="groupsLoading" :size="32" />
 
-					<NcLoadingIcon v-if="groupsLoading" :size="32" />
+						<NcEmptyContent
+							v-else-if="!ownManagedGroups.length && !openGroups.length"
+							:name="t('olvid', 'No groups')"
+							:description="t('olvid', 'You are not a member of any group.')" />
 
-					<NcEmptyContent
-						v-else-if="!groups.length"
-						:name="t('olvid', 'No groups')"
-						:description="t('olvid', 'You are not a member of any group.')" />
+						<div v-if="openGroups.length">
+							<h4>{{ t('olvid', 'Open groups') }}</h4>
+							<p class="profile-view__desc">{{ t('olvid', 'Groups anyone can join.') }}</p>
+							<ul class="profile-view__groups-list">
+								<NcListItem
+									v-for="openGroup in openGroups"
+									:key="openGroup.id"
+									:name="openGroup.displayName"
+									@click="isAdmin && $emit('open-group-sidebar', openGroup)">
+									<template #icon>
+										<OlvidAvatar
+											:display-name="openGroup.displayName"
+											:is-no-user="true"
+											:use-olvid="openGroup.enabled"
+											:url="openGroup.photoUid ? buildGroupAvatarUrl(openGroup) : undefined" />
+									</template>
 
-					<ul v-else class="profile-view__groups-list">
-						<NcListItem
-							v-for="group in groups"
-							:key="group.id"
-							:name="group.displayName"
-							@click="isAdmin && $emit('open-group-sidebar', group)">
-							<template #icon>
-								<OlvidAvatar
-									:display-name="group.displayName"
-									:is-no-user="true"
-									:use-olvid="group.enabled"
-									:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
-							</template>
-							<template #subname>
-								{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
-							</template>
-						</NcListItem>
-					</ul>
+									<template #extra-actions>
+										<NcButton
+											v-if="!ownOpenGroupIds.includes(openGroup.id)"
+											size="small"
+											variant="secondarye"
+											@click="joinOpenGroup(openGroup)">
+											<template #icon>
+												<IconAccountMultiplePlus :size="20" />
+											</template>
+											{{ t('olvid', 'Join Group') }}
+										</NcButton>
+										<NcButton
+											v-if="ownOpenGroupIds.includes(openGroup.id)"
+											size="small"
+											variant="error"
+											@click="leaveOpenGroup(openGroup)">
+											<template #icon>
+												<IconExitToApp :size="20" />
+											</template>
+											{{ t('olvid', 'Leave Group') }}
+										</NcButton>
+									</template>
+								</NcListItem>
+							</ul>
+						</div>
+
+						<div v-if="ownManagedGroups.length">
+							<h4>{{ t('olvid', 'Managed Groups') }}</h4>
+							<p class="profile-view__desc">{{ t('olvid', 'The groups you are member of, managed by administrators') }}</p>
+							<ul class="profile-view__groups-list">
+								<NcListItem
+									v-for="group in ownManagedGroups"
+									:key="group.id"
+									:name="group.displayName"
+									@click="isAdmin && $emit('open-group-sidebar', group)">
+									<template #icon>
+										<OlvidAvatar
+											:display-name="group.displayName"
+											:is-no-user="true"
+											:use-olvid="group.enabled"
+											:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
+									</template>
+									<template #subname>
+										{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
+									</template>
+								</NcListItem>
+							</ul>
+						</div>
+					</div>
 				</section>
 			</template>
 		</div>
@@ -199,12 +245,14 @@ import OlvidAvatar from '../components/OlvidAvatar.vue'
 import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
 import InvalidConfigurationAlertModal from '../components/InvalidConfigurationAlertModal.vue'
+import IconAccountMultiplePlus from 'vue-material-design-icons/AccountMultiplePlusOutline.vue'
+import IconExitToApp from 'vue-material-design-icons/ExitToApp.vue'
 
 export default {
 	name: 'ProfileView',
-	components: { InvalidConfigurationAlertModal, NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
+	components: { IconAccountMultiplePlus, IconExitToApp, InvalidConfigurationAlertModal, NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
 
-	emits: ['open-group-sidebar'],
+	emits: ['open-group-sidebar', 'updated'],
 
 	data() {
 		return {
@@ -233,7 +281,9 @@ export default {
 			unlinkModalOpen: false,
 
 			// registered step — groups
-			groups: [],
+			ownManagedGroups: [], // all the managed (non-open) groups user is member of (as OlvidGroupFull)
+			openGroups: [], // all open groups as OlvidGroup
+			ownOpenGroupIds: [], // open group ids user is member of
 			groupsLoading: false,
 			isAdmin: false,
 		}
@@ -375,12 +425,41 @@ export default {
 		async fetchGroups() {
 			this.groupsLoading = true
 			try {
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/me/groups'))
-				this.groups = res.data.groups ?? []
+				const groupsPromise = axios.get(generateOcsUrl('/apps/olvid/app/me/groups'))
+				const openGroupsPromise = axios.get(generateOcsUrl('/apps/olvid/app/groups/open'))
+
+				const ownGroups = (await groupsPromise).data.groups ?? []
+				const ownGroupIds = ownGroups.map(g => g.id)
+
+				// list managed group as it is a constant list (you cannot edit it there)
+				this.ownManagedGroups = ownGroups.filter(g => !g.isOpen)
+				// list open groups and store if you member or not of those groups in ownOpenGroupIds
+				this.openGroups = (await openGroupsPromise).data.groups ?? []
+				this.ownOpenGroupIds = this.openGroups.filter(g => ownGroupIds.includes(g.id)).map(g => g.id)
 			} catch (e) {
 				console.error('Could not load groups', e)
 			} finally {
 				this.groupsLoading = false
+			}
+		},
+
+		async joinOpenGroup(group) {
+			try {
+				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/open/${encodeURIComponent(group.id)}`))
+				this.ownOpenGroupIds.push(group.id)
+				this.$emit('updated', { id: group.id, ids: this.ownOpenGroupIds })
+			} catch (e) {
+				console.error('addMember failed', e)
+			}
+		},
+
+		async leaveOpenGroup(group) {
+			try {
+				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/open/${encodeURIComponent(group.id)}`))
+				this.ownOpenGroupIds = this.ownOpenGroupIds.filter(id => id !== group.id)
+				this.$emit('updated', { id: group.id, ids: this.ownOpenGroupIds })
+			} catch (e) {
+				console.error('removeMember failed', e)
 			}
 		},
 
@@ -499,7 +578,7 @@ export default {
 		gap: 8px;
 	}
 
-	&__revoke {
+	&__revoke, &__groups {
 		margin-top: 8px;
 		padding-top: 16px;
 		border-top: 1px solid var(--color-border);
