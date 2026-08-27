@@ -46,7 +46,6 @@
 							{{ t('olvid', 'Magic Link') }}
 						</NcButton>
 						<NcButton
-							icon="pencil-outline"
 							size="small"
 							variant="primary"
 							@click="$emit('open-user-sidebar', user)">

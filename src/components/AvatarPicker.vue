@@ -11,13 +11,10 @@
 				:alt="displayName" />
 			<OlvidAvatar
 				v-else
+				:use-olvid="false"
 				:display-name="displayName"
 				:is-no-user="true"
 				:size="size" />
-		</div>
-
-		<div style="display: flex; justify-content: center;">
-			<div>{{ displayName }}</div>
 		</div>
 
 		<!-- Hidden <input type="file"> — triggered programmatically by the Local file button -->
@@ -30,11 +27,25 @@
 
 		<!-- Picker buttons -->
 		<div class="avatar-picker__actions">
-			<NcButton size="small" @click="$refs.fileInput.click()">
-				{{ t('olvid', 'Local file') }}
+			<NcButton
+				@click="$refs.fileInput.click()">
+				<template #icon>
+					<IconTrayArrowUp :size="20" />
+				</template>
 			</NcButton>
-			<NcButton size="small" @click="openNextcloudPicker">
-				{{ t('olvid', 'From Nextcloud') }}
+			<NcButton
+				@click="openNextcloudPicker">
+				<template #icon>
+					<IconFolder :size="20" />
+				</template>
+			</NcButton>
+			<NcButton
+				v-if="currentUrl"
+				variant="error"
+				@click="unsetImage">
+				<template #icon>
+					<IconCancel :size="20" />
+				</template>
 			</NcButton>
 		</div>
 	</div>
@@ -48,13 +59,16 @@ import '@nextcloud/dialogs/style.css'
 import { generateRemoteUrl } from '@nextcloud/router'
 import OlvidAvatar from './OlvidAvatar.vue'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import IconTrayArrowUp from 'vue-material-design-icons/TrayArrowUp.vue'
+import IconFolder from 'vue-material-design-icons/Folder.vue'
+import IconCancel from 'vue-material-design-icons/Cancel.vue'
 
 // Maximum side length of the output square in pixels
 const MAX_PIXEL_SIZE = 1080
 
 export default {
 	name: 'AvatarPicker',
-	components: { OlvidAvatar, NcButton },
+	components: { IconTrayArrowUp, IconFolder, IconCancel, OlvidAvatar, NcButton },
 
 	props: {
 		/**
@@ -202,6 +216,11 @@ export default {
 
 			return canvas.toDataURL('image/jpeg', 0.75)
 		},
+
+		unsetImage() {
+			this.pendingDataUrl = null
+			this.$emit('change', null)
+		}
 	},
 }
 </script>

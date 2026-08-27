@@ -3,7 +3,7 @@
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>olvid</id>
 	<name>Olvid</name>
-	<version>0.0.2</version>
+	<version>0.0.3</version>
 	<summary>Use Nextcloud as an Olvid directory.</summary>
 	<description>Use your Nextcloud instance as an Olvid directory.
 
@@ -23,7 +23,7 @@
 	<author mail="bot@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<website>https://olvid.io</website>
 	<bugs>https://github.com/olvid-io/Nextcloud-App/issues</bugs>
-        <repository type="git">https://github.com/olvid-io/Nextcloud-App</repository>
+        <repository >https://github.com/olvid-io/Nextcloud-App</repository>
 	<documentation>
 	  <user>https://github.com/olvid-io/Nextcloud-App</user>
 	  <developer>https://github.com/olvid-io/Nextcloud-App</developer>

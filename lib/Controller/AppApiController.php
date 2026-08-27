@@ -16,7 +16,6 @@ use OCA\Olvid\Db\OlvidGroup;
 use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\RandomUtil;
-use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -385,12 +384,12 @@ class AppApiController extends OCSController {
 	 * Uploads or replaces the avatar image for a group
 	 *
 	 * @param string $groupId Group ID (URL path)
-	 * @param string $photoData Base64-encoded image data (PNG or JPEG, JSON body)
+	 * @param ?string $photoData Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
 	 * @return DataResponse<Http::STATUS_OK, array{photoUid: string}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
-	public function groupsAvatarPut(string $groupId, string $photoData): DataResponse {
+	public function groupsAvatarPut(string $groupId, ?string $photoData): DataResponse {
 		return $this->avatarUpload->handle($groupId, $photoData);
 	}
 

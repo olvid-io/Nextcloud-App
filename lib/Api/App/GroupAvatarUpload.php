@@ -41,45 +41,58 @@ class GroupAvatarUpload {
 	) {
 	}
 
-	public function handle(string $groupId, $photoData): DataResponse {
+	public function handle(string $groupId, ?string $photoData): DataResponse {
 		// Validate the Nextcloud group exists
 		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
 		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		// Strip the "data:image/<type>;base64," prefix and decode
-		$base64 = preg_replace('/^data:image\/\w+;base64,/', '', $photoData);
-		$jpegBytes = base64_decode($base64, true);
-		if ($jpegBytes === false || strlen($jpegBytes) === 0) {
-			return new DataResponse(['error' => 'invalid image data'], Http::STATUS_BAD_REQUEST);
+		// unset current photo
+		if ($photoData === null) {
+			// set photo uid to null
+			$photoUid = null;
 		}
+		// handle a new picture
+		else {
+			// Strip the "data:image/<type>;base64," prefix and decode
+			$base64 = preg_replace('/^data:image\/\w+;base64,/', '', $photoData);
+			$jpegBytes = base64_decode($base64, true);
+			if ($jpegBytes === false || strlen($jpegBytes) === 0) {
+				return new DataResponse(['error' => 'invalid image data'], Http::STATUS_BAD_REQUEST);
+			}
 
-		// Generate a new UID + AuthEncAES256ThenSHA256 key
-		// A new UID on every upload changes the ?v= cache-buster URL.
-		$photoUid = RandomUtil::random_bytes(Constants::UID_SIZE);
-		$macKey = RandomUtil::random_bytes(32);
-		$encKey = RandomUtil::random_bytes(32);
-		if ($photoUid === null || $macKey === null || $encKey === null) {
-			$this->logger->error('GroupAvatarUpload: failed to generate random bytes');
-			return new DataResponse(['error' => 'server crypto error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			// Generate a new UID + AuthEncAES256ThenSHA256 key
+			// A new UID on every upload changes the ?v= cache-buster URL.
+			$photoUid = RandomUtil::random_bytes(Constants::UID_SIZE);
+			$macKey = RandomUtil::random_bytes(32);
+			$encKey = RandomUtil::random_bytes(32);
+			if ($photoUid === null || $macKey === null || $encKey === null) {
+				$this->logger->error('GroupAvatarUpload: failed to generate random bytes');
+				return new DataResponse(['error' => 'server crypto error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+
+			// Encode the key as an Olvid AuthEncAES256ThenSHA256 key (type 0x90) so the
+			// getData endpoint can serve this image encrypted to Olvid devices in the future.
+			$encodedKey = Encoded::encodeSymmetricKey(0x02, 0x00, [
+				'mackey' => $macKey,
+				'enckey' => $encKey,
+			]);
+
+			try {
+				// Insert the image into olvid_data
+				$olvidData = new OlvidData();
+				$olvidData->setBytesDataUid($photoUid);
+				$olvidData->setBytesEncodedKey($encodedKey);
+				$olvidData->setBytesData($jpegBytes);
+				$this->context->db->data->insert($olvidData);
+			} catch (Exception $e) {
+				$this->logger->error('GroupAvatarUpload: DB error: cannot create OlvidData', ['exception' => $e]);
+				return new DataResponse(['error' => 'database error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
 		}
-
-		// Encode the key as an Olvid AuthEncAES256ThenSHA256 key (type 0x90) so the
-		// getData endpoint can serve this image encrypted to Olvid devices in the future.
-		$encodedKey = Encoded::encodeSymmetricKey(0x02, 0x00, [
-			'mackey' => $macKey,
-			'enckey' => $encKey,
-		]);
 
 		try {
-			// Insert the image into olvid_data
-			$olvidData = new OlvidData();
-			$olvidData->setBytesDataUid($photoUid);
-			$olvidData->setBytesEncodedKey($encodedKey);
-			$olvidData->setBytesData($jpegBytes);
-			$this->context->db->data->insert($olvidData);
-
 			// Get-or-create OlvidGroup and update group_photo_uid
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 			// create a new minimal olvid group entity, might be updated properly on group updates
@@ -90,6 +103,11 @@ class GroupAvatarUpload {
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 				$this->context->db->group->insert($olvidGroup);
 			} else {
+				// delete previous data if necessary
+				if ($olvidGroup->getBytesGroupPhotoUid()) {
+					$previousOlvidData = $this->context->db->data->getByUidOrNull($olvidGroup->getBytesGroupPhotoUid());
+					$this->context->db->data->delete($previousOlvidData);
+				}
 				$olvidGroup->setBytesGroupPhotoUid($photoUid);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 				$this->context->db->group->update($olvidGroup);
@@ -116,6 +134,6 @@ class GroupAvatarUpload {
 		}
 
 		// Return the new photo UID so the frontend can update the ?v= cache-buster
-		return new DataResponse(['photoUid' => base64_encode($photoUid)]);
+		return new DataResponse(['photoUid' => $photoUid ? base64_encode($photoUid) : null]);
 	}
 }

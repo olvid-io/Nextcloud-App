@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Utils;
 
-use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\IAppConfig;
 

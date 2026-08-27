@@ -1,22 +1,29 @@
 <template>
 	<NcAppSidebar
 		:name="group.displayName"
-		:subname="group.id"
+		:subname="group.id !== group.displayName ? group.id : ''"
 		@close="$emit('close')">
 		<!-- Details tab -->
 		<NcAppSidebarTab id="details" :name="t('olvid', 'Details')" :order="0">
+			<template #icon>
+				<IconCardAccountDetails :size="20" />
+			</template>
+
 			<div class="group-sidebar__fields">
 				<!-- Group avatar picker: uploads immediately on selection -->
 				<div class="group-sidebar__avatar">
 					<AvatarPicker
 						:current-url="currentAvatarUrl"
 						:display-name="group.displayName"
-						:size="96"
+						:size="192"
 						@change="handleAvatarChange" />
 					<p v-if="avatarUploading" class="group-sidebar__hint">
-						{{ t('olvid', 'Uploading…') }}
+						{{ t('olvid', 'Update in progress…') }}
 					</p>
 					<p v-if="avatarError" class="group-sidebar__error">{{ avatarError }}</p>
+					<h3 class="group-sidebar__discussion-name">
+						{{ form.discussionName }}
+					</h3>
 				</div>
 
 				<NcCheckboxRadioSwitch
@@ -50,6 +57,10 @@
 
 		<!-- Members tab -->
 		<NcAppSidebarTab id="members" :name="t('olvid', 'Members ({n})', { n: members.length })" :order="1">
+			<template #icon>
+				<IconAccountGroup :size="20" />
+			</template>
+
 			<div class="group-sidebar__members">
 				<!-- Add member search -->
 				<div class="group-sidebar__search">
@@ -117,10 +128,12 @@ import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import AvatarPicker from './AvatarPicker.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
+import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
+import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
 
 export default {
 	name: 'GroupDetailsSidebar',
-	components: { AvatarPicker, OlvidAvatar, NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
+	components: { IconCardAccountDetails, IconAccountGroup, AvatarPicker, OlvidAvatar, NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
 
 	props: {
 		group: {
@@ -282,6 +295,10 @@ export default {
 		padding-bottom: 4px;
 		border-bottom: 1px solid var(--color-border);
 		margin-bottom: 4px;
+	}
+
+	&__discussion-name {
+		margin: 0;
 	}
 
 	&__hint {

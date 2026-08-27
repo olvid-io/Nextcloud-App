@@ -106,7 +106,6 @@
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
 						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
-						<p class="profile-view__desc">{{ t('olvid', 'Change here how you appear in Olvid application.') }}</p>
 						<span class="profile-view__enrolled-badge">
 							<img :src="olvidEnabledUrl"
 								width="16"
@@ -115,6 +114,14 @@
 								aria-hidden="true">
 							{{ t('olvid', 'Enrolled') }}
 						</span>
+
+						<p class="profile-view__desc">
+							{{ t('olvid', 'Change here how you appear in Olvid application.') }}
+						</p>
+
+						<h3 style="margin: 0; display: flex; justify-content: center;">
+							{{ olvidDisplayNameFromForm }}
+						</h3>
 					</div>
 
 					<div class="profile-view__form">
@@ -162,7 +169,9 @@
 
 						<div v-if="openGroups.length">
 							<h4>{{ t('olvid', 'Open groups') }}</h4>
-							<p class="profile-view__desc">{{ t('olvid', 'Groups anyone can join.') }}</p>
+							<p class="profile-view__desc">
+								{{ t('olvid', 'Groups anyone can join.') }}
+							</p>
 							<ul class="profile-view__groups-list">
 								<NcListItem
 									v-for="openGroup in openGroups"
@@ -175,6 +184,9 @@
 											:is-no-user="true"
 											:use-olvid="openGroup.enabled"
 											:url="openGroup.photoUid ? buildGroupAvatarUrl(openGroup) : undefined" />
+									</template>
+									<template #subname>
+										{{ openGroup.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
 									</template>
 
 									<template #extra-actions>
@@ -205,7 +217,9 @@
 
 						<div v-if="ownManagedGroups.length">
 							<h4>{{ t('olvid', 'Managed Groups') }}</h4>
-							<p class="profile-view__desc">{{ t('olvid', 'The groups you are member of, managed by administrators') }}</p>
+							<p class="profile-view__desc">
+								{{ t('olvid', 'The groups you are member of, managed by administrators') }}
+							</p>
 							<ul class="profile-view__groups-list">
 								<NcListItem
 									v-for="group in ownManagedGroups"
@@ -296,6 +310,12 @@ export default {
 		olvidEnabledUrl() {
 			return generateFilePath('olvid', 'img', 'olvid-enabled.svg')
 		},
+		olvidDisplayNameFromForm() {
+			const name = `${this.form.firstname} ${this.form.lastname}`.trim()
+			const role = [this.form.position, this.form.company].filter(Boolean).join(' @ ')
+			return role ? `${name} (${role})` : name
+		},
+
 	},
 
 	watch: {

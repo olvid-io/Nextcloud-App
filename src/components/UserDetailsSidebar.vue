@@ -1,21 +1,26 @@
 <template>
 	<NcAppSidebar
 		:name="user.displayName"
+		:subname="user.id !== user.displayName ? user.id : ''"
 		@close="$emit('close')">
 		<!-- Profile tab -->
 		<NcAppSidebarTab id="profile" :name="t('olvid', 'Olvid Profile')" :order="0">
+			<template #icon>
+				<IconCardAccountDetails :size="20" />
+			</template>
+
 			<div class="user-sidebar__fields">
 				<div style="display: flex; justify-content: center;">
 					<OlvidAvatar :user="user.id"
 						:display-name="user.displayName"
 						:use-olvid="user.useOlvid"
 						:is-inactive="user.isInactive"
-						:size="64" />
+						:size="192" />
 				</div>
 
-				<div style="display: flex; justify-content: center;">
-					<div>{{ user.displayName }}</div>
-				</div>
+				<h3 style="margin: 0; display: flex; justify-content: center;">
+					{{ olvidDisplayNameFromForm }}
+				</h3>
 
 				<hr class="user-sidebar__separator">
 
@@ -70,6 +75,10 @@
 
 		<!-- Groups tab -->
 		<NcAppSidebarTab id="groups" :name="t('olvid', 'Groups ({n})', { n: groups.length })" :order="1">
+			<template #icon>
+				<IconAccountGroup :size="20" />
+			</template>
+
 			<div class="user-sidebar__members">
 				<!-- Add to group search -->
 				<div class="user-sidebar__search">
@@ -164,10 +173,12 @@ import OlvidAvatar from './OlvidAvatar.vue'
 import MagicLinkModal from './MagicLinkModal.vue'
 import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
 import DeleteUserModal from './DeleteUserModal.vue'
+import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
+import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
 
 export default {
 	name: 'UserDetailsSidebar',
-	components: { MagicLinkModal, UnlinkIdentityModal, DeleteUserModal, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, OlvidAvatar },
+	components: { IconCardAccountDetails, IconAccountGroup, MagicLinkModal, UnlinkIdentityModal, DeleteUserModal, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, OlvidAvatar },
 
 	props: {
 		user: {
@@ -201,6 +212,14 @@ export default {
 			loadingMagicLink: null,
 			showUnlinkConfirm: false,
 		}
+	},
+
+	computed: {
+		olvidDisplayNameFromForm() {
+			const name = `${this.form.firstname} ${this.form.lastname}`.trim()
+			const role = [this.form.position, this.form.company].filter(Boolean).join(' @ ')
+			return role ? `${name} (${role})` : name
+		},
 	},
 
 	watch: {
