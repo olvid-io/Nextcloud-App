@@ -59,6 +59,16 @@ class Admin implements IDeclarativeSettingsForm {
 					}, $this->groupManager->search('')),
 					'default' => []
 				],
+				[
+					'id' => OlvidAppConfigManager::APP_CONFIG_OPEN_GROUP_IDS,
+					'title' => $this->l->t('Open groups'),
+					'description' => $this->l->t('A list of groups users can choose to join or leave themselves'),
+					'type' => DeclarativeSettingsTypes::MULTI_SELECT,
+					'options' => array_map(function ($ng) {
+						return $ng->getGID();
+					}, $this->groupManager->search('')),
+					'default' => []
+				],
 			]
 		];
 	}

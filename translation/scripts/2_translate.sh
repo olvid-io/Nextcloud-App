@@ -197,10 +197,12 @@ def translate_po(path, lang):
                 0: translate_string(client, lang_name, msgid),
                 1: translate_string(client, lang_name, msgid_pl),
             }
+            print(f"    => {new_pl}")
             block = rebuild_block(block, None, new_pl)
         else:
             new_str = translate_string(client, lang_name, msgid)
             block = rebuild_block(block, new_str, {})
+            print(f"    => {new_str}")
         changed += 1
         result_blocks.append(block)
 

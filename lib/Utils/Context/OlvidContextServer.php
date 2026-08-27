@@ -103,7 +103,9 @@ class OlvidContextServer {
 
 	/**
 	 * @param String $pushTopic
-	 * @return void
+	 *
+	 * @return true
+	 *
 	 * @noinspection PhpUnused
 	 */
 	public function revokePushTopic(String $pushTopic): bool {
