@@ -12,11 +12,13 @@ use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\Settings\DeclarativeSettingsTypes;
 use OCP\Settings\IDeclarativeSettingsForm;
+use Psr\Log\LoggerInterface;
 
 class Admin implements IDeclarativeSettingsForm {
 	public function __construct(
 		private readonly IL10N $l,
 		private readonly IGroupManager $groupManager,
+		private readonly LoggerInterface $logger,
 	) {
 	}
 
@@ -54,9 +56,8 @@ class Admin implements IDeclarativeSettingsForm {
 					'title' => $this->l->t('Automatic groups'),
 					'description' => $this->l->t('Automatically add new Nextcloud accounts to those groups. This is useful for maintaining Olvid discussions with all users.'),
 					'type' => DeclarativeSettingsTypes::MULTI_SELECT,
-					'options' => array_map(function ($ng) {
-						return $ng->getGID();
-					}, $this->groupManager->search('')),
+					// do disable to add admin group to those groups
+					'options' => $this->getNonAdminGroupIds(),
 					'default' => []
 				],
 				[
@@ -64,12 +65,22 @@ class Admin implements IDeclarativeSettingsForm {
 					'title' => $this->l->t('Open groups'),
 					'description' => $this->l->t('A list of groups users can choose to join or leave themselves'),
 					'type' => DeclarativeSettingsTypes::MULTI_SELECT,
-					'options' => array_map(function ($ng) {
-						return $ng->getGID();
-					}, $this->groupManager->search('')),
+					// do disable to add admin group to those groups
+					'options' => $this->getNonAdminGroupIds(),
 					'default' => []
 				],
 			]
 		];
+	}
+
+	public function getNonAdminGroupIds(): array {
+		$nonAdminGroupIds = [];
+		foreach ($this->groupManager->search("") as $group) {
+			if ($group->getGID() === "admin") {
+				continue;
+			}
+			$nonAdminGroupIds[] = $group->getGID();
+		}
+		return $nonAdminGroupIds;
 	}
 }
