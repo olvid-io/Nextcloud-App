@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Utils;
 
+use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\IAppConfig;
 
@@ -54,7 +55,7 @@ class OlvidAppConfigManager {
 	 */
 	// olvid server url
 	public function getOlvidServerUrl(): ?string {
-		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_URL);
+		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_URL) ?? Constants::DEFAULT_OLVID_SERVER;
 	}
 	// api key
 	public function getOlvidServerApiKey(): ?string {
