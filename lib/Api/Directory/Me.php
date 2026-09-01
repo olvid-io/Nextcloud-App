@@ -56,8 +56,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getApiKey();
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
-		if ($olvidUser->hasIdentity() && $olvidUser->getNonce() === null) {
-			$olvidUser->setNonce(RandomUtil::uuid_create());
+		if ($olvidUser->hasIdentity()) {
+			if ($olvidUser->getNonce() === null) {
+				$olvidUser->setNonce(RandomUtil::uuid_create());
+			}
 			$response[Constants::ME_RESPONSE_NONCE] = base64_encode($olvidUser->getNonce());
 		}
 
