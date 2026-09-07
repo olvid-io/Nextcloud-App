@@ -73,8 +73,8 @@ class GroupsUpdate {
 			if ($enableStatusChanged) {
 				// group have been enabled, remove any GroupDeletion in database
 				if ($olvidGroup->getEnabled()) {
-					$groupDeletion = $this->context->db->groupDeletion->getByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
-					if ($groupDeletion !== null) {
+					$groupDeletions = $this->context->db->groupDeletion->getAllByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
+					foreach ($groupDeletions as $groupDeletion) {
 						$this->context->db->groupDeletion->delete($groupDeletion);
 					}
 

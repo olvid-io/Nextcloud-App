@@ -7,7 +7,6 @@ namespace OCA\Olvid\Db;
 use OCA\Olvid\Models\JsonGroupDeletionData;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
@@ -41,27 +40,14 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	}
 
 	/**
-	 * @throws MultipleObjectsReturnedException
-	 * @throws DoesNotExistException
+	 * @return OlvidGroupDeletion[]
 	 * @throws Exception
 	 */
-	public function getByBytesGroupUid(string $bytesGroupUid): OlvidGroupDeletion {
+	public function getAllByBytesGroupUidOrNull(string $bytesGroupUid): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BLOB)));
-		return $this->findEntity($qb);
-	}
-
-	/**
-	 * @throws MultipleObjectsReturnedException
-	 * @throws Exception
-	 */
-	public function getByBytesGroupUidOrNull(string $bytesGroupUid): ?OlvidGroupDeletion {
-		try {
-			return $this->getByBytesGroupUid($bytesGroupUid);
-		} catch (DoesNotExistException) {
-			return null;
-		}
+		return $this->findEntities($qb);
 	}
 
 	/** @return OlvidGroupDeletion[]
@@ -90,14 +76,21 @@ class OlvidGroupDeletionMapper extends QBMapper {
 		$deletionData->timestamp = $currentTimestamp;
 		$signedDeletionData = $context->signatory->sign($deletionData->jsonSerialize());
 
-		$groupDeletion = $this->getByBytesGroupUidOrNull($olvidGroup->getGroupId());
+		$groupDeletions = $this->getAllByBytesGroupUidOrNull($olvidGroup->getGroupId());
 		// create a new deletion
-		if ($groupDeletion === null) {
+		if (sizeof($groupDeletions) === 0) {
 			$groupDeletion = OlvidGroupDeletion::create($olvidGroup->getBytesGroupUid(), $currentTimestamp, $signedDeletionData);
 			return $this->insert($groupDeletion);
 		}
 		// update existing deletion
 		else {
+			// safeguard: delete any extra group deletion
+			if (sizeof($groupDeletions) > 1) {
+				for ($i = 1; $i < sizeof($groupDeletions); $i++) {
+					$this->delete($groupDeletions[$i]);
+				}
+			}
+			$groupDeletion = $groupDeletions[0];
 			$groupDeletion->setSignedDeletion($signedDeletionData);
 			$groupDeletion->setTimestamp($currentTimestamp);
 			return $this->update($groupDeletion);
