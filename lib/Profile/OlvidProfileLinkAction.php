@@ -6,6 +6,7 @@ namespace OCA\Olvid\Profile;
 
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Db\OlvidUserMapper;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\Profile\ILinkAction;
@@ -16,6 +17,7 @@ class OlvidProfileLinkAction implements ILinkAction {
 	public function __construct(
 		private readonly OlvidUserMapper $olvidUserMapper,
 		private readonly IURLGenerator $urlGenerator,
+		private readonly IL10N $l10n,
 	) {
 	}
 
@@ -29,15 +31,15 @@ class OlvidProfileLinkAction implements ILinkAction {
 	}
 
 	public function getId(): string {
-		return 'olvid-identity';
+		return Application::APP_ID;
 	}
 
 	public function getDisplayId(): string {
-		return 'Olvid';
+		return $this->l10n->t('Olvid');
 	}
 
 	public function getTitle(): string {
-		return 'Connected with Olvid';
+		return $this->l10n->t('Use Olvid');
 	}
 
 	public function getPriority(): int {
@@ -51,6 +53,6 @@ class OlvidProfileLinkAction implements ILinkAction {
 	}
 
 	public function getTarget(): ?string {
-		return $this->hasIdentity ? '' : null;
+		return $this->hasIdentity ? $this->urlGenerator->linkToRoute('olvid.Page.index') : null;
 	}
 }
