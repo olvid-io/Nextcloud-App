@@ -14,10 +14,6 @@ class OlvidAppConfigManager {
 	public const APP_CONFIG_OLVID_SERVER_API_KEY = 'olvid-server-api-key';
 	public const APP_CONFIG_GLOBAL_PUSH_TOPIC = 'olvid-global-push-topic';
 
-	// App options
-	public const APP_CONFIG_EVERYONE_GROUP_IDS = 'olvid-everyone-group-ids';
-	public const APP_CONFIG_OPEN_GROUP_IDS = 'olvid-open-group-ids';
-
 	// json web key
 	private const APP_CONFIG_JWK_KEY_ID = 'olvid-jwk-key-id';
 	private const APP_CONFIG_JWK_KEY_TYPE = 'olvid-jwk-key-type';
@@ -36,8 +32,6 @@ class OlvidAppConfigManager {
 		self::APP_CONFIG_JWK_PUBLIC_KEY,
 		self::APP_CONFIG_JWK_PUBLIC_KEY_X,
 		self::APP_CONFIG_JWK_PUBLIC_KEY_Y,
-		self::APP_CONFIG_EVERYONE_GROUP_IDS,
-		self::APP_CONFIG_OPEN_GROUP_IDS
 	];
 
 	public function __construct(
@@ -67,17 +61,6 @@ class OlvidAppConfigManager {
 	}
 	public function setGlobalPushTopic(string $value): void {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_GLOBAL_PUSH_TOPIC, $value);
-	}
-
-	/*
-	 * Application options
-	 */
-	public function getEveryoneGroupIds(): ?array {
-		return json_decode($this->appConfig->getValueString(Application::APP_ID, self::APP_CONFIG_EVERYONE_GROUP_IDS));
-	}
-
-	public function getOpenGroupIds(): ?array {
-		return json_decode($this->appConfig->getValueString(Application::APP_ID, self::APP_CONFIG_OPEN_GROUP_IDS)) ?? [];
 	}
 
 	/*

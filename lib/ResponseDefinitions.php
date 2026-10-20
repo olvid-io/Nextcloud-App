@@ -35,7 +35,6 @@ namespace OCA\Olvid;
  *    id: string,
  *    displayName: string,
  *    enabled: bool,
- *    isOpen: boolean,
  *    photoUid: string|null,
  *  }
  *
@@ -43,7 +42,6 @@ namespace OCA\Olvid;
  *   id: string,
  *   displayName: string,
  *   enabled: bool,
- *   isOpen: boolean,
  *   discussionName: string,
  *   discussionDescription: string|null,
  *   photoUid: string|null,

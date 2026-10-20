@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Olvid\AppInfo;
 
 use OCA\Olvid\DeclarativeSettings\Admin;
-use OCA\Olvid\Listeners\EveryoneGroupsEventListener;
 use OCA\Olvid\Listeners\GroupEventListener;
 use OCA\Olvid\Listeners\UserEventListener;
 use OCA\Olvid\Profile\OlvidProfileLinkAction;
@@ -41,9 +40,6 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(GroupDeletedEvent::class, GroupEventListener::class);
 		$context->registerEventListener(UserAddedEvent::class, GroupEventListener::class);
 		$context->registerEventListener(UserRemovedEvent::class, GroupEventListener::class);
-
-		// everyone group management
-		$context->registerEventListener(UserCreatedEvent::class, EveryoneGroupsEventListener::class);
 	}
 
 	public function boot(IBootContext $context): void {

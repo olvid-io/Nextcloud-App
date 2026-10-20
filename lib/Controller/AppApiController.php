@@ -137,7 +137,6 @@ class AppApiController extends OCSController {
 	public function meGroups(): DataResponse {
 		$nextcloudUser = $this->userSession->getUser();
 		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
-		$openGroupIds = $this->context->nextcloud->appManager->getOpenGroupIds();
 		$result = [];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
 			$gid = $nextcloudGroup->getGID();
@@ -147,99 +146,10 @@ class AppApiController extends OCSController {
 				'id' => $gid,
 				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'isOpen' => in_array($gid, $openGroupIds),
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 			];
 		}
 		return new DataResponse(['groups' => $result]);
-	}
-
-    // TODO TODEL ?
-	// ── Open Group endpoints (non-admin) ──────────────────────────────────────────────
-	/**
-	 * Returns all open groups information
-	 *
-	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroup>}, array{}>
-	 * @noinspection PhpUnused
-	 * @throws Exception
-	 */
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/app/groups/open')]
-	public function groupsOpenGet(): DataResponse {
-		$nextcloudGroups = $this->context->nextcloud->groupManager->search('');
-		$openGroupIds = $this->context->nextcloud->appManager->getOpenGroupIds();
-		$openGroups = array_filter($nextcloudGroups, function ($group) use ($openGroupIds) { return in_array($group->getGID(), $openGroupIds); });
-
-		$result = [];
-		foreach ($openGroups as $openNextcloudGroup) {
-			$gid = $openNextcloudGroup->getGID();
-			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($gid);
-			$bytesPhotoUid = $olvidGroup?->getBytesGroupPhotoUid();
-			$result[] = [
-				'id' => $gid,
-				'displayName' => $openNextcloudGroup->getDisplayName() ?? $openNextcloudGroup->getGID(),
-				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'isOpen' => in_array($gid, $openGroupIds),
-				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
-			];
-		}
-		return new DataResponse(['groups' => $result]);
-	}
-
-    // TODO TODEL ?
-	/**
-	 * Join an open group (yourself)
-	 *
-	 * @param string $groupId Group ID (URL path)
-	 * @return DataResponse<Http::STATUS_OK>
-	 * @noinspection PhpUnused
-	 * @throws Exception
-	 */
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'PUT', url: '/app/groups/open/{groupId}')]
-	public function groupsOpenPut(string $groupId): DataResponse {
-		// get nextcloud group
-		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
-		if ($nextcloudGroup === null) {
-			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		// check group is open (else return not found error)
-		$openGroupIds = $this->context->nextcloud->appManager->getOpenGroupIds();
-		if (!in_array($nextcloudGroup->getGID(), $openGroupIds)) {
-			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$nextcloudGroup->addUser($this->userSession->getUser());
-		return new DataResponse([]);
-	}
-
-    // TODO TODEL ?
-	/**
-	 * Leave an open group (yourself)
-	 *
-	 * @param string $groupId Group ID (URL path)
-	 * @return DataResponse<Http::STATUS_OK>
-	 * @noinspection PhpUnused
-	 * @throws Exception
-	 */
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'DELETE', url: '/app/groups/open/{groupId}')]
-	public function groupsOpenDelete(string $groupId): DataResponse {
-		// get nextcloud group
-		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
-		if ($nextcloudGroup === null) {
-			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		// check group is open (else return not found error)
-		$openGroupIds = $this->context->nextcloud->appManager->getOpenGroupIds();
-		if (!in_array($nextcloudGroup->getGID(), $openGroupIds)) {
-			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$nextcloudGroup->removeUser($this->userSession->getUser());
-		return new DataResponse([]);
 	}
 
 	// ── Group endpoints (admin) ──────────────────────────────────────────────
@@ -254,7 +164,6 @@ class AppApiController extends OCSController {
 	#[ApiRoute(verb: 'GET', url: '/app/groups')]
 	public function groupsGet(): DataResponse {
 		$nextcloudGroups = $this->context->nextcloud->groupManager->search('');
-		$openGroupIds = $this->context->nextcloud->appManager->getOpenGroupIds();
 
 		$response = ['groups' => []];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
@@ -275,7 +184,6 @@ class AppApiController extends OCSController {
 				'id' => $gid,
 				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'isOpen' => in_array($gid, $openGroupIds),
 				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
 				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
@@ -310,14 +218,10 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'group not created'], Http::STATUS_BAD_REQUEST);
 		}
 
-		// check if an open group does not exist
-		$openGroupIds = $this->context->nextcloud->appManager->getOpenGroupIds();
-
 		return new DataResponse([
 			'id' => $groupId,
 			'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 			'enabled' => false,
-			'isOpen' => in_array($groupId, $openGroupIds),
 			'discussionName' => null,
 			'discussionDescription' => null,
 			'photoUid' => null,
