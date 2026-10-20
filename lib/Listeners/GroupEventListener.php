@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Listeners;
 
-use OCA\Circles\Events\CircleDestroyedEvent;
-use OCA\Circles\Events\CircleMemberAddedEvent;
-use OCA\Circles\Events\CircleMemberRemovedEvent;
-use OCA\Circles\Events\EditingCircleEvent;
 use OCA\Circles\Model\Member;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
@@ -47,7 +43,7 @@ class GroupEventListener implements IEventListener {
 			$this->userAddedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
 		} elseif ($event instanceof UserRemovedEvent) {
 			$this->logger->info('GroupEventListener: UserRemovedEvent: ' . $event->getGroup()->getGID() . ': ' . $event->getUser()->getUID());
-			$this->userRemovedHandler($event);
+			$this->userRemovedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
 		} else {
 			$this->logger->info('GroupEventListener: unknown event: ' . get_class($event));
 		}
@@ -56,7 +52,7 @@ class GroupEventListener implements IEventListener {
 	/**
 	 * @param array<string> $groupMemberIds
 	 * @throws MultipleObjectsReturnedException
-     * @throws Exception
+	 * @throws Exception
 	 */
 	public function groupChangedHandler(string $groupId, array $groupMemberIds): void {
 		// check group is enabled

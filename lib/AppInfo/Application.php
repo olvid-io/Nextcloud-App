@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace OCA\Olvid\AppInfo;
 
 use OCA\Olvid\DeclarativeSettings\Admin;
-use OCA\Olvid\Listener\EveryoneGroupsEventListener;
-use OCA\Olvid\Listener\GroupEventListener;
-use OCA\Olvid\Listener\UserEventListener;
+use OCA\Olvid\Listeners\EveryoneGroupsEventListener;
+use OCA\Olvid\Listeners\GroupEventListener;
+use OCA\Olvid\Listeners\UserEventListener;
 use OCA\Olvid\Profile\OlvidProfileLinkAction;
 use OCA\Olvid\SetupCheck\OlvidConfigurationSetupCheck;
 use OCP\AppFramework\App;

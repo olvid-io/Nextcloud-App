@@ -4,7 +4,7 @@ import Router from 'vue-router'
 import GroupsView from './views/GroupsView.vue'
 import ProfileView from './views/ProfileView.vue'
 import UsersView from './views/UsersView.vue'
-import StatisticsView from './views/StatisticsView.vue';
+import StatisticsView from './views/StatisticsView.vue'
 
 Vue.use(Router)
 
