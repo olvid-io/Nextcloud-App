@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Listener;
+namespace OCA\Olvid\Listeners;
 
+use OCA\Circles\Events\CircleDestroyedEvent;
+use OCA\Circles\Events\CircleMemberAddedEvent;
+use OCA\Circles\Events\CircleMemberRemovedEvent;
+use OCA\Circles\Events\EditingCircleEvent;
+use OCA\Circles\Model\Member;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -14,6 +19,7 @@ use OCP\Group\Events\GroupChangedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
+use OCP\IUser;
 use Psr\Log\LoggerInterface;
 
 /** @template-implements IEventListener<GroupDeletedEvent|GroupChangedEvent|UserAddedEvent|UserRemovedEvent> */
@@ -29,15 +35,16 @@ class GroupEventListener implements IEventListener {
 	 * @throws Exception
 	 */
 	public function handle(Event $event): void {
+		// Nextcloud groups
 		if ($event instanceof GroupDeletedEvent) {
 			$this->logger->info('GroupEventListener: GroupDeletedEvent: ' . $event->getGroup()->getGID());
-			$this->groupDeletedHandler($event);
+			$this->groupDeletedHandler($event->getGroup()->getGID());
 		} elseif ($event instanceof GroupChangedEvent) {
 			$this->logger->info('GroupEventListener: GroupChangedEvent: ' . $event->getGroup()->getGID());
-			$this->groupChangedHandler($event);
+			$this->groupChangedHandler($event->getGroup()->getGID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
 		} elseif ($event instanceof UserAddedEvent) {
 			$this->logger->info('GroupEventListener: UserAddedEvent: ' . $event->getGroup()->getGID() . ': ' . $event->getUser()->getUID());
-			$this->userAddedHandler($event);
+			$this->userAddedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
 		} elseif ($event instanceof UserRemovedEvent) {
 			$this->logger->info('GroupEventListener: UserRemovedEvent: ' . $event->getGroup()->getGID() . ': ' . $event->getUser()->getUID());
 			$this->userRemovedHandler($event);
@@ -47,19 +54,20 @@ class GroupEventListener implements IEventListener {
 	}
 
 	/**
+	 * @param array<string> $groupMemberIds
 	 * @throws MultipleObjectsReturnedException
-	 * @throws Exception
+     * @throws Exception
 	 */
-	public function groupChangedHandler(GroupChangedEvent $event): void {
+	public function groupChangedHandler(string $groupId, array $groupMemberIds): void {
 		// check group is enabled
-		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
 		// if group have no custom name we must change it, update blob and notify members
 		if ($olvidGroup->getDiscussionName() === null || trim($olvidGroup->getDiscussionName()) === '') {
-			$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getUsers(), $this->context);
+			$jsonGroupBlob = $olvidGroup->computeBlob($groupMemberIds, $this->context);
 			$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -93,24 +101,27 @@ class GroupEventListener implements IEventListener {
 	}
 
 	/**
-	 * @throws MultipleObjectsReturnedException
+	 * @param string $groupId
+	 * @param string $userId
+	 * @param array<string> $groupMemberIds
 	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
-	public function userAddedHandler(UserAddedEvent $event): void {
+	public function userAddedHandler(string $groupId, string $userId, array $groupMemberIds): void {
 		// check group is enabled
-		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
 		// check user use Olvid
-		$olvidUser = $this->context->db->user->getByUserIdOrNull($event->getUser()->getUID());
+		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
 		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}
 
 		// update group blob
-		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getUsers(), $this->context);
+		$jsonGroupBlob = $olvidGroup->computeBlob($groupMemberIds, $this->context);
 		$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -126,17 +137,20 @@ class GroupEventListener implements IEventListener {
 	}
 
 	/**
-	 * @throws MultipleObjectsReturnedException
+	 * @param string $groupId
+	 * @param string $userId
+	 * @param array<string> $groupMemberIds
 	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
-	public function userRemovedHandler(UserRemovedEvent $event): void {
+	public function userRemovedHandler(string $groupId, string $userId, array $groupMemberIds): void {
 		// check group is enabled
-		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
 
-		$olvidUser = $this->context->db->user->getByUserIdOrNull($event->getUser()->getUID());
+		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
 		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}
@@ -145,7 +159,7 @@ class GroupEventListener implements IEventListener {
 		$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $olvidUser->getUserId(), $olvidUser->getBytesIdentity(), $this->context);
 
 		// update group blob
-		$jsonGroupBlob = $olvidGroup->computeBlob($event->getGroup()->getUsers(), $this->context);
+		$jsonGroupBlob = $olvidGroup->computeBlob($groupMemberIds, $this->context);
 		$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 		$olvidGroup->setSignedGroupBlob($signedBlob);
 		$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

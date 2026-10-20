@@ -23,28 +23,35 @@ class GroupsUpdate {
 	}
 
 	/*
-	 * Update an OlvidGroup task
+	 * Update an OlvidGroup task, shared between Nextcloud groups and circles.
+	 * - $groupId: the Nextcloud group id or circle single id — same generic
+	 *   string key used in the olvid_group table either way.
+	 * - $displayName/$memberUsers: already resolved by the caller (an
+	 *   IGroup lookup for a group, a Circle's own member list for a
+	 *   circle) — this method has no NC-group- or circle-specific logic
+	 *   left in it, existence is signalled by $displayName being null.
 	 * - enabled: if not null update enable status for the group.
 	 * - $discussionName: if not null and not empty update discussion name in Olvid.
-	 * - $discussionName: if not null update discussion description in Olvid.
+	 * - $discussionDescription: if not null update discussion description in Olvid.
 	 * This task notify Olvid concerned Olvid devices if necessary
+	 *
+	 * @param string[] $memberUserIds
 	 */
-	public function handle(string $groupId, ?bool $enabled, ?string $discussionName, ?string $discussionDescription): DataResponse {
+	public function handle(string $groupId, ?string $displayName, array $memberUserIds, ?bool $enabled, ?string $discussionName, ?string $discussionDescription): DataResponse {
 		// group status (enable/disabled) have been changed in this update
 		$enableStatusChanged = false;
 		// if the push topic is new we notify users individually, as they do not had time to register to it
 		$newlyCreatedPushTopic = false;
 
 		try {
-			$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
-			if ($nextcloudGroup === null) {
+			if ($displayName === null) {
 				return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 			}
 
 			// get or create OlvidGroup entity in database
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 			if ($olvidGroup === null) {
-				$olvidGroup = $this->context->db->group->insert(OlvidGroup::create($groupId, $nextcloudGroup->getDisplayName()));
+				$olvidGroup = $this->context->db->group->insert(OlvidGroup::create($groupId, $displayName));
 			}
 
 			$updated = false;
@@ -99,7 +106,7 @@ class GroupsUpdate {
 			 * else we can delete blob
 			 */
 			if ($olvidGroup->getEnabled()) {
-				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
+				$jsonGroupBlob = $olvidGroup->computeBlob($memberUserIds, $this->context);
 				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 				$olvidGroup->setSignedGroupBlob($signedBlob);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -118,7 +125,7 @@ class GroupsUpdate {
 			} else {
 				// notify users individually
 				if ($newlyCreatedPushTopic || $olvidGroup->getPushTopic() === null) {
-					$olvidUserMembers = $this->context->db->user->getUsersById(array_map(function ($nu) { return $nu->getUID(); }, $nextcloudGroup->getUsers()));
+					$olvidUserMembers = $this->context->db->user->getUsersById($memberUserIds);
 					foreach ($olvidUserMembers as $olvidUserMember) {
 						$olvidUser = $this->context->db->user->getByUserIdOrNull($olvidUserMember->getUserId());
 						if ($olvidUser?->hasIdentity()) {

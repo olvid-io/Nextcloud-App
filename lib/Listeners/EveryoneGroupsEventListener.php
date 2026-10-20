@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Listener;
+namespace OCA\Olvid\Listeners;
 
 use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\EventDispatcher\Event;

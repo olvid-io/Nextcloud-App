@@ -154,6 +154,7 @@ class AppApiController extends OCSController {
 		return new DataResponse(['groups' => $result]);
 	}
 
+    // TODO TODEL ?
 	// ── Open Group endpoints (non-admin) ──────────────────────────────────────────────
 	/**
 	 * Returns all open groups information
@@ -185,6 +186,7 @@ class AppApiController extends OCSController {
 		return new DataResponse(['groups' => $result]);
 	}
 
+    // TODO TODEL ?
 	/**
 	 * Join an open group (yourself)
 	 *
@@ -212,6 +214,7 @@ class AppApiController extends OCSController {
 		return new DataResponse([]);
 	}
 
+    // TODO TODEL ?
 	/**
 	 * Leave an open group (yourself)
 	 *
@@ -334,7 +337,15 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
 	public function groupsPut(string $groupId, ?bool $enabled, ?string $discussionName, ?string $discussionDescription): DataResponse {
-		return $this->updateGroupsHandler->handle($groupId, $enabled, $discussionName, $discussionDescription);
+		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
+		return $this->updateGroupsHandler->handle(
+			$groupId,
+			$nextcloudGroup?->getDisplayName(),
+			$this->context->groupTools->getGroupMemberIds($nextcloudGroup),
+			$enabled,
+			$discussionName,
+			$discussionDescription,
+		);
 	}
 
 	/**
@@ -390,7 +401,13 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
 	public function groupsAvatarPut(string $groupId, ?string $photoData): DataResponse {
-		return $this->avatarUpload->handle($groupId, $photoData);
+		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
+		return $this->avatarUpload->handle(
+			$groupId,
+			$nextcloudGroup?->getDisplayName(),
+			$this->context->groupTools->getGroupMemberIds($nextcloudGroup),
+			$photoData,
+		);
 	}
 
 	/**
@@ -439,30 +456,6 @@ class AppApiController extends OCSController {
 		}
 		$nextcloudGroup->removeUser($nextcloudUser);
 		return new DataResponse([]);
-	}
-
-	// ── User search (admin, used by groups sidebar) ──────────────────────────
-
-	/**
-	 * Searches for users by display name or uid. Returns up to 20 results
-	 *
-	 * @param string $query Search string (query parameter)
-	 * @return DataResponse<Http::STATUS_OK, array{users: list<OlvidUser>}, array{}>
-	 * @noinspection PhpUnused
-	 */
-	#[ApiRoute(verb: 'GET', url: '/app/users/search')]
-	public function usersSearch(string $query = ''): DataResponse {
-		$nextcloudUsers = $this->context->nextcloud->userManager->search($query, 20);
-
-		$result = [];
-		foreach ($nextcloudUsers as $nextcloudUser) {
-			$result[] = [
-				'id' => $nextcloudUser->getUID(),
-				'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
-				'useOlvid' => $this->context->db->user->hasUserAnIdentity($nextcloudUser->getUID()),
-			];
-		}
-		return new DataResponse(['users' => $result]);
 	}
 
 	// ── User management endpoints (admin only) ───────────────────────────────
@@ -674,6 +667,30 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
 		return $this->userGetMagicLink->handle($nextcloudUser);
+	}
+
+
+	/**
+	 * Searches for users by display name or uid. Returns up to 20 results
+	 *
+	 * @param string $query Search string (query parameter)
+	 * @return DataResponse<Http::STATUS_OK, array{users: list<OlvidUser>}, array{}>
+	 * @noinspection PhpUnused
+	 */
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/app/users/search')]
+	public function usersSearch(string $query = ''): DataResponse {
+		$nextcloudUsers = $this->context->nextcloud->userManager->search($query, 20);
+
+		$result = [];
+		foreach ($nextcloudUsers as $nextcloudUser) {
+			$result[] = [
+				'id' => $nextcloudUser->getUID(),
+				'displayName' => $nextcloudUser->getDisplayName() ?? $nextcloudUser->getUID(),
+				'useOlvid' => $this->context->db->user->hasUserAnIdentity($nextcloudUser->getUID()),
+			];
+		}
+		return new DataResponse(['users' => $result]);
 	}
 
 	/**

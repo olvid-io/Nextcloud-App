@@ -84,7 +84,7 @@ class UserDeleteIdentity {
 				$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $userId, $bytesUserIdentity, $this->context);
 
 				// update group blob
-				$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
+				$jsonGroupBlob = $olvidGroup->computeBlob($this->context->groupTools->getGroupMemberIds($nextcloudGroup), $this->context);
 				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 				$olvidGroup->setSignedGroupBlob($signedBlob);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

@@ -92,12 +92,12 @@ class OlvidGroup extends Entity {
 	}
 
 	/**
-	 * @param IUser[] $groupMembers
+	 * @param array<string> $groupMemberIds
 	 * @param OlvidContext $context
 	 * @return JsonGroupBlob
 	 * @throws Exception
 	 */
-	public function computeBlob(array $groupMembers, OlvidContext $context): JsonGroupBlob {
+	public function computeBlob(array $groupMemberIds, OlvidContext $context): JsonGroupBlob {
 		$previousMembers = [];
 		if ($this->getSignedGroupBlob()) {
 			try {
@@ -115,7 +115,7 @@ class OlvidGroup extends Entity {
 
 		$groupMembersAndPermissions = [];
 
-		$olvidUserMembers = $context->db->user->getUsersById(array_map(function ($nu) { return $nu->getUID(); }, $groupMembers));
+		$olvidUserMembers = $context->db->user->getUsersById($groupMemberIds);
 		foreach ($olvidUserMembers as $olvidUserMember) {
 			if (!$olvidUserMember?->hasIdentity()) {
 				continue;

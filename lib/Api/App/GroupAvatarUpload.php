@@ -41,10 +41,21 @@ class GroupAvatarUpload {
 	) {
 	}
 
-	public function handle(string $groupId, ?string $photoData): DataResponse {
-		// Validate the Nextcloud group exists
-		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
-		if ($nextcloudGroup === null) {
+	/*
+	* Update a group avatar task, shared between Nextcloud groups and circles.
+	* - $groupId: the Nextcloud group id or circle single id — same generic
+	*   string key used in the olvid_group table either way.
+	* - $displayName/$memberUsers: already resolved by the caller (an
+	*   IGroup lookup for a group, a Circle's own member list for a
+	*   circle) — this method has no NC-group- or circle-specific logic
+	*   left in it, existence is signalled by $displayName being null.
+	* - $photoData: Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
+	* This task notify Olvid concerned Olvid devices if necessary
+	*
+	* @param string[] $memberUserIds
+	*/
+	public function handle(string $groupId, ?string $displayName, array $memberUserIds, ?string $photoData): DataResponse {
+		if ($displayName === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
 
@@ -97,7 +108,7 @@ class GroupAvatarUpload {
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 			// create a new minimal olvid group entity, might be updated properly on group updates
 			if ($olvidGroup === null) {
-				$olvidGroup = OlvidGroup::create($groupId, $nextcloudGroup->getDisplayName());
+				$olvidGroup = OlvidGroup::create($groupId, $displayName);
 				$olvidGroup->setSignedGroupBlob(null);
 				$olvidGroup->setBytesGroupPhotoUid($photoUid);
 				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
@@ -114,7 +125,7 @@ class GroupAvatarUpload {
 			}
 
 			// re-compute Olvid blob
-			$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
+			$jsonGroupBlob = $olvidGroup->computeBlob($memberUserIds, $this->context);
 			$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 			$olvidGroup->setSignedGroupBlob($signedBlob);
 			$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

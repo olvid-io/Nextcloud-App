@@ -9,7 +9,8 @@ class OlvidContext {
 		public readonly OlvidContextNextcloud $nextcloud,
 		public readonly OlvidContextDatabase $db,
 		public readonly OlvidContextServer $olvidServer,
-		public readonly OlvidContextSignatory $signatory,
+        public readonly OlvidContextSignatory $signatory,
+        public readonly OlvidContextGroupTools $groupTools,
 	) {
 	}
 }

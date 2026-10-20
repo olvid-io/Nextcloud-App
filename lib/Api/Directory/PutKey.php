@@ -88,6 +88,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				// save user in database
 				$olvidUser = $this->context->db->user->update($olvidUser);
 
+				// TODO delay this asynchronously to avoid any timeout if there is a lot of groups
 				// recompute all groups blob for this user enabled groups
 				$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
 				foreach ($nextcloudGroups as $nextcloudGroup) {
@@ -99,7 +100,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 
 					try {
 						// re-compute group blob and save in db
-						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
+						$jsonGroupBlob = $olvidGroup->computeBlob(array_map(fn (IUser $gm) => $gm->getUID(), $nextcloudGroup->getUsers()), $this->context);
 						$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
 						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 						$this->context->db->group->update($olvidGroup);
@@ -182,7 +183,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 
 					try {
 						// re-compute group blob and save in db
-						$jsonGroupBlob = $olvidGroup->computeBlob($nextcloudGroup->getUsers(), $this->context);
+						$jsonGroupBlob = $olvidGroup->computeBlob($this->context->groupTools->getGroupMemberIds($nextcloudGroup), $this->context);
 						$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
 						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
 						$this->context->db->group->update($olvidGroup);
