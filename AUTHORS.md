@@ -1,3 +1,3 @@
 # Authors
 
-- Olvid <bot@olvid.io>
+- Olvid <nextcloud@olvid.io>

@@ -20,7 +20,7 @@
 		<nextcloud min-version="30" max-version="35"/>
 	</dependencies>
 
-	<author mail="bot@olvid.io" homepage="https://olvid.io">Olvid</author>
+	<author mail="nextcloud@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<website>https://olvid.io</website>
 	<bugs>https://github.com/olvid-io/Nextcloud-App/issues</bugs>
         <repository >https://github.com/olvid-io/Nextcloud-App</repository>
