@@ -1,7 +1,7 @@
 <template>
 	<div class="olvid-avatar">
 		<NcAvatar
-			:preloaded-user-status="isInactive ? status.inactive : null"
+			:preloaded-user-status="useOlvid && isInactive ? status.inactive : null"
 			v-bind="$attrs"
 			:size="size"
 			v-on="$listeners" />
