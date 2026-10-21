@@ -3,38 +3,48 @@
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>olvid</id>
 	<name>Olvid</name>
-	<version>0.0.4</version>
 	<summary>Use Nextcloud as an Olvid directory.</summary>
 	<description>Use your Nextcloud instance as an Olvid directory.
 
-- 🪄 Magic Links: easily bind you Olvid identity to your Nextcloud account
-- 📑 Directory: Start an Olvid discussion whith any other Nextcloud user in one click
-- 👥 Groups: associate an Olvid discussion with a Nextcloud group
-- ✉️ Security: your messages are steal exchanged using Olvid cryptographic protocols, your Nextcloud server do not store it.
+- 📑 Directory: Start an Olvid discussion with any other Nextcloud user in one click
+- 👥 Groups: Associate an Olvid discussion with a Nextcloud group
+- 🪄 Magic Links: easily bind your Olvid identity to your Nextcloud account
+- ✉️ Security: Your messages are still exchanged using Olvid cryptographic protocols, your Nextcloud server cannot access it.
 	</description>
+	<version>0.0.5</version>
 	<licence>agpl</licence>
+	<author mail="nextcloud@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<namespace>Olvid</namespace>
+	<documentation>
+		<user>https://github.com/olvid-io/Nextcloud-App</user>
+		<developer>https://github.com/olvid-io/Nextcloud-App</developer>
+	</documentation>
 	<category>integration</category>
 	<category>social</category>
-	<dependencies>
-		<nextcloud min-version="30" max-version="35"/>
-	</dependencies>
-
-	<author mail="nextcloud@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<website>https://olvid.io</website>
 	<bugs>https://github.com/olvid-io/Nextcloud-App/issues</bugs>
-        <repository >https://github.com/olvid-io/Nextcloud-App</repository>
-	<documentation>
-	  <user>https://github.com/olvid-io/Nextcloud-App</user>
-	  <developer>https://github.com/olvid-io/Nextcloud-App</developer>
-	</documentation>
+	<repository >https://github.com/olvid-io/Nextcloud-App</repository>
 	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-profile-1.png</screenshot>
 	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-profile-2.png</screenshot>
 	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-users-1.png</screenshot>
 	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-users-2.png</screenshot>
 	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-groups-1.png</screenshot>
 	<screenshot>https://github.com/olvid-io/Nextcloud-App/raw/main/img/screenshots/screenshot-olvid.png</screenshot>
+	<dependencies>
+		<nextcloud min-version="30" max-version="35"/>
+	</dependencies>
 
+	<background-jobs>
+		<job>OCA\Olvid\Cron\SyncCronTask</job>
+	</background-jobs>
+	<repair-steps>
+		<post-migration><step>OCA\Olvid\Migration\RepairStep</step></post-migration>
+		<install><step>OCA\Olvid\Migration\InstallRepairStep</step></install>
+		<uninstall><step>OCA\Olvid\Migration\UninstallRepairStep</step></uninstall>
+	</repair-steps>
+	<settings>
+		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
+	</settings>
 	<navigations>
 		<navigation>
 			<id>olvid</id>
@@ -44,15 +54,4 @@
 			<type>link</type>
 		</navigation>
 	</navigations>
-	<repair-steps>
-		<install><step>OCA\Olvid\Migration\InstallRepairStep</step></install>
-		<uninstall><step>OCA\Olvid\Migration\UninstallRepairStep</step></uninstall>
-		<post-migration><step>OCA\Olvid\Migration\RepairStep</step></post-migration>
-	</repair-steps>
-	<background-jobs>
-		<job>OCA\Olvid\Cron\SyncCronTask</job>
-	</background-jobs>
-	<settings>
-		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
-	</settings>
 </info>
