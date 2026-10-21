@@ -17,23 +17,6 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
 
-/**
- * PUT /app/groups/{groupId}/avatar
- *
- * Accepts a base64 JPEG data URL (already cropped and compressed by the
- * frontend AvatarPicker component), stores it as a new row in olvid_data, and
- * updates the group's group_photo_uid to point to it.
- *
- * A fresh 32-byte UID is generated on every upload so the ?v= cache-buster in
- * the avatar URL always changes — browsers will fetch the new image.
- * The old olvid_data row is not deleted (orphan cleanup can be added later).
- *
- * Request body (JSON):
- *   { "photoData": "data:image/jpeg;base64,<base64-encoded JPEG>" }
- *
- * Response (JSON):
- *   { "photoUid": "<base64-encoded 32-byte UID>" }   — used by the frontend as ?v= param
- */
 class GroupAvatarUpload {
 	public function __construct(
 		private readonly LoggerInterface $logger,
@@ -42,13 +25,10 @@ class GroupAvatarUpload {
 	}
 
 	/*
-	* Update a group avatar task, shared between Nextcloud groups and circles.
-	* - $groupId: the Nextcloud group id or circle single id — same generic
-	*   string key used in the olvid_group table either way.
-	* - $displayName/$memberUsers: already resolved by the caller (an
-	*   IGroup lookup for a group, a Circle's own member list for a
-	*   circle) — this method has no NC-group- or circle-specific logic
-	*   left in it, existence is signalled by $displayName being null.
+	* Update a group avatar task
+	 * - $groupId: the Nextcloud group id
+	 * - $displayName: resolved by caller, used to compute olvid discussion name
+	 * - $memberUserIds: a list of user ids resolved by caller, used to compute group blob
 	* - $photoData: Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
 	* This task notify Olvid concerned Olvid devices if necessary
 	*

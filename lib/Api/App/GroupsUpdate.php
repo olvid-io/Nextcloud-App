@@ -24,12 +24,9 @@ class GroupsUpdate {
 
 	/*
 	 * Update an OlvidGroup task, shared between Nextcloud groups and circles.
-	 * - $groupId: the Nextcloud group id or circle single id — same generic
-	 *   string key used in the olvid_group table either way.
-	 * - $displayName/$memberUsers: already resolved by the caller (an
-	 *   IGroup lookup for a group, a Circle's own member list for a
-	 *   circle) — this method has no NC-group- or circle-specific logic
-	 *   left in it, existence is signalled by $displayName being null.
+	 * - $groupId: the Nextcloud group id
+	 * - $displayName: resolved by caller, used to compute olvid discussion name
+	 * - $memberUserIds: a list of user ids resolved by caller, used to compute group blob
 	 * - enabled: if not null update enable status for the group.
 	 * - $discussionName: if not null and not empty update discussion name in Olvid.
 	 * - $discussionDescription: if not null update discussion description in Olvid.
