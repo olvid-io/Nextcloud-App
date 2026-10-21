@@ -27,6 +27,12 @@ mkdir -p ./build/olvid
 cp AUTHORS.md CHANGELOG.md LICENSE README.md ./build/olvid/
 cp -r appinfo css img js l10n lib templates composer ./build/olvid/
 
+echo deleting DebugApiController
+rm ./build/olvid/lib/Controller/DebugApiController.php
+
+echo deleting screenshots
+rm -r ./build/olvid/img/screenshots
+
 # Package
 (cd ./build && tar -czvf "olvid-${VERSION}.tar.gz" olvid)
 echo "Archive: ./build/olvid-${VERSION}.tar.gz"

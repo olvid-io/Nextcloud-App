@@ -42,6 +42,9 @@
 		<install><step>OCA\Olvid\Migration\InstallRepairStep</step></install>
 		<uninstall><step>OCA\Olvid\Migration\UninstallRepairStep</step></uninstall>
 	</repair-steps>
+	<commands>
+		<command>OCA\Olvid\Command\SyncCommand</command>
+	</commands>
 	<settings>
 		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
 	</settings>

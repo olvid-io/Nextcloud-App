@@ -41,23 +41,5 @@ class RepairStep implements IRepairStep {
 		} catch (Exception $exception) {
 			$this->logger->error('RepairStep: OlvidDatabaseSynchronizationTask: unexpected exception', ['exception' => $exception]);
 		}
-
-		/*
-		 * Sync with olvid server (api keys and push topics)
-		 */
-		try {
-			(new OlvidServerSynchronizationTask($this->context, $this->logger))->run();
-		} catch (Exception $exception) {
-			$this->logger->error('RepairStep: OlvidServerSynchronizationTask: unexpected exception', ['exception' => $exception]);
-		}
-
-		/*
-		 * Refresh all server signatures
-		 */
-		try {
-			(new OlvidRefreshSignatureTask($this->context, $this->logger))->run();
-		} catch (Exception $exception) {
-			$this->logger->error('RepairStep: OlvidServerSynchronizationTask: unexpected exception', ['exception' => $exception]);
-		}
 	}
 }
