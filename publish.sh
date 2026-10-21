@@ -10,6 +10,10 @@ if [ -z "$NEXTCLOUD_TOKEN" ]  ; then echo Specify your nextcloud API token as NE
 VERSION=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
 echo "Building version: $VERSION"
 
+# Prepare staging directory
+rm -rf ./build ./css ./js
+mkdir -p ./build/olvid
+
 # Built from: https://docs.nextcloud.com/server/stable/developer_manual/app_publishing_maintenance/release_process.html
 
 # Install dependencies (no dev packages in release)
@@ -18,10 +22,6 @@ npm ci
 
 # Build frontend assets
 npm run build
-
-# Prepare staging directory
-rm -rf ./build
-mkdir -p ./build/olvid
 
 # Copy only production files
 cp AUTHORS.md CHANGELOG.md LICENSE README.md ./build/olvid/
