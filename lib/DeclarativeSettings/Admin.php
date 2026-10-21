@@ -52,15 +52,4 @@ class Admin implements IDeclarativeSettingsForm {
 			]
 		];
 	}
-
-	public function getNonAdminGroupIds(): array {
-		$nonAdminGroupIds = [];
-		foreach ($this->groupManager->search('') as $group) {
-			if ($group->getGID() === 'admin') {
-				continue;
-			}
-			$nonAdminGroupIds[] = $group->getGID();
-		}
-		return $nonAdminGroupIds;
-	}
 }

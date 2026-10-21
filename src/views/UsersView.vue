@@ -72,30 +72,6 @@
 			@close="showCreateModal = false"
 			@created="onUserCreated" />
 
-		<!-- Delete confirmation dialog -->
-		<NcDialog
-			v-if="deleteTarget"
-			:name="t('olvid', 'Delete user')"
-			:open="!!deleteTarget"
-			@update:open="closeDeleteDialog">
-			<p>{{ t('olvid', 'Are you sure you want to delete {name}? This action cannot be undone.', { name: deleteTarget.displayName }) }}</p>
-			<div v-if="deleteTarget.useOlvid">
-				<NcCheckboxRadioSwitch :checked.sync="deleteRevoke" class="users-view__revoke-checkbox">
-					{{ t('olvid', 'This Olvid profile was lost or replaced') }}
-				</NcCheckboxRadioSwitch>
-				<p class="users-view__revoke-checkbox-desc">
-					{{ t('olvid', 'Warning: this action is not reversible. The Olvid identity will be blocked for every other users in this directory. They will no longer be able to reach the user through this identity, and it can never be re-registered. He will need to create a new Olvid profile and re-enroll.') }}
-				</p>
-			</div>
-			<template #actions>
-				<NcButton @click="closeDeleteDialog">
-					{{ t('olvid', 'Cancel') }}
-				</NcButton>
-				<NcButton type="error" :disabled="deleting" @click="executeDelete">
-					{{ deleting ? t('olvid', 'Deleting…') : (deleteRevoke ? t('olvid', 'Delete and block') : t('olvid', 'Delete')) }}
-				</NcButton>
-			</template>
-		</NcDialog>
 	</NcAppContent>
 </template>
 
@@ -105,8 +81,6 @@ import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
@@ -118,7 +92,7 @@ import OlvidAvatar from '../components/OlvidAvatar.vue'
 
 export default {
 	name: 'UsersView',
-	components: { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal, IconPlus, IconPencil },
+	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal, IconPlus, IconPencil },
 
 	emits: ['open-user-sidebar'],
 

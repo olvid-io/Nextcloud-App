@@ -49,7 +49,6 @@ export default {
 
 	async mounted() {
 		await this.fetchStatistics()
-		this.openUserFromRoute()
 	},
 
 	methods: {

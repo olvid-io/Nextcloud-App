@@ -54,33 +54,4 @@ enum GroupPermission: string {
 		}
 		return $permissionStrings;
 	}
-
-	/**
-	 * @return self[]
-	 */
-	public static function deserializeKnownPermissions(string $serializedPermissions): array {
-		return self::fromStrings(self::deserializePermissions($serializedPermissions));
-	}
-
-	/**
-	 * @param string[] $permissionStrings
-	 */
-	public static function serializePermissionStrings(iterable $permissionStrings): string {
-		$parts = [];
-		foreach ($permissionStrings as $permissionString) {
-			$parts[] = $permissionString;
-		}
-		return implode("\x00", $parts);
-	}
-
-	/**
-	 * @param self[] $permissions
-	 */
-	public static function serializePermissions(iterable $permissions): string {
-		$parts = [];
-		foreach ($permissions as $permission) {
-			$parts[] = $permission->value;
-		}
-		return implode("\x00", $parts);
-	}
 }
