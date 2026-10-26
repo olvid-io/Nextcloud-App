@@ -41,12 +41,12 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 			$t = $schema->createTable('olvid_group');
 			$t->addColumn('id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true]);
 			$t->addColumn('group_id', Types::STRING, ['notnull' => true]);
-			$t->addColumn('bytes_group_uid', Types::BLOB, ['notnull' => true]);
-			$t->addColumn('enabled', Types::BOOLEAN, ['notnull' => true, 'default' => false]);
+			$t->addColumn('bytes_group_uid', Types::BINARY, ['notnull' => true, 'length' => 32]);
+			$t->addColumn('enabled', Types::BOOLEAN, ['notnull' => false, 'default' => false]);
 			$t->addColumn('signed_group_blob', Types::TEXT, ['notnull' => false, 'default' => null]);
 			$t->addColumn('last_modification_timestamp', Types::BIGINT, ['notnull' => true, 'default' => 0]);
 			$t->addColumn('push_topic', Types::STRING, ['notnull' => false]);
-			$t->addColumn('bytes_group_photo_uid', Types::BLOB, ['notnull' => false]);
+			$t->addColumn('bytes_group_photo_uid', Types::BINARY, ['notnull' => false, 'length' => 32]);
 			$t->addColumn('serialized_shared_settings', Types::TEXT, ['notnull' => false]);
 			$t->addColumn('discussion_name', Types::TEXT, ['notnull' => true]);
 			$t->addColumn('discussion_description', Types::TEXT, ['notnull' => false]);
@@ -58,7 +58,7 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 		if (!$schema->hasTable('olvid_group_deletion')) {
 			$t = $schema->createTable('olvid_group_deletion');
 			$t->addColumn('id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true]);
-			$t->addColumn('bytes_group_uid', Types::BLOB, ['notnull' => true]);
+			$t->addColumn('bytes_group_uid', Types::BINARY, ['notnull' => true, 'length' => 32]);
 			$t->addColumn('timestamp', Types::BIGINT, ['notnull' => true]);
 			$t->addColumn('signed_deletion', Types::TEXT, ['notnull' => true]);
 
@@ -70,7 +70,7 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 		if (!$schema->hasTable('olvid_group_kicked')) {
 			$t = $schema->createTable('olvid_group_kicked');
 			$t->addColumn('id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true]);
-			$t->addColumn('bytes_group_uid', Types::BLOB, ['notnull' => true]);
+			$t->addColumn('bytes_group_uid', Types::BINARY, ['notnull' => true, 'length' => 32]);
 			$t->addColumn('user_id', Types::STRING, ['notnull' => true]);
 			$t->addColumn('timestamp', Types::BIGINT, ['notnull' => true]);
 			$t->addColumn('signed_kick', Types::TEXT, ['notnull' => true]);
@@ -90,7 +90,6 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 			$t->addColumn('signed_revocation', Types::TEXT, ['notnull' => true]);
 
 			$t->setPrimaryKey(['id']);
-			$t->addIndex(['bytes_identity'], 'olvid_rev_bytes_identity_idx');
 			$t->addIndex(['timestamp'], 'olvid_rev_ts_idx');
 			$t->addIndex(['revocation_type'], 'olvid_rev_type_idx');
 		}
@@ -98,7 +97,7 @@ class Version0001Date20260714124200 extends SimpleMigrationStep {
 		if (!$schema->hasTable('olvid_data')) {
 			$t = $schema->createTable('olvid_data');
 			$t->addColumn('id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true]);
-			$t->addColumn('bytes_data_uid', Types::BLOB, ['notnull' => true]);
+			$t->addColumn('bytes_data_uid', Types::BINARY, ['notnull' => true, 'length' => 32]);
 			$t->addColumn('bytes_encoded_key', Types::BLOB, ['notnull' => true]);
 			$t->addColumn('bytes_data', Types::BLOB, ['notnull' => true]);
 
