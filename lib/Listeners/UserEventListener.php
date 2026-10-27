@@ -99,7 +99,7 @@ class UserEventListener implements IEventListener {
 					$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $userId, $bytesUserIdentity, $this->context);
 
 					// update group blob
-					$jsonGroupBlob = $olvidGroup->computeBlob($this->context->groupTools->getGroupMemberIds($nextcloudGroup), $this->context);
+					$jsonGroupBlob = $olvidGroup->computeBlob($this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($nextcloudGroup), $this->context);
 					$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 					$olvidGroup->setSignedGroupBlob($signedBlob);
 					$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());

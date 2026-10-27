@@ -77,7 +77,7 @@ class AppApiController extends OCSController {
 			'company' => $olvidUser->getCompany(),
 			'useOlvid' => $olvidUser->hasIdentity() ?? false,
 			'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
-			'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
+			'isAdmin' => $this->context->nextcloud->groupManager->isUserANextcloudAdmin($this->userId),
 		]);
 	}
 
@@ -164,7 +164,7 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/groups')]
 	public function groupsGet(): DataResponse {
-		$nextcloudGroups = $this->context->nextcloud->groupManager->search('');
+		$nextcloudGroups = $this->context->nextcloud->groupManager->getAll();
 
 		$response = ['groups' => []];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
@@ -246,7 +246,7 @@ class AppApiController extends OCSController {
 		return $this->updateGroupsHandler->handle(
 			$groupId,
 			$nextcloudGroup?->getDisplayName(),
-			$this->context->groupTools->getGroupMemberIds($nextcloudGroup),
+			$this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($nextcloudGroup),
 			$enabled,
 			$discussionName,
 			$discussionDescription,
@@ -374,7 +374,7 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users')]
 	public function usersGet(): DataResponse {
-		$nextcloudUsers = $this->context->nextcloud->userManager->search('');
+		$nextcloudUsers = $this->context->nextcloud->userManager->getAll();
 
 		$result = [];
 		foreach ($nextcloudUsers as $nextcloudUser) {
@@ -388,7 +388,7 @@ class AppApiController extends OCSController {
 				'company' => $olvidUser->getCompany(),
 				'useOlvid' => $olvidUser->hasIdentity() ?? false,
 				'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
-				'isAdmin' => $this->context->nextcloud->groupManager->isAdmin($this->userId),
+				'isAdmin' => $this->context->nextcloud->groupManager->isUserANextcloudAdmin($this->userId),
 			];
 		}
 		return new DataResponse(['users' => $result]);
@@ -438,7 +438,7 @@ class AppApiController extends OCSController {
 		// create nextcloud user
 		try {
 			$nextcloudUser = $this->context->nextcloud->userManager->createUser($uid, $password);
-			if ($nextcloudUser === false) {
+			if ($nextcloudUser === null) {
 				return new DataResponse(['error' => 'Could not create user'], Http::STATUS_INTERNAL_SERVER_ERROR);
 			}
 		} catch (Exception $e) {
@@ -643,7 +643,7 @@ class AppApiController extends OCSController {
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/statistics')]
 	public function getStatistics(): DataResponse {
-		$allNextcloudUsers = $this->context->nextcloud->userManager->search('');
+		$allNextcloudUsers = $this->context->nextcloud->userManager->getAll();
 		$allOlvidUsers = $this->context->db->user->getAll();
 
 		$olvidUsersCount = count(array_filter($allOlvidUsers, function ($olvidUser) {
@@ -654,7 +654,7 @@ class AppApiController extends OCSController {
 			return $olvidUser->hasIdentity() && $olvidUser->isInactive();
 		}));
 
-		$allNextcloudGroups = $this->context->nextcloud->groupManager->search('');
+		$allNextcloudGroups = $this->context->nextcloud->groupManager->getAll();
 		$allOlvidGroups = $this->context->db->group->getAll();
 
 		$olvidGroupsCount = count(array_filter($allOlvidGroups, function ($olvidGroup) {

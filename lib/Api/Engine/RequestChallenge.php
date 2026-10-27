@@ -64,7 +64,7 @@ class RequestChallenge extends AbstractEngineApiHandler {
 
 		// look up user and cache challenge only when user has an identity
 		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
-		if ($olvidUser == null) {
+		if ($olvidUser === null) {
 			$this->logger->warning('requestChallenge: user not found');
 			return $response;
 		}

@@ -45,14 +45,12 @@ class OlvidDatabaseSynchronizationTask {
 	private function syncAndValidateOlvidUsers(): void {
 		// retrieve users from olvid and nextcloud
 		$allOlvidUsers = $this->context->db->user->getAll();
-		$allNextcloudUsers = $this->context->nextcloud->userManager->search('');
 
 		/*
 		 * Check all Olvid users have an associated nextcloud user, or delete it
 		 */
-		$nextcloudUserMap = array_combine(array_map(function ($user) { return $user->getUID(); }, $allNextcloudUsers), $allNextcloudUsers);
 		foreach ($allOlvidUsers as $olvidUser) {
-			if (!array_key_exists($olvidUser->getUserId(), $nextcloudUserMap)) {
+			if (!$this->context->nextcloud->userManager->userExists($olvidUser->getUserId())) {
 				try {
 					$userId = $olvidUser->getUserId();
 					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found user with no Nextcloud user: $userId");
@@ -133,10 +131,10 @@ class OlvidDatabaseSynchronizationTask {
 	}
 
 	private function syncAndValidateOlvidGroups(): void {
-		$allNextcloudGroups = $this->context->nextcloud->groupManager->search('');
 		try {
 			// retrieve groups from olvid and nextcloud
 			$allOlvidGroups = $this->context->db->group->getAll();
+			$allNextcloudGroups = $this->context->nextcloud->groupManager->getAll();
 		} catch (Exception $e) {
 			$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot load db data', ['exception' => $e]);
 			return;
@@ -177,7 +175,7 @@ class OlvidDatabaseSynchronizationTask {
 				if (!$olvidGroup->getSignedGroupBlob()) {
 					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no blob: $groupId");
 					try {
-						$jsonGroupBlob = $olvidGroup->computeBlob($this->context->groupTools->getGroupMemberIds($nextcloudGroup), $this->context);
+						$jsonGroupBlob = $olvidGroup->computeBlob($this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($nextcloudGroup), $this->context);
 						$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 						$olvidGroup->setSignedGroupBlob($signedBlob);
 					} catch (Exception $e) {

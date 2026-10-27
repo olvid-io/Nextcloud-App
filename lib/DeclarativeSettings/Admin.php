@@ -7,8 +7,7 @@ namespace OCA\Olvid\Settings;
 namespace OCA\Olvid\DeclarativeSettings;
 
 use OCA\Olvid\Api\Constants;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCP\IGroupManager;
+use OCA\Olvid\Utils\Context\OlvidContextAppManager;
 use OCP\IL10N;
 use OCP\Settings\DeclarativeSettingsTypes;
 use OCP\Settings\IDeclarativeSettingsForm;
@@ -16,7 +15,6 @@ use OCP\Settings\IDeclarativeSettingsForm;
 class Admin implements IDeclarativeSettingsForm {
 	public function __construct(
 		private readonly IL10N $l,
-		private readonly IGroupManager $groupManager,
 	) {
 	}
 
@@ -32,7 +30,7 @@ class Admin implements IDeclarativeSettingsForm {
 			'doc_url' => '',
 			'fields' => [
 				[
-					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_URL,
+					'id' => OlvidContextAppManager::APP_CONFIG_OLVID_SERVER_URL,
 					'title' => $this->l->t('Olvid Server url'),
 					'description' => $this->l->t('Olvid distribution server url.'),
 					'type' => DeclarativeSettingsTypes::URL,
@@ -41,7 +39,7 @@ class Admin implements IDeclarativeSettingsForm {
 					'placeholder' => '',
 				],
 				[
-					'id' => OlvidAppConfigManager::APP_CONFIG_OLVID_SERVER_API_KEY,
+					'id' => OlvidContextAppManager::APP_CONFIG_OLVID_SERVER_API_KEY,
 					'title' => $this->l->t('Olvid Server Api Key'),
 					'description' => $this->l->t('Api Key used to communicate with your Olvid distribution server. Send us an email to get one: contact@olvid.io'),
 					'type' => DeclarativeSettingsTypes::PASSWORD,

@@ -69,7 +69,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// save olvid user to database
 		$this->context->db->user->update($olvidUser);
 
-		$response[Constants::ME_RESPONSE_SERVER] = $this->context->nextcloud->appManager->getOlvidServerUrl() ?? '';
+		$response[Constants::ME_RESPONSE_SERVER] = $this->context->nextcloud->appManager->getOlvidServerUrl();
 		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = true;
 		$response[Constants::ME_RESPONSE_TRANSFER_RESTRICTED] = false;
 

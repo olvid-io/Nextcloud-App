@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Utils;
+namespace OCA\Olvid\Utils\Context;
 
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCP\IAppConfig;
 
-class OlvidAppConfigManager {
+class OlvidContextAppManager {
 	// Olvid Server
 	public const APP_CONFIG_OLVID_SERVER_URL = 'olvid-server-url';
 	public const APP_CONFIG_OLVID_SERVER_API_KEY = 'olvid-server-api-key';
@@ -48,7 +48,7 @@ class OlvidAppConfigManager {
 	 * Get fields set up in settings
 	 */
 	// olvid server url
-	public function getOlvidServerUrl(): ?string {
+	public function getOlvidServerUrl(): string {
 		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_URL) ?? Constants::DEFAULT_OLVID_SERVER;
 	}
 	// api key
@@ -61,6 +61,9 @@ class OlvidAppConfigManager {
 	}
 	public function setGlobalPushTopic(string $value): void {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_GLOBAL_PUSH_TOPIC, $value);
+	}
+	public function unsetGlobalPushTopic(): void {
+		$this->appConfig->deleteKey(Application::APP_ID, self::APP_CONFIG_GLOBAL_PUSH_TOPIC);
 	}
 
 	/*
@@ -107,14 +110,5 @@ class OlvidAppConfigManager {
 	}
 	public function setJwkKeyPublicKeyY(string $value): void {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_JWK_PUBLIC_KEY_Y, $value);
-	}
-
-	/*
-	 * Clean method
-	 */
-	public function deleteAppConfig(): void {
-		foreach (self::ALL_KEYS as $key) {
-			$this->appConfig->deleteKey(Application::APP_ID, $key);
-		}
 	}
 }

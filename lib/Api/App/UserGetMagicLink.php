@@ -50,7 +50,7 @@ class UserGetMagicLink {
 			$this->context->db->user->update($olvidUser);
 
 			// build the magic link url
-			$serverUrl = $this->context->nextcloud->appManager->getOlvidServerUrl() ?? '';
+			$serverUrl = $this->context->nextcloud->appManager->getOlvidServerUrl();
 			$nextcloudUrl = $this->urlGenerator->linkToOCSRouteAbsolute('olvid.directoryApi.index');
 
 			// compute magic link payload

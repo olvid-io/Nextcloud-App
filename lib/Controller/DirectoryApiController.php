@@ -18,7 +18,6 @@ use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\RevocationTest;
 use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\ResponseDefinitions;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,7 +49,6 @@ class DirectoryApiController extends OCSController {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly Me $meHandler,
 		private readonly PutKey $putKeyHandler,

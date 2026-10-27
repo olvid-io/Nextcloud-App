@@ -12,7 +12,6 @@ use OCA\Olvid\Utils\Context\OlvidServer\JsonOlvidServerRequest;
 use OCA\Olvid\Utils\Context\OlvidServer\MissingBotPermissionException;
 use OCA\Olvid\Utils\Context\OlvidServer\NetworkException;
 use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCP\Http\Client\IClientService;
 use Psr\Log\LoggerInterface;
 
@@ -23,19 +22,19 @@ class OlvidContextServer {
 	public function __construct(
 		private readonly LoggerInterface $logger,
 		private readonly IClientService $clientService,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
+		private readonly OlvidContextAppManager $olvidAppManager,
 	) {
 	}
 
 	private function getCachedApiKey(): ?string {
 		if ($this->cachedApiKey === null) {
-			$this->cachedApiKey = $this->olvidAppConfig->getOlvidServerApiKey();
+			$this->cachedApiKey = $this->olvidAppManager->getOlvidServerApiKey();
 		}
 		return $this->cachedApiKey;
 	}
 	private function getCachedServerUrl(): ?string {
 		if ($this->cachedServerUrl === null) {
-			$this->cachedServerUrl = $this->olvidAppConfig->getOlvidServerUrl();
+			$this->cachedServerUrl = $this->olvidAppManager->getOlvidServerUrl();
 		}
 		return $this->cachedServerUrl;
 	}
@@ -49,6 +48,10 @@ class OlvidContextServer {
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_API_KEY;
 		$serverResponse = $this->serverApiRequest($query);
 		$this->logger->info('OlvidServer:: requestNewApiKey');
+		if (!array_key_exists('apiKey', $serverResponse)) {
+			$this->logger->error('OlvidServer:: requestNewApiKey: apiKey not set in response');
+			throw new InternalErrorException();
+		}
 		return $serverResponse['apiKey'];
 	}
 
@@ -98,17 +101,21 @@ class OlvidContextServer {
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_NEW_PUSH_TOPIC;
 		$serverResponse = $this->serverApiRequest($query);
 		$this->logger->info('OlvidServer:: requestNewPushTopic');
+		if (!array_key_exists('pushTopic', $serverResponse)) {
+			$this->logger->error('OlvidServer:: requestNewPushTopic: pushTopic not set in response');
+			throw new InternalErrorException();
+		}
 		return $serverResponse['pushTopic'];
 	}
 
 	/**
-	 * @param String $pushTopic
+	 * @param string $pushTopic
 	 *
 	 * @return true
 	 *
 	 * @noinspection PhpUnused
 	 */
-	public function revokePushTopic(String $pushTopic): bool {
+	public function revokePushTopic(string $pushTopic): bool {
 		// not implemented server side
 		//		$query = new JsonOlvidServerRequest();
 		//		$query->query = JsonOlvidServerRequest::QUERY_DELETE_PUSH_TOPIC;
@@ -119,11 +126,11 @@ class OlvidContextServer {
 	}
 
 	/**
-	 * @param String $pushTopic
+	 * @param string $pushTopic
 	 *
-	 * @noinspection PhpUnused
+	 * @return bool
 	 */
-	public function revokePushTopicNoFail(String $pushTopic): bool {
+	public function revokePushTopicNoFail(string $pushTopic): bool {
 		try {
 			return $this->revokePushTopic($pushTopic);
 		} catch (InvalidConfigurationException) {
@@ -139,7 +146,7 @@ class OlvidContextServer {
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
-	private function sendGroupNotification(String $pushTopic): bool {
+	private function sendGroupNotification(string $pushTopic): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_NOTIFY_PUSH_TOPIC_USERS;
 		$query->pushTopic = $pushTopic;
@@ -149,12 +156,12 @@ class OlvidContextServer {
 	}
 
 	/**
-	 * @param String $base64UserIdentity
+	 * @param string $base64UserIdentity
 	 * @return bool
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
-	private function sendSingleUserNotification(String $base64UserIdentity): bool {
+	private function sendSingleUserNotification(string $base64UserIdentity): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_NOTIFY_SINGLE_USER;
 		$query->userIdentity = $base64UserIdentity;
@@ -217,7 +224,7 @@ class OlvidContextServer {
 	private function serverApiRequest(JsonOlvidServerRequest $jsonRequest): array {
 		$jsonRequest->keycloakApiKey = $this->getCachedApiKey();
 		$serverUrl = $this->getCachedServerUrl();
-		if ($serverUrl == null || $jsonRequest->keycloakApiKey == null) {
+		if ($serverUrl === null || $jsonRequest->keycloakApiKey === null) {
 			throw new InvalidConfigurationException();
 		}
 		if (!$jsonRequest->q) {
@@ -238,19 +245,16 @@ class OlvidContextServer {
 			throw new NetworkException("$e");
 		}
 
-		if ($jsonResponse != null && array_key_exists('error', $jsonResponse) && $jsonResponse['error']) {
-			switch ($jsonResponse['error']) {
-				case OlvidServerException::ERROR_INVALID_REQUEST:
-					throw new InvalidRequestException();
-				case OlvidServerException::ERROR_INTERNAL:
-					throw new InternalErrorException();
-				case OlvidServerException::ERROR_INVALID_API_KEY:
-					throw new InvalidApiKeyException();
-				case OlvidServerException::ERROR_API_KEY_NOT_FOUND:
-					throw new ApiKeyNotFoundException();
-				case OlvidServerException::ERROR_MISSING_BOT_PERMISSION:
-					throw new MissingBotPermissionException();
-			}
+		if ($jsonResponse === null) {
+			throw new InternalErrorException();
+		} elseif (array_key_exists('error', $jsonResponse) && $jsonResponse['error']) {
+			throw match ($jsonResponse['error']) {
+				OlvidServerException::ERROR_INVALID_REQUEST => new InvalidRequestException(),
+				OlvidServerException::ERROR_INVALID_API_KEY => new InvalidApiKeyException(),
+				OlvidServerException::ERROR_API_KEY_NOT_FOUND => new ApiKeyNotFoundException(),
+				OlvidServerException::ERROR_MISSING_BOT_PERMISSION => new MissingBotPermissionException(),
+				default => new InternalErrorException(),
+			};
 		}
 		return $jsonResponse;
 	}

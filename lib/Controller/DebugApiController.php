@@ -72,7 +72,7 @@ class DebugApiController extends OCSController {
 		}
 
 		$users = [];
-		foreach ($this->context->nextcloud->userManager->search('') as $user) {
+		foreach ($this->context->nextcloud->userManager->getAll() as $user) {
 			try {
 				$olvidUser = $this->context->db->user->getByUserIdOrNull($user->getUID());
 				$users[$user->getUID()] = $olvidUser?->jsonSerialize();
@@ -220,7 +220,7 @@ class DebugApiController extends OCSController {
 		// $this->olvidAppConfig->deleteAppConfig();
 
 		// reset users data
-		$nextcloudUsers = $this->context->nextcloud->userManager->search('');
+		$nextcloudUsers = $this->context->nextcloud->userManager->getAll();
 		foreach ($nextcloudUsers as $nextcloudUser) {
 			$olvidUser = $this->context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
 			if ($olvidUser !== null) {

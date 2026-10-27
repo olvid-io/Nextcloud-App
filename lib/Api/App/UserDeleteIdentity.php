@@ -43,7 +43,7 @@ class UserDeleteIdentity {
 		}
 
 		// check user use Olvid
-		if (!$olvidUser->hasIdentity()) {
+		if (!$olvidUser?->hasIdentity()) {
 			return new DataResponse(null, Http::STATUS_NOT_FOUND);
 		}
 
@@ -74,31 +74,33 @@ class UserDeleteIdentity {
 		$this->context->db->user->update($olvidUser);
 
 		// remove user from Olvid groups (ignore exceptions)
-		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
-		foreach ($nextcloudGroups as $nextcloudGroup) {
-			try {
-				$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
-				if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
-					continue;
+		if ($nextcloudUser !== null) {
+			$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
+			foreach ($nextcloudGroups as $nextcloudGroup) {
+				try {
+					$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
+					if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
+						continue;
+					}
+
+					// create group kick in database
+					$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $userId, $bytesUserIdentity, $this->context);
+
+					// update group blob
+					$jsonGroupBlob = $olvidGroup->computeBlob($this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($nextcloudGroup), $this->context);
+					$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
+					$olvidGroup->setSignedGroupBlob($signedBlob);
+					$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
+					$olvidGroup = $this->context->db->group->update($olvidGroup);
+
+					// notify users
+					if ($olvidGroup->getPushTopic() !== null) {
+						// we can use push topic to notify members and removed user
+						$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
+					}
+				} catch (Exception $exception) {
+					$this->logger->error('UserDeleteIdentity: cannot kick user from group', ['exception' => $exception]);
 				}
-
-				// create group kick in database
-				$this->context->db->groupKicked->computeAndSaveGroupKick($olvidGroup, $userId, $bytesUserIdentity, $this->context);
-
-				// update group blob
-				$jsonGroupBlob = $olvidGroup->computeBlob($this->context->groupTools->getGroupMemberIds($nextcloudGroup), $this->context);
-				$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
-				$olvidGroup->setSignedGroupBlob($signedBlob);
-				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-				$olvidGroup = $this->context->db->group->update($olvidGroup);
-
-				// notify users
-				if ($olvidGroup->getPushTopic() !== null) {
-					// we can use push topic to notify members and removed user
-					$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
-				}
-			} catch (Exception $exception) {
-				$this->logger->error('UserDeleteIdentity: cannot kick user from group', ['exception' => $exception]);
 			}
 		}
 

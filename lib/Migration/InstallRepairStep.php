@@ -3,7 +3,7 @@
 namespace OCA\Olvid\Migration;
 
 use Exception;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
+use OCA\Olvid\Utils\Context\OlvidContextAppManager;
 use OCA\Olvid\Utils\RandomUtil;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 class InstallRepairStep implements IRepairStep {
 	public function __construct(
 		private readonly LoggerInterface $logger,
-		private readonly OlvidAppConfigManager $olvidAppConfig,
+		private readonly OlvidContextAppManager $olvidAppManager,
 	) {
 	}
 
@@ -22,13 +22,13 @@ class InstallRepairStep implements IRepairStep {
 
 	public function run(IOutput $output): void {
 		try {
-			self::createSignatureKeyIfNecessary($output, $this->olvidAppConfig);
+			self::createSignatureKeyIfNecessary($output, $this->olvidAppManager);
 		} catch (Exception) {
 			$this->logger->error('install step: cannot create signature key');
 		}
 	}
 
-	public static function createSignatureKeyIfNecessary(IOutput $output, OlvidAppConfigManager $olvidAppConfig): void {
+	public static function createSignatureKeyIfNecessary(IOutput $output, OlvidContextAppManager $olvidAppConfig): void {
 		$keyId = $olvidAppConfig->getJwkKeyId();
 		if (!$keyId) {
 			$output->info('create a new JWKS key');

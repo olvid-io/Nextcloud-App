@@ -14,7 +14,6 @@ use OCP\Group\Events\GroupChangedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
-use OCP\IUser;
 use Psr\Log\LoggerInterface;
 
 /** @template-implements IEventListener<GroupDeletedEvent|GroupChangedEvent|UserAddedEvent|UserRemovedEvent> */
@@ -36,13 +35,13 @@ class GroupEventListener implements IEventListener {
 			$this->groupDeletedHandler($event->getGroup()->getGID());
 		} elseif ($event instanceof GroupChangedEvent) {
 			$this->logger->info('GroupEventListener: GroupChangedEvent: ' . $event->getGroup()->getGID());
-			$this->groupChangedHandler($event->getGroup()->getGID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
+			$this->groupChangedHandler($event->getGroup()->getGID(), $this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($event->getGroup()));
 		} elseif ($event instanceof UserAddedEvent) {
 			$this->logger->info('GroupEventListener: UserAddedEvent: ' . $event->getGroup()->getGID() . ': ' . $event->getUser()->getUID());
-			$this->userAddedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
+			$this->userAddedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), $this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($event->getGroup()));
 		} elseif ($event instanceof UserRemovedEvent) {
 			$this->logger->info('GroupEventListener: UserRemovedEvent: ' . $event->getGroup()->getGID() . ': ' . $event->getUser()->getUID());
-			$this->userRemovedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), array_map(fn (IUser $gm) => $gm->getUID(), $event->getGroup()->getUsers()));
+			$this->userRemovedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), $this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($event->getGroup()));
 		} else {
 			$this->logger->info('GroupEventListener: unknown event: ' . get_class($event));
 		}

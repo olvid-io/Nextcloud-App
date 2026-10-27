@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace OCA\Olvid\Utils\Context;
 
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use OCA\Olvid\Utils\OlvidAppConfigManager;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\IUser;
+use Psr\Log\LoggerInterface;
 use stdClass;
 
 class OlvidContextSignatory {
@@ -17,7 +19,8 @@ class OlvidContextSignatory {
 	private ?string $cachedPrivateKey = null;
 
 	public function __construct(
-		private readonly OlvidAppConfigManager $appConfigManager,
+		private readonly OlvidContextAppManager $appConfigManager,
+		private readonly LoggerInterface $logger,
 	) {
 	}
 
@@ -63,14 +66,27 @@ class OlvidContextSignatory {
 	public function verifyBearerToken(string $bearerToken, OlvidContext $context): IUser {
 		// decode token and check type
 		$decodedToken = JWT::decode($bearerToken, $this->getCachedPublicKey());
+
+		// check required claims are present and well typed
+		if (!isset($decodedToken->type, $decodedToken->sub, $decodedToken->iat, $decodedToken->exp)
+			|| !is_string($decodedToken->type)
+			|| !is_string($decodedToken->sub)
+			|| !is_int($decodedToken->iat)
+			|| !is_int($decodedToken->exp)) {
+			throw new Exception('Invalid token: missing or malformed claims.');
+		}
+
+		// check token type
 		if ($decodedToken->type !== 'session') {
 			throw new Exception("Invalid token type: '$decodedToken->type'.");
 		}
+
 		// check user exists (in nextcloud)
 		$nextcloudUser = $context->nextcloud->userManager->get($decodedToken->sub);
 		if (!$nextcloudUser) {
 			throw new Exception("User not found: '$decodedToken->sub'.");
 		}
+
 		// check user session were not revoked
 		$olvidUser = $context->db->user->getByUserIdOrNull($nextcloudUser->getUID());
 		if ($olvidUser?->getSessionRevokedBefore() !== null) {
@@ -83,34 +99,47 @@ class OlvidContextSignatory {
 		// check user did not revoke its identity since session creation
 		// (in case user was deleted and SessionRevokedBefore was unset)
 		// WARN iat is in seconds, while sessionRevokedBefore is in ms
-		$revocations = $context->db->revocation->getUserRevocationsSinceTimestampOrNull($olvidUser->getUserId(), $decodedToken->iat * 1000);
-		if ($revocations !== null && sizeof($revocations) > 0) {
-			throw new Exception("User identity was revoked: '{$olvidUser->getUserId()}'.");
+		$revocations = $context->db->revocation->getUserRevocationsSinceTimestamp($nextcloudUser->getUID(), $decodedToken->iat * 1000);
+		if (sizeof($revocations) > 0) {
+			throw new Exception("User identity was revoked: '{$nextcloudUser->getUID()}'.");
 		}
 		return $nextcloudUser;
 	}
 
 	private function getCachedKeyId(): ?string {
-		if ($this->cachedKeyId == null) {
+		if ($this->cachedKeyId === null) {
 			$this->cachedKeyId = $this->appConfigManager->getJwkKeyId();
+			if ($this->cachedKeyId === null) {
+				$this->logger->error('OlvidContextSignatory: JWKS not set, you must repair Olvid application: `occ maintenance:repair`');
+			}
 		}
 		return $this->cachedKeyId;
 	}
 	private function getCachedKeyType(): ?string {
-		if ($this->cachedKeyType == null) {
+		if ($this->cachedKeyType === null) {
 			$this->cachedKeyType = $this->appConfigManager->getJwkKeyType();
+			if ($this->cachedKeyType === null) {
+				$this->logger->error('OlvidContextSignatory: JWKS not set, you must repair Olvid application: `occ maintenance:repair`');
+			}
 		}
 		return $this->cachedKeyType;
 	}
 	private function getCachedPublicKey(): Key {
-		if ($this->cachedPublicKey == null) {
+		if ($this->cachedPublicKey === null) {
+			$publicKey = $this->appConfigManager->getJwkKeyPublicKey();
+			if ($publicKey === null) {
+				$this->logger->error('OlvidContextSignatory: JWKS not set, you must repair Olvid application: `occ maintenance:repair`');
+			}
 			$this->cachedPublicKey = new Key($this->appConfigManager->getJwkKeyPublicKey(), 'ES256');
 		}
 		return $this->cachedPublicKey;
 	}
 	private function getCachedPrivateKey(): ?string {
-		if ($this->cachedPrivateKey == null) {
+		if ($this->cachedPrivateKey === null) {
 			$this->cachedPrivateKey = $this->appConfigManager->getJwkKeyPrivateKey();
+			if ($this->cachedPrivateKey === null) {
+				$this->logger->error('OlvidContextSignatory: JWKS not set, you must repair Olvid application: `occ maintenance:repair`');
+			}
 		}
 		return $this->cachedPrivateKey;
 	}

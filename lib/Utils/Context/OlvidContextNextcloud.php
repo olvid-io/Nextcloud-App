@@ -1,16 +1,14 @@
 <?php
 
-namespace OCA\Olvid\Utils\Context;
+declare(strict_types=1);
 
-use OCA\Olvid\Utils\OlvidAppConfigManager;
-use OCP\IGroupManager;
-use OCP\IUserManager;
+namespace OCA\Olvid\Utils\Context;
 
 class OlvidContextNextcloud {
 	public function __construct(
-		public readonly OlvidAppConfigManager $appManager,
-		public readonly IGroupManager $groupManager,
-		public readonly IUserManager $userManager,
+		public readonly OlvidContextAppManager $appManager,
+		public readonly OlvidContextGroupManager $groupManager,
+		public readonly OlvidContextUserManager $userManager,
 	) {
 	}
 
