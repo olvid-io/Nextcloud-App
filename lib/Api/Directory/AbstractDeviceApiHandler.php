@@ -13,6 +13,7 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /*
  * DeviceApi:
@@ -43,8 +44,8 @@ abstract class AbstractDeviceApiHandler {
 
 		try {
 			return $this->handler($jsonParameters, $this->user);
-		} catch (Exception $exception) {
-			$this->logger->error(get_class($this) . ': unexpected exception in handler', ['exception' => $exception]);
+		} catch (Throwable $throwable) {
+			$this->logger->error(get_class($this) . ': unexpected exception in handler', ['exception' => $throwable]);
 			return $this->internalError();
 		}
 	}

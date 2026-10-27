@@ -43,7 +43,7 @@ class UninstallRepairStep implements IRepairStep {
 		$output->info('Olvid: revoking global push topics');
 		if ($this->context->nextcloud->appManager->getGlobalPushTopic()) {
 			$this->context->olvidServer->revokePushTopic($this->context->nextcloud->appManager->getGlobalPushTopic());
-			$this->context->nextcloud->appManager->setGlobalPushTopic(null);
+			$this->context->nextcloud->appManager->unsetGlobalPushTopic();
 		}
 
 		// do not delete application config and database tables anymore, as it causes issues to re-run the same migrations

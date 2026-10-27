@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Listeners;
 
-use OCA\Circles\Model\Member;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -79,9 +78,9 @@ class GroupEventListener implements IEventListener {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	public function groupDeletedHandler(GroupDeletedEvent $event): void {
+	public function groupDeletedHandler(string $groupId): void {
 		// check group is enabled
-		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($event->getGroup()->getGID());
+		$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
 		if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
 			return;
 		}
@@ -111,7 +110,16 @@ class GroupEventListener implements IEventListener {
 		}
 
 		// check user use Olvid
-		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		try {
+			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		} catch (MultipleObjectsReturnedException $e) {
+			$this->logger->error('GroupEventListener: userAddHandler: more than one user found', ['exception' => $e]);
+			return;
+		} catch (Exception $e) {
+			$this->logger->error('GroupEventListener: userAddHandler: cannot get user', ['exception' => $e]);
+			return;
+		}
+
 		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}
@@ -146,7 +154,15 @@ class GroupEventListener implements IEventListener {
 			return;
 		}
 
-		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		try {
+			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		} catch (MultipleObjectsReturnedException $e) {
+			$this->logger->error('GroupEventListener: userRemovedHandler: more than one user found', ['exception' => $e]);
+			return;
+		} catch (Exception $e) {
+			$this->logger->error('GroupEventListener: userRemovedHandler: cannot get user', ['exception' => $e]);
+			return;
+		}
 		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}

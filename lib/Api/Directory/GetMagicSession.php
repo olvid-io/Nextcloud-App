@@ -7,6 +7,7 @@ namespace OCA\Olvid\Api\Directory;
 use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
@@ -27,6 +28,8 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 	 * @param array $jsonParameters
 	 * @param IUser|null $nextcloudUser: always null (unauthenticated entry point)
 	 * @return JSONResponse
+	 * @throws \OCP\DB\Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// Parse request

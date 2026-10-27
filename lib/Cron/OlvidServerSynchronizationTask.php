@@ -126,7 +126,7 @@ class OlvidServerSynchronizationTask {
 		 */
 		// unset global push topic if unknown
 		if (in_array($globalPushTopic, $unknownPushTopics)) {
-			$this->context->nextcloud->appManager->setGlobalPushTopic(null);
+			$this->context->nextcloud->appManager->unsetGlobalPushTopic();
 		}
 		// unset groups push topic if unknown
 		if ($unknownPushTopics) {
@@ -161,7 +161,7 @@ class OlvidServerSynchronizationTask {
 			try {
 				if ($olvidUserWithIdentity->getApiKey() === null) {
 					$olvidUserWithIdentity->setApiKey($this->context->olvidServer->requestNewApiKey());
-					$this->context->db->group->update($olvidUserWithIdentity);
+					$this->context->db->user->update($olvidUserWithIdentity);
 				}
 			} catch (InvalidConfigurationException|OlvidServerException $e) {
 				$this->logger->error('requestMissingPushTopics: cannot request user api key', ['exception' => $e]);

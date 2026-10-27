@@ -6,11 +6,15 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IUser;
 
 class GetKey extends AbstractAuthenticatedDeviceApiHandler {
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws \OCP\DB\Exception
+	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// Parse request
 		try {

@@ -27,7 +27,8 @@ class Search extends AbstractAuthenticatedDeviceApiHandler {
 		];
 
 		try {
-			$searchedOlvidUsers = $this->context->db->user->searchEnabledUsers($filters);
+			// search for limit + 1 elements to have enough elements if we skip self element
+			$searchedOlvidUsers = $this->context->db->user->searchEnabledUsers($filters, Constants::SEARCH_COUNT_LIMIT + 1);
 			$countSkippedCount = 0;
 			for ($i = 0; $i < min(count($searchedOlvidUsers), Constants::SEARCH_COUNT_LIMIT); $i++) {
 				$searchedOlvidUser = $searchedOlvidUsers[$i];

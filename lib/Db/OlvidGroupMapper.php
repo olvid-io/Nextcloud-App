@@ -11,12 +11,16 @@ use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\Types;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 
 /** @template-extends QBMapper<OlvidGroup> */
 class OlvidGroupMapper extends QBMapper {
 	public const TABLE_NAME = 'olvid_group';
 
-	public function __construct(IDBConnection $db) {
+	public function __construct(
+		IDBConnection $db,
+		private readonly LoggerInterface $logger,
+	) {
 		parent::__construct($db, self::TABLE_NAME, OlvidGroup::class);
 	}
 
@@ -80,6 +84,7 @@ class OlvidGroupMapper extends QBMapper {
 
 	/*
 	 * On a group deletion we can automatically delete associated OlvidData for group photo
+	 * Do not block group deletion if we cannot delete group photo
 	 */
 	public function delete(Entity|OlvidGroup $entity): Entity {
 		parent::delete($entity);
@@ -90,6 +95,7 @@ class OlvidGroupMapper extends QBMapper {
 				$olvidData = $dataMapper->getByUid($entity->getBytesGroupPhotoUid());
 				$dataMapper->delete($olvidData);
 			} catch (DoesNotExistException|MultipleObjectsReturnedException|Exception) {
+				$this->logger->error('OlvidGroupMapper::delete cannot delete associated data');
 			}
 		}
 		return $entity;

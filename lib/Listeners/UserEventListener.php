@@ -10,6 +10,7 @@ use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\User\Events\UserDeletedEvent;
@@ -33,23 +34,36 @@ class UserEventListener implements IEventListener {
 	public function userDeletedHandler(UserDeletedEvent $event): void {
 		$userId = $event->getUser()->getUID();
 
-		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		try {
+			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
+		} catch (MultipleObjectsReturnedException $e) {
+			$this->logger->error('UserEventListener: userDeletedHandler: more than one user found', ['exception' => $e]);
+			return;
+		} catch (\OCP\DB\Exception $e) {
+			$this->logger->error('UserEventListener: userDeletedHandler: cannot get user', ['exception' => $e]);
+			return;
+		}
+
+		// user not found, probably already deleted ignore
+		if ($olvidUser === null) {
+			return ;
+		}
 
 		// delete user api key if he has one (ignore exceptions)
-		if ($olvidUser?->getApiKey() !== null) {
+		if ($olvidUser->getApiKey() !== null) {
 			try {
 				$this->context->olvidServer->revokeApiKey($olvidUser->getApiKey());
 				$olvidUser->setApiKey(null);
 				$this->context->db->user->updateNoFail($olvidUser);
 			} catch (InvalidConfigurationException) {
-				$this->logger->error('userDeletedHandler: cannot revoke api key: invalid server configuration');
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke api key: invalid server configuration');
 			} catch (OlvidServerException $e) {
-				$this->logger->error('userDeletedHandler: cannot revoke api key: unexpected exception', ['exception' => $e]);
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke api key: unexpected exception', ['exception' => $e]);
 			}
 		}
 
 		// if user use olvid revoke it's identity and remove it from groups
-		if ($olvidUser?->hasIdentity()) {
+		if ($olvidUser->hasIdentity()) {
 			// revoke identity
 			try {
 				$this->context->db->revocation->computeAndSaveRevocation($userId, $olvidUser->getBytesIdentity(), JsonRevocationData::REVOCATION_TYPE_DELETE_USER, $this->context);
@@ -101,8 +115,13 @@ class UserEventListener implements IEventListener {
 				}
 			}
 		}
-
-		// delete olvid user in database
-		$this->context->db->user->delete($olvidUser);
+		// user has no identity, just delete OlvidUser in database
+		else {
+			try {
+				$this->context->db->user->delete($olvidUser);
+			} catch (\OCP\DB\Exception $exception) {
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot delete olvid user in db', ['exception' => $exception]);
+			}
+		}
 	}
 }

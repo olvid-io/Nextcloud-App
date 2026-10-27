@@ -55,7 +55,7 @@ class OlvidDatabaseSynchronizationTask {
 			if (!array_key_exists($olvidUser->getUserId(), $nextcloudUserMap)) {
 				try {
 					$userId = $olvidUser->getUserId();
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found user with no Nextcloud user: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found user with no Nextcloud user: $userId");
 					$this->context->db->user->delete($olvidUser);
 				} catch (Exception $e) {
 					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: cannot delete user', ['exception' => $e]);
@@ -72,7 +72,7 @@ class OlvidDatabaseSynchronizationTask {
 			if ($olvidUser->hasIdentity()) {
 				// re-compute user details if user does not have it
 				if (!$olvidUser->getSignedDetails()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no signed details: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no signed details: $userId");
 					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 				}
@@ -84,7 +84,7 @@ class OlvidDatabaseSynchronizationTask {
 					} catch (Exception) {
 					}
 					if (!$verified) {
-						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: cannot parse signed user details, re-computing them: ${userId}");
+						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: cannot parse signed user details, re-computing them: $userId");
 						$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 						$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 					}
@@ -92,13 +92,13 @@ class OlvidDatabaseSynchronizationTask {
 
 				// set a nonce if necessary
 				if (!$olvidUser->getNonce()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no nonce: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no nonce: $userId");
 					$olvidUser->setNonce(RandomUtil::uuid_create());
 				}
 
 				// request an api key if necessary
 				if (!$olvidUser->getApiKey()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no api key: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no api key: $userId");
 					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 				}
@@ -107,17 +107,17 @@ class OlvidDatabaseSynchronizationTask {
 			else {
 				// user is not supposed to have signed details
 				if ($olvidUser->getSignedDetails()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with signed details: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with signed details: $userId");
 					$olvidUser->setSignedDetails(null);
 				}
 				// user is not supposed to have a nonce
 				if ($olvidUser->getNonce()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with a nonce: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with a nonce: $userId");
 					$olvidUser->setNonce(null);
 				}
 				// revoke api key
 				if ($olvidUser->getApiKey()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with an api key: ${userId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with an api key: $userId");
 					$this->context->olvidServer->revokeApiKeyNoFail($olvidUser->getApiKey());
 					$olvidUser->setApiKey(null);
 				}
@@ -126,7 +126,7 @@ class OlvidDatabaseSynchronizationTask {
 				try {
 					$this->context->db->user->update($olvidUser);
 				} catch (Exception $e) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: cannot update user: ${userId}", ['exception' => $e]);
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: cannot update user: $userId", ['exception' => $e]);
 				}
 			}
 		}
@@ -145,7 +145,7 @@ class OlvidDatabaseSynchronizationTask {
 			if (!array_key_exists($olvidGroup->getGroupId(), $nextcloudGroupMap)) {
 				try {
 					$groupId = $olvidGroup->getGroupId();
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a group with no Nextcloud group: ${$groupId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a group with no Nextcloud group: $groupId");
 					$this->context->db->group->delete($olvidGroup);
 				} catch (Exception $e) {
 					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot delete group', ['exception' => $e]);
@@ -164,28 +164,28 @@ class OlvidDatabaseSynchronizationTask {
 			if ($olvidGroup->getEnabled()) {
 				// group must have an olvid bytes group uid
 				if (!$olvidGroup->getBytesGroupUid()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no uid: {$groupId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no uid: $groupId");
 					$olvidGroup->setBytesGroupUid(RandomUtil::random_bytes(Constants::UID_SIZE));
 				}
 
 				// group must have a signed blob
 				if (!$olvidGroup->getSignedGroupBlob()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no blob: {$groupId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no blob: $groupId");
 					try {
 						$jsonGroupBlob = $olvidGroup->computeBlob($this->context->groupTools->getGroupMemberIds($nextcloudGroup), $this->context);
 						$signedBlob = $this->context->signatory->sign($jsonGroupBlob->jsonSerialize());
 						$olvidGroup->setSignedGroupBlob($signedBlob);
 					} catch (Exception $e) {
-						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot compute group blob : {$groupId}", ['exception' => $e]);
+						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot compute group blob : $groupId", ['exception' => $e]);
 					}
 				}
 				// group must have a push topic
 				if (!$olvidGroup->getPushTopic()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no push topic: {$groupId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found an enabled group with no push topic: $groupId");
 					try {
 						$olvidGroup->setPushTopic($this->context->olvidServer->requestNewPushTopic());
 					} catch (Exception $e) {
-						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot request new push topic : {$groupId}", ['exception' => $e]);
+						$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot request new push topic : $groupId", ['exception' => $e]);
 					}
 				}
 			}
@@ -195,12 +195,12 @@ class OlvidDatabaseSynchronizationTask {
 
 				// group is not supposed to have a signed blob
 				if ($olvidGroup->getSignedGroupBlob()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found a disabled group with a blob: {$groupId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found a disabled group with a blob: $groupId");
 					$olvidGroup->setSignedGroupBlob(null);
 				}
 				// group is not supposed to have a push topic
 				if ($olvidGroup->getPushTopic()) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found a disabled group with a push topic: {$groupId}");
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: found a disabled group with a push topic: $groupId");
 					$this->context->olvidServer->revokePushTopicNoFail($olvidGroup->getPushTopic());
 					$olvidGroup->setPushTopic(null);
 				}
@@ -209,7 +209,7 @@ class OlvidDatabaseSynchronizationTask {
 				try {
 					$this->context->db->group->update($olvidGroup);
 				} catch (Exception $e) {
-					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot update group: {$groupId}", ['exception' => $e]);
+					$this->logger->error("OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot update group: $groupId", ['exception' => $e]);
 				}
 			}
 		}

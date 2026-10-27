@@ -23,11 +23,12 @@ class JsonUserDetails implements JsonSerializable {
 	#[JsonField(Constants::DETAILS_KEY_TIMESTAMP)]
 	public int $timestamp;
 
+	public static function normalizeForSearch(string $str): string {
+		return self::unAccent(mb_strtolower($str));
+	}
+
 	public function computeFullSearchString(): String {
-		return strtolower(JsonUserDetails::unAccent($this->firstname == null ? '' : $this->firstname) . ' '
-			. ($this->lastname == null ? '': $this->lastname) . ' '
-			. ($this->position == null ? '': $this->position) . ' '
-			. ($this->company == null ? '': $this->company));
+		return self::normalizeForSearch(implode(' ', [$this->firstname ?? '', $this->lastname ?? '', $this->position ?? '', $this->company ?? '']));
 	}
 
 	# taken from https://gist.github.com/lohic/d01c458e69be636c2365
@@ -35,9 +36,9 @@ class JsonUserDetails implements JsonSerializable {
 		// transform accent to html entities
 		$str = htmlentities($str, ENT_NOQUOTES, 'utf-8');
 		// replace html entities with non accentuated characters
-		$str = preg_replace('#&([A-za-z])(?:acute|grave|cedil|circ|orn|ring|slash|th|tilde|uml);#', '\1', $str);
+		$str = preg_replace('#&([A-Za-z])(?:acute|grave|cedil|circ|orn|ring|slash|th|tilde|uml);#', '\1', $str);
 		// replace ligature: Œ, Æ ...
-		$str = preg_replace('#&([A-za-z]{2})(?:lig);#', '\1', $str);
+		$str = preg_replace('#&([A-Za-z]{2})(?:lig);#', '\1', $str);
 		// delete the rest
 		// $str = preg_replace('#&[^;]+;#', '', $str);
 		return $str;

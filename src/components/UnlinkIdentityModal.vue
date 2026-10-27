@@ -88,8 +88,13 @@ export default {
 			this.unlinking = true
 			this.error = null
 			try {
-				const url = generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/identity`)
-				await axios.delete(url, { data: { revoke: this.revoke } })
+				if (this.isSelf) {
+					const url = generateOcsUrl('/apps/olvid/app/me/identity')
+					await axios.delete(url, { data: { revoke: this.revoke } })
+				} else {
+					const url = generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/identity`)
+					await axios.delete(url, { data: { revoke: this.revoke } })
+				}
 				this.$emit('unlinked', { revoke: this.revoke })
 			} catch (e) {
 				this.error = t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })

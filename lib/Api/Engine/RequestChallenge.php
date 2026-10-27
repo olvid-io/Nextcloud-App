@@ -9,6 +9,7 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
 use OCA\Olvid\Utils\RandomUtil;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
  * POST /olvid-rest/requestChallenge
@@ -25,6 +26,10 @@ use OCA\Olvid\Utils\RandomUtil;
 class RequestChallenge extends AbstractEngineApiHandler {
 	private const CACHE_TTL = 60;
 
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws \OCP\DB\Exception
+	 */
 	protected function handler(string $rawInput): BinaryResponse {
 		// parse request
 		try {
@@ -74,7 +79,7 @@ class RequestChallenge extends AbstractEngineApiHandler {
 			Encoded::encodeString($userId),
 			Encoded::encodeBytes($bytesChallenge),
 		]));
-		$this->cache->set($cacheKey, $cacheValue, self::CACHE_TTL);
+		$this->getCache()->set($cacheKey, $cacheValue, self::CACHE_TTL);
 
 		return $response;
 	}

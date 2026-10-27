@@ -39,7 +39,7 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 
 		// check if this identity have not been revoked
 		$revocations = $this->context->db->revocation->getByTypeAndBytesIdentityOrNull($bytesIdentity, JsonRevocationData::REVOCATION_TYPE_REVOKE_ID);
-		if ($revocations !== null && count($revocations) > 0) {
+		if (count($revocations) > 0) {
 			$this->logger->warning('putKey: rejected for user: ' . $nextcloudUser->getUID() . ', revocation date: ' . $revocations[0]->getTimestamp());
 			return self::identityWasRevoked();
 		}

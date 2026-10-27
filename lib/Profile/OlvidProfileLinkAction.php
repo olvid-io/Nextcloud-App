@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Profile;
 
+use Exception;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Db\OlvidUserMapper;
 use OCP\IL10N;
@@ -22,8 +23,12 @@ class OlvidProfileLinkAction implements ILinkAction {
 	}
 
 	public function preload(IUser $targetUser): void {
-		$olvidUser = $this->olvidUserMapper->getByUserIdOrNull($targetUser->getUID());
-		$this->hasIdentity = $olvidUser?->hasIdentity() ?? false;
+		try {
+			$olvidUser = $this->olvidUserMapper->getByUserIdOrNull($targetUser->getUID());
+			$this->hasIdentity = $olvidUser?->hasIdentity() ?? false;
+		} catch (Exception) {
+			$this->hasIdentity = false;
+		}
 	}
 
 	public function getAppId(): string {

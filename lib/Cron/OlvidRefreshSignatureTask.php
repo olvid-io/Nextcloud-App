@@ -41,7 +41,7 @@ class OlvidRefreshSignatureTask {
 				$this->logger->error('OlvidRefreshSignatureTask: refreshUserSignature: cannot update user details in db', ['exception' => $e]);
 			}
 		}
-		$this->logger->info("OlvidRefreshSignatureTask: refreshUserSignature: refreshed ${count} user signatures");
+		$this->logger->info("OlvidRefreshSignatureTask: refreshUserSignature: refreshed $count user signatures");
 	}
 
 	/**
@@ -65,6 +65,6 @@ class OlvidRefreshSignatureTask {
 				$this->logger->error('OlvidRefreshSignatureTask: refreshGroupsSignature: associated Nextcloud group not found');
 			}
 		}
-		$this->logger->info("OlvidRefreshSignatureTask: refreshGroupsSignature: refreshed ${count} group signatures");
+		$this->logger->info("OlvidRefreshSignatureTask: refreshGroupsSignature: refreshed $count group signatures");
 	}
 }

@@ -55,7 +55,6 @@
 import { getCurrentUser } from '@nextcloud/auth'
 import axios from '@nextcloud/axios'
 import { FilePickerClosed, getFilePickerBuilder } from '@nextcloud/dialogs'
-import '@nextcloud/dialogs/style.css'
 import { generateRemoteUrl } from '@nextcloud/router'
 import OlvidAvatar from './OlvidAvatar.vue'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'

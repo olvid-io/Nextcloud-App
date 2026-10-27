@@ -9,6 +9,7 @@ use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Crypto\ECSdsaVerifier;
 use OCA\Olvid\Http\BinaryResponse;
 use OCA\Olvid\Utils\Encoded;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
  * POST /olvid-rest/getSession
@@ -28,6 +29,10 @@ use OCA\Olvid\Utils\Encoded;
  * On success the response contains a bearer token JSON payload as an Encoded byte array.
  */
 class GetSession extends AbstractEngineApiHandler {
+	/**
+	 * @throws MultipleObjectsReturnedException
+	 * @throws \OCP\DB\Exception
+	 */
 	protected function handler(string $rawInput): BinaryResponse {
 		// parse request
 		try {
@@ -53,12 +58,12 @@ class GetSession extends AbstractEngineApiHandler {
 		// If the user did not exist at requestChallenge time the challenge was never
 		// stored, so we return permissionDenied to avoid leaking whether a userId exists.
 		$cacheKey = 'challenge-' . base64_encode($bytesNonce);
-		$cachedValue = $this->cache->get($cacheKey);
+		$cachedValue = $this->getCache()->get($cacheKey);
 		if ($cachedValue === null) {
 			$this->logger->error('getSession: challenge not found in cache');
 			return $this->permissionDenied();
 		}
-		$this->cache->remove($cacheKey);
+		$this->getCache()->remove($cacheKey);
 
 		// Decode cached {userId, challenge} pair
 		try {

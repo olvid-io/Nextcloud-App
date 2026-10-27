@@ -76,7 +76,7 @@ class OlvidGroupDeletionMapper extends QBMapper {
 		$deletionData->timestamp = $currentTimestamp;
 		$signedDeletionData = $context->signatory->sign($deletionData->jsonSerialize());
 
-		$groupDeletions = $this->getAllByBytesGroupUidOrNull($olvidGroup->getGroupId());
+		$groupDeletions = $this->getAllByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
 		// create a new deletion
 		if (sizeof($groupDeletions) === 0) {
 			$groupDeletion = OlvidGroupDeletion::create($olvidGroup->getBytesGroupUid(), $currentTimestamp, $signedDeletionData);

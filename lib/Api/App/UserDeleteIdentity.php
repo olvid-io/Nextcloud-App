@@ -10,6 +10,7 @@ use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use Psr\Log\LoggerInterface;
@@ -23,6 +24,7 @@ class UserDeleteIdentity {
 
 	/**
 	 * @throws \OCP\DB\Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
 	public function handle(string $userId, bool $revoke): DataResponse {
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);

@@ -94,11 +94,11 @@ class OlvidGroupKickedMapper extends QBMapper {
 		$kickData->timestamp = $currentTimestamp;
 		$signedKickData = $context->signatory->sign($kickData->jsonSerialize());
 
-		$groupKick = $this->getByBytesGroupUidAndUserIdOrNull($olvidGroup->getGroupId(), $userId);
+		$groupKick = $this->getByBytesGroupUidAndUserIdOrNull($olvidGroup->getBytesGroupUid(), $userId);
 
 		// create a new kick
 		if ($groupKick === null) {
-			$groupKick = OlvidGroupKicked::create($olvidGroup->getGroupId(), $userId, $currentTimestamp, $signedKickData);
+			$groupKick = OlvidGroupKicked::create($olvidGroup->getBytesGroupUid(), $userId, $currentTimestamp, $signedKickData);
 			return $this->insert($groupKick);
 		}
 		// update existing deletion

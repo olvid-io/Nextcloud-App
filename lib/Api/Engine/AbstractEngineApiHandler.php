@@ -12,6 +12,7 @@ use OCA\Olvid\Utils\Encoded;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Base class for binary Olvid Engine API endpoints.
@@ -30,15 +31,14 @@ abstract class AbstractEngineApiHandler {
 	protected const STATUS_PERMISSION_DENIED = "\x0e";
 	protected const STATUS_PARSING_ERROR = "\xfe";
 	protected const STATUS_GENERAL_ERROR = "\xff";
-	// cache is used to store session challenges in memory (no need to persist them)
-	protected readonly ICache $cache;
+	// cache is used to store session challenges (no need to persist them)
+	private ?ICache $cache = null;
 
 	public function __construct(
-		ICacheFactory $cacheFactory,
+		private readonly ICacheFactory $cacheFactory,
 		protected readonly LoggerInterface $logger,
 		protected readonly OlvidContext $context,
 	) {
-		$this->cache = $cacheFactory->createDistributed(Application::APP_ID);
 	}
 
 	/**
@@ -53,6 +53,31 @@ abstract class AbstractEngineApiHandler {
 			$this->logger->error(get_class($this) . ': unexpected exception', ['exception' => $exception]);
 			return $this->generalError();
 		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Session cache
+	// if a distributed cache is not available try to create in memory cache as a fallback
+	// -------------------------------------------------------------------------
+	protected function getCache(): ?ICache {
+		if ($this->cache !== null) {
+			return $this->cache;
+		}
+		try {
+			$this->cache = $this->cacheFactory->createDistributed(Application::APP_ID);
+			return $this->cache;
+		} catch (Throwable $exception) {
+			$this->logger->error(get_class($this) . ': cannot create distributed cache, fallback to memory cache', ['exception' => $exception]);
+		}
+		try {
+			$this->cache = $this->cacheFactory->createInMemory();
+			return $this->cache;
+		} catch (Throwable $exception) {
+			$this->logger->error(get_class($this) . ': cannot create memory cache, fallback to local cache', ['exception' => $exception]);
+		}
+
+		$this->cache = $this->cacheFactory->createLocal();
+		return $this->cache;
 	}
 
 	abstract protected function handler(string $rawInput): BinaryResponse;

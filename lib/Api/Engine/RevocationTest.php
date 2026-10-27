@@ -29,9 +29,13 @@ class RevocationTest extends AbstractEngineApiHandler {
 		// parse request
 		try {
 			$json = json_decode($rawInput, true);
-			$nonce = $json[Constants::REVOCATION_TEST_REQUEST_NONCE] ?? null;
-			if ($nonce === null) {
+			$base64_nonce = $json[Constants::REVOCATION_TEST_REQUEST_NONCE] ?? null;
+			if ($base64_nonce === null) {
 				throw new Exception('Missing nonce field');
+			}
+			$nonce = base64_decode($base64_nonce, true);
+			if ($nonce === false) {
+				throw new Exception('Cannot decode nonce field');
 			}
 		} catch (Exception $e) {
 			$this->logger->warning('revocationTest: parse error: ', ['exception' => $e]);

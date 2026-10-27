@@ -93,11 +93,11 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : null;
 
 		// list every revocation since timestamp passed in request
-		$signedRevocations = $this->context->db->revocation->getSinceTimestampOrNull($timestamp);
+		$signedRevocations = $this->context->db->revocation->getSinceTimestamp($timestamp);
 
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) {
 			return $revocation->getSignedRevocation();
-		}, $signedRevocations ?? []);
+		}, $signedRevocations);
 		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS]) !== 0 ? $response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] : null;
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;

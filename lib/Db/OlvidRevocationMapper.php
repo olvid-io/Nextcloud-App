@@ -71,50 +71,38 @@ class OlvidRevocationMapper extends QBMapper {
 
 	/**
 	 * @return ?OlvidRevocation[]
+	 * @throws \OCP\DB\Exception
 	 */
-	public function getSinceTimestampOrNull(int $timestamp): ?array {
-		try {
-			$qb = $this->db->getQueryBuilder();
-			$qb->select('*')->from($this->getTableName())
-				->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
-			return $this->findEntities($qb);
-		} catch (Exception $e) {
-			$this->logger->error('getSinceTimestampOrNull', ['exception' => $e]);
-			return null;
-		}
+	public function getSinceTimestamp(int $timestamp): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
+		return $this->findEntities($qb);
 	}
 
 	/**
-	 * @return ?OlvidRevocation[]
+	 * @return OlvidRevocation[]
+	 * @throws \OCP\DB\Exception
 	 */
-	public function getUserRevocationsSinceTimestampOrNull(string $userId, int $timestamp): ?array {
-		try {
-			$qb = $this->db->getQueryBuilder();
-			$qb->select('*')->from($this->getTableName())
-				->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)))
-				->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
-			return $this->findEntities($qb);
-		} catch (Exception $e) {
-			$this->logger->error('getUserRevocationsSinceTimestampOrNull', ['exception' => $e]);
-			return null;
-		}
+	public function getUserRevocationsSinceTimestampOrNull(string $userId, int $timestamp): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)))
+			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
+		return $this->findEntities($qb);
 	}
 
 	/**
 	 * Search revocations by type for a given identity.
-	 * @return ?OlvidRevocation[]
+	 * @return OlvidRevocation[]
+	 * @throws \OCP\DB\Exception
 	 */
-	public function getByTypeAndBytesIdentityOrNull(string $bytesIdentity, int $revocationType): ?array {
-		try {
-			$qb = $this->db->getQueryBuilder();
-			$qb->select('*')->from($this->getTableName())
-				->where($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BLOB)))
-				->andWhere($qb->expr()->eq('revocation_type', $qb->createNamedParameter($revocationType, Types::INTEGER)));
-			return $this->findEntities($qb);
-		} catch (Exception $e) {
-			$this->logger->error('findRevokeByIdentityOrNull', ['exception' => $e]);
-			return null;
-		}
+	public function getByTypeAndBytesIdentityOrNull(string $bytesIdentity, int $revocationType): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BINARY)))
+			->andWhere($qb->expr()->eq('revocation_type', $qb->createNamedParameter($revocationType, Types::INTEGER)));
+		return $this->findEntities($qb);
 	}
 
 	/**

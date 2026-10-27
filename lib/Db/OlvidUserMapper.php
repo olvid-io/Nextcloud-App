@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Db;
 
+use OCA\Olvid\Models\JsonUserDetails;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -44,24 +45,26 @@ class OlvidUserMapper extends QBMapper {
 	 * @throws Exception
 	 */
 	public function getUsersById(array $userIds): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->in('user_id', $qb->createNamedParameter($userIds, IQueryBuilder::PARAM_STR_ARRAY)));
-		return $this->findEntities($qb);
+		$users = [];
+		foreach (array_chunk($userIds, 900) as $chunk) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('*')->from($this->getTableName())
+				->where($qb->expr()->in('user_id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_STR_ARRAY)));
+			array_push($users, ...$this->findEntities($qb));
+		}
+		return $users;
 	}
 
 	/**
 	 * @param string $userId
 	 * @return ?OlvidUser
+	 * @throws MultipleObjectsReturnedException|Exception
 	 */
 	public function getByUserIdOrNull(string $userId): ?OlvidUser {
 		try {
 			return $this->getByUserId($userId);
 		} catch (DoesNotExistException) {
 			return null;
-		} catch (MultipleObjectsReturnedException|Exception $e) {
-			$this->logger->error('OlvidUserMapper: getByUserIdOrNull: unexpected exception', ['exception' => $e]);
-			return OlvidUser::create($userId, '');
 		}
 	}
 
@@ -69,14 +72,13 @@ class OlvidUserMapper extends QBMapper {
 	 * @param string $userId
 	 * @param string $nextcloudDisplayName
 	 * @return OlvidUser
+	 * @throws Exception|MultipleObjectsReturnedException
 	 */
 	public function getOrCreate(string $userId, string $nextcloudDisplayName): OlvidUser {
 		try {
-			$user = $this->getByUserIdOrNull($userId);
-			return $user === null ? $this->insert(OlvidUser::create($userId, $nextcloudDisplayName)) : $user;
-		} catch (Exception $e) {
-			$this->logger->error('OlvidUserMapper: getOrCreate: unexpected exception', ['exception' => $e]);
-			return OlvidUser::create($userId, $nextcloudDisplayName);
+			return $this->getByUserId($userId);
+		} catch (DoesNotExistException) {
+			return $this->insert(OlvidUser::create($userId, $nextcloudDisplayName));
 		}
 	}
 
@@ -85,12 +87,14 @@ class OlvidUserMapper extends QBMapper {
 	 * @return OlvidUser[]
 	 * @throws Exception
 	 */
-	public function searchEnabledUsers(array $filters): array {
+	public function searchEnabledUsers(array $filters, int|null $limit = null): array {
 		$qb = $this->db->getQueryBuilder()->select('*')->from($this->getTableName());
 		$qb = $qb->where($qb->expr()->isNotNull('bytes_identity'));
 		foreach ($filters as $filter) {
-			$qb = $qb->andWhere($qb->expr()->like('full_search_field', $qb->createNamedParameter('%' . strtolower($filter) . '%', Types::STRING)));
+			$preparedFilter = $this->db->escapeLikeParameter(JsonUserDetails::normalizeForSearch($filter));
+			$qb = $qb->andWhere($qb->expr()->like('full_search_field', $qb->createNamedParameter('%' . $preparedFilter . '%', Types::STRING)));
 		}
+		$qb->setMaxResults($limit);
 		return $this->findEntities($qb);
 	}
 

@@ -573,6 +573,20 @@ class AppApiController extends OCSController {
 		return $this->userGetMagicLink->handle($nextcloudUser);
 	}
 
+	/**
+	 * Unlinks the Olvid identity of a specific user
+	 * When $revoke is true the identity is also permanently blocked for all contacts
+	 *
+	 * @param string $userId User ID (URL path)
+	 * @param bool $revoke Permanently revoke the identity (irreversible)
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
+	 * @throws \OCP\DB\Exception
+	 * @noinspection PhpUnused
+	 */
+	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}/identity')]
+	public function usersIdentityDelete(string $userId, bool $revoke = false): DataResponse {
+		return $this->userDeleteIdentity->handle($userId, $revoke);
+	}
 
 	/**
 	 * Searches for users by display name or uid. Returns up to 20 results
@@ -581,7 +595,6 @@ class AppApiController extends OCSController {
 	 * @return DataResponse<Http::STATUS_OK, array{users: list<OlvidUser>}, array{}>
 	 * @noinspection PhpUnused
 	 */
-	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/users/search')]
 	public function usersSearch(string $query = ''): DataResponse {
 		$nextcloudUsers = $this->context->nextcloud->userManager->search($query, 20);
@@ -595,22 +608,6 @@ class AppApiController extends OCSController {
 			];
 		}
 		return new DataResponse(['users' => $result]);
-	}
-
-	/**
-	 * Unlinks the Olvid identity of a specific user
-	 * When $revoke is true the identity is also permanently blocked for all contacts
-	 *
-	 * @param string $userId User ID (URL path)
-	 * @param bool $revoke Permanently revoke the identity (irreversible)
-	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
-	 * @throws \OCP\DB\Exception
-	 * @noinspection PhpUnused
-	 */
-	#[NoAdminRequired]
-	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}/identity')]
-	public function usersIdentityDelete(string $userId, bool $revoke = false): DataResponse {
-		return $this->userDeleteIdentity->handle($userId, $revoke);
 	}
 
 	// ── Misc endpoints (admin only) ───────────────────────────────
