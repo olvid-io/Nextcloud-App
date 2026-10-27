@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Db;
 
-use Exception;
 use OCA\Olvid\Models\JsonRevocationData;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\Exception;
 use OCP\DB\Types;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -27,7 +27,7 @@ class OlvidRevocationMapper extends QBMapper {
 	}
 
 	/** @return OlvidRevocation[]
-	 * @throws \OCP\DB\Exception
+	 * @throws Exception
 	 */
 	public function getAll(): array {
 		$qb = $this->db->getQueryBuilder();
@@ -36,7 +36,7 @@ class OlvidRevocationMapper extends QBMapper {
 	}
 
 	/**
-	 * @throws \OCP\DB\Exception
+	 * @throws Exception
 	 */
 	public function deleteAll(): void {
 		$qb = $this->db->getQueryBuilder();
@@ -53,7 +53,7 @@ class OlvidRevocationMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)))
-			->andWhere($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BLOB)));
+			->andWhere($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BINARY)));
 		return $this->findEntity($qb);
 	}
 
@@ -70,8 +70,8 @@ class OlvidRevocationMapper extends QBMapper {
 	}
 
 	/**
-	 * @return ?OlvidRevocation[]
-	 * @throws \OCP\DB\Exception
+	 * @return OlvidRevocation[]
+	 * @throws Exception
 	 */
 	public function getSinceTimestamp(int $timestamp): array {
 		$qb = $this->db->getQueryBuilder();
@@ -82,9 +82,9 @@ class OlvidRevocationMapper extends QBMapper {
 
 	/**
 	 * @return OlvidRevocation[]
-	 * @throws \OCP\DB\Exception
+	 * @throws Exception
 	 */
-	public function getUserRevocationsSinceTimestampOrNull(string $userId, int $timestamp): array {
+	public function getUserRevocationsSinceTimestamp(string $userId, int $timestamp): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->gte('timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)))
@@ -95,9 +95,9 @@ class OlvidRevocationMapper extends QBMapper {
 	/**
 	 * Search revocations by type for a given identity.
 	 * @return OlvidRevocation[]
-	 * @throws \OCP\DB\Exception
+	 * @throws Exception
 	 */
-	public function getByTypeAndBytesIdentityOrNull(string $bytesIdentity, int $revocationType): array {
+	public function getByTypeAndBytesIdentity(string $bytesIdentity, int $revocationType): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
 			->where($qb->expr()->eq('bytes_identity', $qb->createNamedParameter($bytesIdentity, Types::BINARY)))
@@ -106,7 +106,7 @@ class OlvidRevocationMapper extends QBMapper {
 	}
 
 	/**
-	 * @throws \OCP\DB\Exception
+	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function computeAndSaveRevocation(string $userId, string $bytesIdentity, int $revocationType, OlvidContext $context): OlvidRevocation {
@@ -129,12 +129,25 @@ class OlvidRevocationMapper extends QBMapper {
 				$signedRevocationData,
 				$currentTimestamp,
 			);
-			return $this->insert($revocation);
-		} else {
-			$revocation->setRevocationType($revocationType);
-			$revocation->setTimestamp($currentTimestamp);
-			$revocation->setSignedRevocation($signedRevocationData);
-			return $this->update($revocation);
+			try {
+				return $this->insert($revocation);
+			} catch (Exception $e) {
+				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+					throw $e;
+				}
+				// a concurrent request inserted it first: read the committed row
+				$revocation = $this->getByUserIdAndBytesIdentityOrNull($userId, $bytesIdentity);
+				if ($revocation === null) {
+					// the row was inserted concurrently, then deleted before we could read it
+					throw new Exception('OlvidRevocationMapper: computeAndSaveRevocation ' . $userId . ' was deleted concurrently', 0, $e);
+				}
+			}
 		}
+
+		// else update existing revocation
+		$revocation->setRevocationType($revocationType);
+		$revocation->setTimestamp($currentTimestamp);
+		$revocation->setSignedRevocation($signedRevocationData);
+		return $this->update($revocation);
 	}
 }

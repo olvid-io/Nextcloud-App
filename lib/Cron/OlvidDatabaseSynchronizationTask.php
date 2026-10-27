@@ -133,9 +133,14 @@ class OlvidDatabaseSynchronizationTask {
 	}
 
 	private function syncAndValidateOlvidGroups(): void {
-		// retrieve groups from olvid and nextcloud
-		$allOlvidGroups = $this->context->db->group->getAll();
 		$allNextcloudGroups = $this->context->nextcloud->groupManager->search('');
+		try {
+			// retrieve groups from olvid and nextcloud
+			$allOlvidGroups = $this->context->db->group->getAll();
+		} catch (Exception $e) {
+			$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidGroups: cannot load db data', ['exception' => $e]);
+			return;
+		}
 
 		/*
 		 * Check all Olvid groups have an associated nextcloud group, or delete it
@@ -216,9 +221,14 @@ class OlvidDatabaseSynchronizationTask {
 	}
 
 	private function syncAndValidateOlvidData(): void {
-		$allOlvidData = $this->context->db->data->getAll();
-		$olvidGroupsWithPhoto = $this->context->db->group->getGroupsWithPhoto();
-		$olvidGroupByDataUidMap = array_combine(array_map(function ($group) { return $group->getBytesGroupPhotoUid(); }, $olvidGroupsWithPhoto), $olvidGroupsWithPhoto);
+		try {
+			$allOlvidData = $this->context->db->data->getAll();
+			$olvidGroupsWithPhoto = $this->context->db->group->getGroupsWithPhoto();
+			$olvidGroupByDataUidMap = array_combine(array_map(function ($group) { return $group->getBytesGroupPhotoUid(); }, $olvidGroupsWithPhoto), $olvidGroupsWithPhoto);
+		} catch (Exception $e) {
+			$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidData: cannot load db data', ['exception' => $e]);
+			return;
+		}
 
 		foreach ($allOlvidData as $olvidData) {
 			if (!array_key_exists($olvidData->getBytesDataUid(), $olvidGroupByDataUidMap)) {

@@ -78,7 +78,20 @@ class OlvidUserMapper extends QBMapper {
 		try {
 			return $this->getByUserId($userId);
 		} catch (DoesNotExistException) {
-			return $this->insert(OlvidUser::create($userId, $nextcloudDisplayName));
+			try {
+				return $this->insert(OlvidUser::create($userId, $nextcloudDisplayName));
+			} catch (Exception $e) {
+				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+					throw $e;
+				}
+				// a concurrent request inserted it first: read the committed row
+				try {
+					return $this->getByUserId($userId);
+				} catch (DoesNotExistException) {
+					// the row was inserted concurrently, then deleted before we could read it
+					throw new Exception('OlvidUser: getOrCreate: ' . $userId . ' was deleted concurrently', 0, $e);
+				}
+			}
 		}
 	}
 
@@ -87,7 +100,7 @@ class OlvidUserMapper extends QBMapper {
 	 * @return OlvidUser[]
 	 * @throws Exception
 	 */
-	public function searchEnabledUsers(array $filters, int|null $limit = null): array {
+	public function searchEnabledUsers(array $filters, ?int $limit = null): array {
 		$qb = $this->db->getQueryBuilder()->select('*')->from($this->getTableName());
 		$qb = $qb->where($qb->expr()->isNotNull('bytes_identity'));
 		foreach ($filters as $filter) {
@@ -106,7 +119,7 @@ class OlvidUserMapper extends QBMapper {
 	public function listRegisteredUsersSince(int $timestamp): array {
 		$qb = $this->db->getQueryBuilder()->select('*')->from($this->getTableName());
 		$qb = $qb->where($qb->expr()->isNotNull('bytes_identity'))
-			->andWhere($qb->expr()->gt('registration_timestamp', $qb->createNamedParameter($timestamp, Types::INTEGER)));
+			->andWhere($qb->expr()->gt('registration_timestamp', $qb->createNamedParameter($timestamp, Types::BIGINT)));
 		return $this->findEntities($qb);
 	}
 

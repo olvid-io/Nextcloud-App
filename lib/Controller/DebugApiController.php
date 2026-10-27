@@ -205,6 +205,7 @@ class DebugApiController extends OCSController {
 
 	/**
 	 * @throws \OCP\DB\Exception
+	 * @throws MultipleObjectsReturnedException
 	 * @noinspection PhpUnused
 	 */
 	#[NoCSRFRequired]

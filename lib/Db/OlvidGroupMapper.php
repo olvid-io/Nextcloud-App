@@ -51,6 +51,34 @@ class OlvidGroupMapper extends QBMapper {
 	}
 
 	/**
+	 * @param string $groupId
+	 * @param string $nextcloudDisplayName
+	 * @return OlvidGroup
+	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function getOrCreate(string $groupId, string $nextcloudDisplayName): OlvidGroup {
+		try {
+			return $this->getByGroupId($groupId);
+		} catch (DoesNotExistException) {
+			try {
+				return $this->insert(OlvidGroup::create($groupId, $nextcloudDisplayName));
+			} catch (Exception $e) {
+				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+					throw $e;
+				}
+				// a concurrent request inserted it first: read the committed row
+				try {
+					return $this->getByGroupId($groupId);
+				} catch (DoesNotExistException) {
+					// the row was inserted concurrently, then deleted before we could read it
+					throw new Exception('OlvidGroupMapper: getOrCreate: ' . $groupId . ' was deleted concurrently', 0, $e);
+				}
+			}
+		}
+	}
+
+	/**
 	 * @return OlvidGroup[]
 	 * @throws Exception
 	 */
@@ -94,8 +122,10 @@ class OlvidGroupMapper extends QBMapper {
 				$dataMapper = new OlvidDataMapper($this->db);
 				$olvidData = $dataMapper->getByUid($entity->getBytesGroupPhotoUid());
 				$dataMapper->delete($olvidData);
-			} catch (DoesNotExistException|MultipleObjectsReturnedException|Exception) {
-				$this->logger->error('OlvidGroupMapper::delete cannot delete associated data');
+			} catch (MultipleObjectsReturnedException|Exception $e) {
+				$this->logger->error('OlvidGroupMapper::delete cannot delete associated data', ['exception' => $e]);
+			} catch (DoesNotExistException) {
+				// ignore
 			}
 		}
 		return $entity;

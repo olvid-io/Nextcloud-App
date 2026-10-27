@@ -7,6 +7,7 @@ namespace OCA\Olvid\Db;
 use OCA\Olvid\Models\JsonGroupDeletionData;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
@@ -40,14 +41,19 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	}
 
 	/**
-	 * @return OlvidGroupDeletion[]
+	 * @return ?OlvidGroupDeletion
 	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
-	public function getAllByBytesGroupUidOrNull(string $bytesGroupUid): array {
+	public function getByBytesGroupUidOrNull(string $bytesGroupUid): ?OlvidGroupDeletion {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BLOB)));
-		return $this->findEntities($qb);
+			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BINARY)));
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException) {
+			return null;
+		}
 	}
 
 	/** @return OlvidGroupDeletion[]
@@ -76,24 +82,28 @@ class OlvidGroupDeletionMapper extends QBMapper {
 		$deletionData->timestamp = $currentTimestamp;
 		$signedDeletionData = $context->signatory->sign($deletionData->jsonSerialize());
 
-		$groupDeletions = $this->getAllByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
+		$groupDeletion = $this->getByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
 		// create a new deletion
-		if (sizeof($groupDeletions) === 0) {
+		if ($groupDeletion === null) {
 			$groupDeletion = OlvidGroupDeletion::create($olvidGroup->getBytesGroupUid(), $currentTimestamp, $signedDeletionData);
-			return $this->insert($groupDeletion);
-		}
-		// update existing deletion
-		else {
-			// safeguard: delete any extra group deletion
-			if (sizeof($groupDeletions) > 1) {
-				for ($i = 1; $i < sizeof($groupDeletions); $i++) {
-					$this->delete($groupDeletions[$i]);
+			try {
+				return $this->insert($groupDeletion);
+			} catch (Exception $e) {
+				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+					throw $e;
+				}
+				// a concurrent request inserted it first: read the committed row
+				$groupDeletion = $this->getByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
+				if ($groupDeletion === null) {
+					// the row was inserted concurrently, then deleted before we could read it
+					throw new Exception('OlvidGroupDeletion: computeAndSaveGroupDeletion ' . $olvidGroup->getGroupId() . ' was deleted concurrently', 0, $e);
 				}
 			}
-			$groupDeletion = $groupDeletions[0];
-			$groupDeletion->setSignedDeletion($signedDeletionData);
-			$groupDeletion->setTimestamp($currentTimestamp);
-			return $this->update($groupDeletion);
 		}
+
+		// else update existing deletion
+		$groupDeletion->setSignedDeletion($signedDeletionData);
+		$groupDeletion->setTimestamp($currentTimestamp);
+		return $this->update($groupDeletion);
 	}
 }

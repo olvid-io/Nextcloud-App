@@ -55,7 +55,7 @@ class OlvidDataMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('bytes_data_uid', $qb->createNamedParameter($bytesDataUid, Types::BLOB)));
+			->where($qb->expr()->eq('bytes_data_uid', $qb->createNamedParameter($bytesDataUid, Types::BINARY)));
 		return $this->findEntity($qb);
 	}
 

@@ -85,12 +85,12 @@ class OlvidUser extends Entity {
 		$this->addType('sessionRevokedBefore', Types::BIGINT);
 		$this->addType('registrationTimestamp', Types::BIGINT);
 		$this->addType('lastConnectionTimestamp', Types::BIGINT);
-		$this->addType('signedDetails', Types::STRING);
+		$this->addType('signedDetails', Types::TEXT);
 		$this->addType('firstname', Types::STRING);
 		$this->addType('lastname', Types::STRING);
 		$this->addType('position', Types::STRING);
 		$this->addType('company', Types::STRING);
-		$this->addType('fullSearchField', Types::STRING);
+		$this->addType('fullSearchField', Types::TEXT);
 	}
 
 	public static function create(string $userId, ?string $nextcloudDisplayName): OlvidUser {

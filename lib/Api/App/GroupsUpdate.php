@@ -46,10 +46,7 @@ class GroupsUpdate {
 			}
 
 			// get or create OlvidGroup entity in database
-			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
-			if ($olvidGroup === null) {
-				$olvidGroup = $this->context->db->group->insert(OlvidGroup::create($groupId, $displayName));
-			}
+			$olvidGroup = $this->context->db->group->getOrCreate($groupId, $displayName);
 
 			$updated = false;
 			if ($enabled !== null && $enabled !== $olvidGroup->getEnabled()) {
@@ -77,8 +74,8 @@ class GroupsUpdate {
 			if ($enableStatusChanged) {
 				// group have been enabled, remove any GroupDeletion in database
 				if ($olvidGroup->getEnabled()) {
-					$groupDeletions = $this->context->db->groupDeletion->getAllByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
-					foreach ($groupDeletions as $groupDeletion) {
+					$groupDeletion = $this->context->db->groupDeletion->getByBytesGroupUidOrNull($olvidGroup->getBytesGroupUid());
+					if ($groupDeletion !== null) {
 						$this->context->db->groupDeletion->delete($groupDeletion);
 					}
 

@@ -112,11 +112,13 @@ class OlvidServerSynchronizationTask {
 			}
 			// remove api key for users with an unknown api key
 			foreach ($unknownApiKeys as $unknownApiKey) {
-				$apiKeyToUserMap[$unknownApiKey]?->setApiKey(null);
-				try {
-					$this->context->db->user->update($apiKeyToUserMap[$unknownApiKey]);
-				} catch (Exception $e) {
-					$this->logger->error('OlvidServerSynchronizationTask: cannot update user api key in database', ['exception' => $e]);
+				if (array_key_exists($unknownApiKey, $apiKeyToUserMap) && $apiKeyToUserMap[$unknownApiKey] !== null) {
+					$apiKeyToUserMap[$unknownApiKey]->setApiKey(null);
+					try {
+						$this->context->db->user->update($apiKeyToUserMap[$unknownApiKey]);
+					} catch (Exception $e) {
+						$this->logger->error('OlvidServerSynchronizationTask: cannot update user api key in database', ['exception' => $e]);
+					}
 				}
 			}
 		}
@@ -139,11 +141,13 @@ class OlvidServerSynchronizationTask {
 			}
 			// revoke push topic for groups with an unknown push topic
 			foreach ($unknownPushTopics as $unknownPushTopic) {
-				try {
-					$pushTopicsToGroupMap[$unknownPushTopic]?->setPushTopic(null);
-					$this->context->db->group->update($pushTopicsToGroupMap[$unknownPushTopic]);
-				} catch (Exception $e) {
-					$this->logger->error('OlvidServerSynchronizationTask: cannot update group push topic in database', ['exception' => $e]);
+				if (array_key_exists($unknownPushTopic, $pushTopicsToGroupMap) && $pushTopicsToGroupMap[$unknownPushTopic] !== null) {
+					try {
+						$pushTopicsToGroupMap[$unknownPushTopic]->setPushTopic(null);
+						$this->context->db->group->update($pushTopicsToGroupMap[$unknownPushTopic]);
+					} catch (Exception $e) {
+						$this->logger->error('OlvidServerSynchronizationTask: cannot update group push topic in database', ['exception' => $e]);
+					}
 				}
 			}
 		}

@@ -48,7 +48,7 @@ class OlvidGroupKickedMapper extends QBMapper {
 	private function getByBytesGroupUidAndUserId(string $bytesGroupUid, string $userId): ?OlvidGroupKicked {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')->from($this->getTableName())
-			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BLOB)))
+			->where($qb->expr()->eq('bytes_group_uid', $qb->createNamedParameter($bytesGroupUid, Types::BINARY)))
 			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, Types::STRING)));
 		return $this->findEntity($qb);
 	}
@@ -99,13 +99,24 @@ class OlvidGroupKickedMapper extends QBMapper {
 		// create a new kick
 		if ($groupKick === null) {
 			$groupKick = OlvidGroupKicked::create($olvidGroup->getBytesGroupUid(), $userId, $currentTimestamp, $signedKickData);
-			return $this->insert($groupKick);
+			try {
+				return $this->insert($groupKick);
+			} catch (Exception $e) {
+				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+					throw $e;
+				}
+				// a concurrent request inserted it first: read the committed row
+				$groupKick = $this->getByBytesGroupUidAndUserIdOrNull($olvidGroup->getBytesGroupUid(), $userId);
+				if ($groupKick === null) {
+					// the row was inserted concurrently, then deleted before we could read it
+					throw new Exception('OlvidGroupKicked: computeAndSaveGroupKick ' . $olvidGroup->getGroupId() . ' / ' . $userId . ' was deleted concurrently', 0, $e);
+				}
+			}
 		}
-		// update existing deletion
-		else {
-			$groupKick->setSignedKick($signedKickData);
-			$groupKick->setTimestamp($currentTimestamp);
-			return $this->update($groupKick);
-		}
+
+		// else update existing kick
+		$groupKick->setSignedKick($signedKickData);
+		$groupKick->setTimestamp($currentTimestamp);
+		return $this->update($groupKick);
 	}
 }

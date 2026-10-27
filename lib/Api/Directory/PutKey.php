@@ -25,20 +25,28 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
 			$base64Identity = isset($jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY]) ? (string)$jsonParameters[Constants::PUT_KEY_REQUEST_IDENTITY] : null;
+			if (!$base64Identity) {
+				$this->logger->error('putKey: identity not set');
+				return $this->invalidRequest();
+			}
+			$bytesIdentity = base64_decode($base64Identity, true);
+			if ($bytesIdentity === false) {
+				$this->logger->error('putKey: cannot decode base64 identity');
+				return $this->invalidRequest();
+			}
+			// check database field constraint are respected
+			if (strlen($bytesIdentity) > 1024) {
+				$this->logger->error('putKey: identity is too long');
+				return $this->invalidRequest();
+			}
+			// TODO: also check that identity is a valid Olvid identity
 		} catch (Exception $e) {
 			$this->logger->warning('putKey: parse error: ', ['exception' => $e]);
 			return $this->invalidRequest();
 		}
 
-		if (!$base64Identity) {
-			$this->logger->error('putKey: identity not set');
-			return $this->invalidRequest();
-		}
-		// TODO: also check that identity is a valid Olvid identity
-		$bytesIdentity = base64_decode($base64Identity);
-
 		// check if this identity have not been revoked
-		$revocations = $this->context->db->revocation->getByTypeAndBytesIdentityOrNull($bytesIdentity, JsonRevocationData::REVOCATION_TYPE_REVOKE_ID);
+		$revocations = $this->context->db->revocation->getByTypeAndBytesIdentity($bytesIdentity, JsonRevocationData::REVOCATION_TYPE_REVOKE_ID);
 		if (count($revocations) > 0) {
 			$this->logger->warning('putKey: rejected for user: ' . $nextcloudUser->getUID() . ', revocation date: ' . $revocations[0]->getTimestamp());
 			return self::identityWasRevoked();
@@ -52,10 +60,10 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 			return $this->invalidRequest();
 		}
 
-		// create Olvid user if it does not exist
-		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
-
 		try {
+			// create Olvid user if it does not exist
+			$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
+
 			$base64PreviousIdentity = base64_encode($olvidUser->getBytesIdentity() ?? '');
 
 			// no identity already registered

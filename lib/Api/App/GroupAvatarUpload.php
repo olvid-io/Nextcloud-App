@@ -6,7 +6,6 @@ namespace OCA\Olvid\Api\App;
 
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Db\OlvidData;
-use OCA\Olvid\Db\OlvidGroup;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Encoded;
 use OCA\Olvid\Utils\RandomUtil;
@@ -85,24 +84,10 @@ class GroupAvatarUpload {
 
 		try {
 			// Get-or-create OlvidGroup and update group_photo_uid
-			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($groupId);
-			// create a new minimal olvid group entity, might be updated properly on group updates
-			if ($olvidGroup === null) {
-				$olvidGroup = OlvidGroup::create($groupId, $displayName);
-				$olvidGroup->setSignedGroupBlob(null);
-				$olvidGroup->setBytesGroupPhotoUid($photoUid);
-				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-				$this->context->db->group->insert($olvidGroup);
-			} else {
-				// delete previous data if necessary
-				if ($olvidGroup->getBytesGroupPhotoUid()) {
-					$previousOlvidData = $this->context->db->data->getByUidOrNull($olvidGroup->getBytesGroupPhotoUid());
-					$this->context->db->data->delete($previousOlvidData);
-				}
-				$olvidGroup->setBytesGroupPhotoUid($photoUid);
-				$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-				$this->context->db->group->update($olvidGroup);
-			}
+			$olvidGroup = $this->context->db->group->getOrCreate($groupId, $displayName);
+
+			$previousGroupPhotoUid = $olvidGroup->getBytesGroupPhotoUid();
+			$olvidGroup->setBytesGroupPhotoUid($photoUid);
 
 			// re-compute Olvid blob
 			$jsonGroupBlob = $olvidGroup->computeBlob($memberUserIds, $this->context);
@@ -118,6 +103,18 @@ class GroupAvatarUpload {
 				} else {
 					$this->logger->warning('GroupAvatarUpload: no push topic to notify group members');
 				}
+			}
+
+			// delete previous group photo
+			try {
+				if ($previousGroupPhotoUid !== null) {
+					$previousOlvidData = $this->context->db->data->getByUidOrNull($previousGroupPhotoUid);
+					if ($previousOlvidData !== null) {
+						$this->context->db->data->delete($previousOlvidData);
+					}
+				}
+			} catch (Exception|MultipleObjectsReturnedException $e) {
+				$this->logger->warning('GroupAvatarUpload: cannot delete previous photo', ['exception' => $e]);
 			}
 		} catch (Exception|MultipleObjectsReturnedException $e) {
 			$this->logger->error('GroupAvatarUpload: DB error', ['exception' => $e]);
