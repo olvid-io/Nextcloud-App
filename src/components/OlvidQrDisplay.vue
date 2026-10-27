@@ -98,7 +98,7 @@ export default {
 
 		openWithOlvid() {
 			if (this.configurationUrl) {
-				window.open('olvid://' + this.configurationUrl)
+				window.open(this.configurationUrl.replace(/^https:\/\//, 'olvid://'))
 			}
 		},
 
