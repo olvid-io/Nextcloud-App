@@ -12,6 +12,7 @@ class JsonField {
 		public readonly string $key,
 		public readonly bool $isBytes = false,
 		// for object fields specify associated class
+		/** @var class-string|null */
 		public readonly ?string $class = null,
 		public readonly bool $isArray = false,
 		// exclude this attribute from json fields

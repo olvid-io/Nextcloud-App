@@ -16,7 +16,6 @@ use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception;
 use OCP\DB\Types;
-use OCP\IUser;
 use ReflectionException;
 
 /**

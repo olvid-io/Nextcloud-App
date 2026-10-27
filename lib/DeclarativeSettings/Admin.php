@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace OCA\Olvid\Settings;
-
 namespace OCA\Olvid\DeclarativeSettings;
 
 use OCA\Olvid\Api\Constants;
@@ -34,7 +32,6 @@ class Admin implements IDeclarativeSettingsForm {
 					'title' => $this->l->t('Olvid Server url'),
 					'description' => $this->l->t('Olvid distribution server url.'),
 					'type' => DeclarativeSettingsTypes::URL,
-					'options' => '',
 					'default' => Constants::DEFAULT_OLVID_SERVER,
 					'placeholder' => '',
 				],
@@ -43,7 +40,6 @@ class Admin implements IDeclarativeSettingsForm {
 					'title' => $this->l->t('Olvid Server Api Key'),
 					'description' => $this->l->t('Api Key used to communicate with your Olvid distribution server. Send us an email to get one: contact@olvid.io'),
 					'type' => DeclarativeSettingsTypes::PASSWORD,
-					'options' => '',
 					'default' => '',
 					'placeholder' => '',
 				]

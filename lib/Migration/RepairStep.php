@@ -4,8 +4,6 @@ namespace OCA\Olvid\Migration;
 
 use Exception;
 use OCA\Olvid\Cron\OlvidDatabaseSynchronizationTask;
-use OCA\Olvid\Cron\OlvidRefreshSignatureTask;
-use OCA\Olvid\Cron\OlvidServerSynchronizationTask;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;

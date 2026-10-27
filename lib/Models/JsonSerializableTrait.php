@@ -94,7 +94,8 @@ trait JsonSerializableTrait {
 			return $decoded !== false ? $decoded : null;
 		}
 		if ($field->class !== null && $field->isArray) {
-			$items = array_map(fn ($m) => ($field->class)::fromArray((array)$m), (array)$value);
+			$class = $field->class;
+			$items = array_map(fn ($m) => $class::fromArray((array)$m), (array)$value);
 			return empty($items) ? null : $items;
 		}
 		if ($field->class !== null) {

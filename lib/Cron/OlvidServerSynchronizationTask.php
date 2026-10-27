@@ -62,8 +62,9 @@ class OlvidServerSynchronizationTask {
 		$allOlvidUsers = $this->context->db->user->getAll();
 		$knownApiKeys = [];
 		foreach ($allOlvidUsers as $olvidUser) {
-			if ($olvidUser->getApiKey() !== null) {
-				$knownApiKeys[] = $olvidUser->getApiKey();
+			$apiKey = $olvidUser->getApiKey();
+			if ($apiKey !== null) {
+				$knownApiKeys[] = $apiKey;
 			}
 		}
 
@@ -77,8 +78,9 @@ class OlvidServerSynchronizationTask {
 		// group push topics
 		$allOlvidGroups = $this->context->db->group->getAll();
 		foreach ($allOlvidGroups as $olvidGroup) {
-			if ($olvidGroup->getPushTopic() !== null) {
-				$knownPushTopics[] = $olvidGroup->getPushTopic();
+			$pushTopic = $olvidGroup->getPushTopic();
+			if ($pushTopic !== null) {
+				$knownPushTopics[] = $pushTopic;
 			}
 		}
 

@@ -18,6 +18,7 @@ use OCA\Olvid\Api\Engine\RequestChallenge;
 use OCA\Olvid\Api\Engine\RevocationTest;
 use OCA\Olvid\Api\Engine\Verify;
 use OCA\Olvid\ResponseDefinitions;
+use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,6 +51,7 @@ class DirectoryApiController extends OCSController {
 		string $appName,
 		IRequest $request,
 		private readonly IURLGenerator $urlGenerator,
+		private readonly OlvidContext $context,
 		private readonly Me $meHandler,
 		private readonly PutKey $putKeyHandler,
 		private readonly GetKey $getKeyHandler,
@@ -76,7 +78,7 @@ class DirectoryApiController extends OCSController {
 	}
 
 	/**
-	 * @return TextPlainResponse<Http::STATUS_OK, string>
+	 * @return TextPlainResponse<Http::STATUS_OK, array{}>
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -91,14 +93,14 @@ class DirectoryApiController extends OCSController {
 	/**
 	 * Legacy well-known endpoint; only jwks_uri field is actively used by Olvid clients
 	 *
-	 * @return DataResponse<Http::STATUS_OK, OlvidDirectoryOpenIdConfiguration, array{}>
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryOpenIdConfiguration, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/.well-known/openid-configuration')]
-	public function openid(): Response {
+	public function openid(): JSONResponse {
 		$discoveryPayload = [
 			'issuer' => $this->urlGenerator->getBaseUrl(),
 			// TODO set to fake value to pass desktop current use but not supposed to be set ...
@@ -131,44 +133,46 @@ class DirectoryApiController extends OCSController {
 	/**
 	 * Olvid directory discovery: supported API version and minimum client build numbers
 	 *
-	 * @return DataResponse<Http::STATUS_OK, OlvidDirectoryOlvidDiscovery, array{}>
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryOlvidDiscovery, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/.well-known/olvid')]
-	public function olvid(): Response {
-		$response['supportIdentityAuthentication'] = true;
-		$response['apiVersion'] = Constants::OLVID_DIRECTORY_API_VERSION;
-		$minBuildVersions['android'] = Constants::MIN_BUILD_ANDROID;
-		$minBuildVersions['ios'] = Constants::MIN_BUILD_IOS;
-		$minBuildVersions['desktop'] = Constants::MIN_BUILD_DESKTOP;
-		$minBuildVersions['daemon'] = Constants::MIN_BUILD_DAEMON;
-		$response['minBuildVersions'] = $minBuildVersions;
-		return new JSONResponse($response);
+	public function olvid(): JSONResponse {
+		return new JSONResponse([
+			'supportIdentityAuthentication' => true,
+			'apiVersion' => Constants::OLVID_DIRECTORY_API_VERSION,
+			'minBuildVersions' => [
+				'android' => Constants::MIN_BUILD_ANDROID,
+				'ios' => Constants::MIN_BUILD_IOS,
+				'desktop' => Constants::MIN_BUILD_DESKTOP,
+				'daemon' => Constants::MIN_BUILD_DAEMON,
+			],
+		]);
 	}
 
 	/**
 	 * JWKS endpoint — exposes the server's EC public key for client signature verification
 	 *
-	 * @return DataResponse<Http::STATUS_OK, OlvidDirectoryJwks, array{}>
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryJwks, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/.well-known/jwks')]
-	public function jwks(): Response {
+	public function jwks(): JSONResponse {
 		$jwks = [
 			'keys' => [
 				[
 					'kty' => 'EC',
 					'crv' => 'P-256',
-					'x' => $this->olvidAppConfig->getJwkKeyPublicKeyX(),
-					'y' => $this->olvidAppConfig->getJwkKeyPublicKeyY(),
+					'x' => $this->context->nextcloud->appManager->getJwkKeyPublicKeyX(),
+					'y' => $this->context->nextcloud->appManager->getJwkKeyPublicKeyY(),
 					'use' => 'sig',
-					'kid' => $this->olvidAppConfig->getJwkKeyId(),
+					'kid' => $this->context->nextcloud->appManager->getJwkKeyId(),
 					'alg' => 'ES256'
 				]
 			]

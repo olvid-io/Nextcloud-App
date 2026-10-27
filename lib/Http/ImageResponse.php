@@ -7,7 +7,11 @@ namespace OCA\Olvid\Http;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Response;
 
-/** Raw JPEG HTTP response, used to serve avatar images. */
+/**
+ * Raw JPEG HTTP response, used to serve avatar images.
+ *
+ * @template-extends Response<Http::STATUS_OK, array<string, mixed>>
+ */
 class ImageResponse extends Response {
 	public function __construct(
 		private readonly string $data,

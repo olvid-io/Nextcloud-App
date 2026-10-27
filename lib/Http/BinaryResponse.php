@@ -7,7 +7,11 @@ namespace OCA\Olvid\Http;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Response;
 
-/** Raw binary (application/octet-stream) HTTP response for the Olvid Engine API. */
+/**
+ * Raw binary (application/octet-stream) HTTP response for the Olvid Engine API.
+ *
+ * @template-extends Response<Http::STATUS_OK, array<string, mixed>>
+ */
 class BinaryResponse extends Response {
 	public function __construct(
 		private readonly string $data,

@@ -154,9 +154,9 @@ class DebugApiController extends OCSController {
 		$userNextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($this->userSession->getUser());
 		foreach ($userNextcloudGroups as $nextcloudGroup) {
 			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
-            if ($olvidGroup != null) {
-                $response['groups'][] = $olvidGroup->jsonSerialize();
-            }
+			if ($olvidGroup != null) {
+				$response['groups'][] = $olvidGroup->jsonSerialize();
+			}
 		}
 
 		$earliestRevocationTimestamp = TimeUtil::currentTimeMillis() - Constants::DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS;
