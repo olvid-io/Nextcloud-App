@@ -160,9 +160,9 @@
 							:description="t('olvid', 'You are not a member of any group.')" />
 
 						<div v-if="ownGroups.length">
-							<h4>{{ t('olvid', 'Managed Groups') }}</h4>
+							<h4>{{ t('olvid', 'Your Groups') }}</h4>
 							<p class="profile-view__desc">
-								{{ t('olvid', 'The groups you are member of, managed by administrators') }}
+								{{ t('olvid', 'The Nextcloud groups you are member of.') }}
 							</p>
 							<ul class="profile-view__groups-list">
 								<NcListItem
@@ -203,6 +203,7 @@ import OlvidAvatar from '../components/OlvidAvatar.vue'
 import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
 import InvalidConfigurationAlertModal from '../components/InvalidConfigurationAlertModal.vue'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'ProfileView',
@@ -290,6 +291,7 @@ export default {
 			}
 		} catch (e) {
 			console.error('Could not fetch Olvid status', e)
+			showError(this.t('olvid', 'Could not fetch user'))
 		} finally {
 			this.loading = false
 		}
@@ -386,6 +388,7 @@ export default {
 				this.ownGroups = (await groupsPromise).data.groups ?? []
 			} catch (e) {
 				console.error('Could not load groups', e)
+				showError(this.t('olvid', 'Could not load groups'))
 			} finally {
 				this.groupsLoading = false
 			}

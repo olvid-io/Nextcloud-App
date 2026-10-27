@@ -20,7 +20,9 @@
 					<p v-if="avatarUploading" class="group-sidebar__hint">
 						{{ t('olvid', 'Update in progress…') }}
 					</p>
-					<p v-if="avatarError" class="group-sidebar__error">{{ avatarError }}</p>
+					<p v-if="avatarError" class="group-sidebar__error">
+						{{ avatarError }}
+					</p>
 					<h3 class="group-sidebar__discussion-name">
 						{{ form.discussionName }}
 					</h3>
@@ -47,8 +49,12 @@
 						rows="4"
 						:placeholder="t('olvid', 'Group description in Olvid')" />
 				</div>
-				<p v-if="saveError" class="group-sidebar__error">{{ saveError }}</p>
-				<p v-if="saveSuccess" class="group-sidebar__success">{{ t('olvid', 'Saved.') }}</p>
+				<p v-if="saveError" class="group-sidebar__error">
+					{{ saveError }}
+				</p>
+				<p v-if="saveSuccess" class="group-sidebar__success">
+					{{ t('olvid', 'Saved.') }}
+				</p>
 				<NcButton :disabled="saving || !form.discussionName" @click="save">
 					{{ t('olvid', 'Save') }}
 				</NcButton>
@@ -130,6 +136,7 @@ import AvatarPicker from './AvatarPicker.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
 import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
 import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'GroupDetailsSidebar',
@@ -239,6 +246,7 @@ export default {
 			} catch (e) {
 				group.enabled = !enabled
 				console.error('Could not enable/disable group', e)
+				showError(this.t('olvid', 'Could not update group'))
 			}
 		},
 
@@ -262,6 +270,7 @@ export default {
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
 				console.error('addMember failed', e)
+				showError(this.t('olvid', 'Could not update group'))
 			}
 		},
 
@@ -272,6 +281,7 @@ export default {
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
 				console.error('removeMember failed', e)
+				showError(this.t('olvid', 'Could not update group'))
 			}
 		},
 	},

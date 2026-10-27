@@ -28,6 +28,7 @@ import NcContent from '@nextcloud/vue/dist/Components/NcContent.js'
 import GroupDetailsSidebar from './components/GroupDetailsSidebar.vue'
 import UserDetailsSidebar from './components/UserDetailsSidebar.vue'
 import OlvidNavigation from './OlvidNavigation.vue'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'App',
@@ -57,7 +58,8 @@ export default {
 			const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
 			this.isAdmin = res.data.isAdmin ?? false
 		} catch (e) {
-			console.error('Could not fetch user status', e)
+			console.error('Could not fetch user', e)
+			showError(this.t('olvid', 'Cannot load user'))
 		}
 	},
 

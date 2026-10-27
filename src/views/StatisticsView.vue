@@ -27,6 +27,7 @@ import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'StatisticsView',
@@ -58,7 +59,8 @@ export default {
 				const res = await axios.get(generateOcsUrl('/apps/olvid/app/statistics'))
 				this.statistics = res.data ?? { olvidUsersCount: 0, nextcloudUsersCount: 0 }
 			} catch (e) {
-				console.error('Could not load users', e)
+				console.error('Could not load statistics', e)
+				showError(this.t('olvid', 'Could not load statistics'))
 			} finally {
 				this.loading = false
 			}

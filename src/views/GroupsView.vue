@@ -86,6 +86,7 @@ import OlvidAvatar from '../components/OlvidAvatar.vue'
 import CreateGroupModal from '../components/CreateGroupModal.vue'
 import IconPlus from 'vue-material-design-icons/Plus.vue'
 import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'GroupsView',
@@ -121,6 +122,7 @@ export default {
 				this.groups = res.data.groups ?? []
 			} catch (e) {
 				console.error('Could not load groups', e)
+				showError(this.t('olvid', 'Could not load groups'))
 			} finally {
 				this.loading = false
 			}
@@ -140,6 +142,7 @@ export default {
 			} catch (e) {
 				group.enabled = !enabled
 				console.error('Could not enable/disable group', e)
+				showError(this.t('olvid', 'Could not update group'))
 			}
 		},
 

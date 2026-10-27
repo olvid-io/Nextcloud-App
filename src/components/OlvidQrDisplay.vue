@@ -1,6 +1,5 @@
 <template>
 	<div class="olvid-qr-display">
-
 		<!-- Mobile path: QR scan ─────────────────────────────────── -->
 		<div class="olvid-qr-display__section">
 			<p class="olvid-qr-display__section-title">
@@ -14,7 +13,7 @@
 					v-if="qrDataUrl"
 					:src="qrDataUrl"
 					:alt="t('olvid', 'Olvid configuration QR code')"
-					class="olvid-qr-display__image" />
+					class="olvid-qr-display__image">
 				<NcLoadingIcon v-else :size="44" />
 			</div>
 		</div>
@@ -44,7 +43,6 @@
 				{{ t('olvid', 'You can also copy the link and paste it in Olvid manually.') }}
 			</p>
 		</div>
-
 	</div>
 </template>
 
@@ -52,6 +50,7 @@
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import QRCode from 'qrcode'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'OlvidQrDisplay',
@@ -93,6 +92,7 @@ export default {
 				})
 			} catch (e) {
 				console.error('QR generation failed', e)
+				showError(this.t('olvid', 'QR generation failed'))
 			}
 		},
 
@@ -109,6 +109,7 @@ export default {
 				setTimeout(() => { this.copied = false }, 2500)
 			} catch (e) {
 				console.error('Could not copy to clipboard', e)
+				showError(this.t('olvid', 'Could not copy to clipboard'))
 			}
 		},
 	},

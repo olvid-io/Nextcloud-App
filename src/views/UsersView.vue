@@ -71,7 +71,6 @@
 			v-if="showCreateModal"
 			@close="showCreateModal = false"
 			@created="onUserCreated" />
-
 	</NcAppContent>
 </template>
 
@@ -89,6 +88,7 @@ import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
 import CreateUserModal from '../components/CreateUserModal.vue'
 import MagicLinkModal from '../components/MagicLinkModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'UsersView',
@@ -127,6 +127,7 @@ export default {
 				this.users = res.data.users ?? []
 			} catch (e) {
 				console.error('Could not load users', e)
+				showError(this.t('olvid', 'Could not load users'))
 			} finally {
 				this.loading = false
 			}
@@ -147,6 +148,7 @@ export default {
 				this.magicLinkTarget = user
 			} catch (e) {
 				console.error('Could not generate magic link', e)
+				showError(this.t('olvid', 'Could not generate magic link'))
 			} finally {
 				this.loadingMagicLink = null
 			}

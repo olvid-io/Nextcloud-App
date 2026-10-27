@@ -175,6 +175,7 @@ import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
 import DeleteUserModal from './DeleteUserModal.vue'
 import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
 import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'UserDetailsSidebar',
@@ -270,6 +271,7 @@ export default {
 				this.groups = res.data.groups ?? []
 			} catch (e) {
 				console.error('Could not load user groups', e)
+				showError(this.t('olvid', 'Could not load groups'))
 			} finally {
 				this.loadingGroups = false
 			}
@@ -281,6 +283,7 @@ export default {
 				this.allGroups = res.data.groups ?? []
 			} catch (e) {
 				console.error('Could not load groups list', e)
+				showError(this.t('olvid', 'Could not load groups'))
 			}
 		},
 
@@ -304,6 +307,7 @@ export default {
 				this.groupSearchResults = this.groupSearchResults.filter(g => g.id !== group.id)
 			} catch (e) {
 				console.error('addToGroup failed', e)
+				showError(this.t('olvid', 'Could not update group'))
 			}
 		},
 
@@ -313,6 +317,7 @@ export default {
 				this.groups = this.groups.filter(g => g.id !== group.id)
 			} catch (e) {
 				console.error('removeFromGroup failed', e)
+				showError(this.t('olvid', 'Could not update group'))
 			}
 		},
 
@@ -329,6 +334,7 @@ export default {
 				this.magicLinkTarget = user
 			} catch (e) {
 				console.error('Could not generate magic link', e)
+				showError(this.t('olvid', 'Could not generate magic link'))
 			} finally {
 				this.loadingMagicLink = null
 			}

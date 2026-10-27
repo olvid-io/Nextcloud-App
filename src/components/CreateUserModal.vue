@@ -83,6 +83,7 @@ import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'CreateUserModal',
@@ -138,6 +139,7 @@ export default {
 				this.allGroupIds = res.data.groups.map(g => g.id) ?? []
 			} catch (e) {
 				console.error('Could not load groups', e)
+				showError(this.t('olvid', 'Could not load groups'))
 			} finally {
 				this.loading = false
 			}
