@@ -23,6 +23,7 @@ class UserDeleteIdentity {
 	}
 
 	/**
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @throws \OCP\DB\Exception
 	 * @throws MultipleObjectsReturnedException
 	 */
@@ -44,7 +45,7 @@ class UserDeleteIdentity {
 
 		// check user use Olvid
 		if (!$olvidUser?->hasIdentity()) {
-			return new DataResponse(null, Http::STATUS_NOT_FOUND);
+			return new DataResponse(['error' => 'user has no Olvid identity'], Http::STATUS_NOT_FOUND);
 		}
 
 		// revoke identity
@@ -110,6 +111,6 @@ class UserDeleteIdentity {
 			$this->context->olvidServer->sendGroupNotificationNoFail($globalPushTopic);
 		}
 
-		return new DataResponse(null, Http::STATUS_OK);
+		return new DataResponse([]);
 	}
 }

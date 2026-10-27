@@ -23,16 +23,17 @@ class GroupAvatarUpload {
 	) {
 	}
 
-	/*
-	* Update a group avatar task
+	/**
+	 * Update a group avatar task
 	 * - $groupId: the Nextcloud group id
 	 * - $displayName: resolved by caller, used to compute olvid discussion name
 	 * - $memberUserIds: a list of user ids resolved by caller, used to compute group blob
-	* - $photoData: Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
-	* This task notify Olvid concerned Olvid devices if necessary
-	*
-	* @param string[] $memberUserIds
-	*/
+	 * - $photoData: Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
+	 * This task notify Olvid concerned Olvid devices if necessary
+	 *
+	 * @param string[] $memberUserIds
+	 * @return DataResponse<Http::STATUS_OK, array{photoUid: string|null}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 */
 	public function handle(string $groupId, ?string $displayName, array $memberUserIds, ?string $photoData): DataResponse {
 		if ($displayName === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);

@@ -3,6 +3,7 @@
 namespace OCA\Olvid\Api\App;
 
 use OCA\Olvid\Utils\Context\OlvidContext;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\DB\Exception;
 use OCP\IRequest;
@@ -18,6 +19,7 @@ class UserUpdate {
 	/**
 	 * Update Olvid Details for a user. If necessary sign new details and notify users for the change.
 	 *
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
 	 * @throws Exception
 	 */
 	public function handle(IUser $nextcloudUser, String $newFirstname, String $newLastname, String $newPosition, String $newCompany): DataResponse {
@@ -44,7 +46,7 @@ class UserUpdate {
 
 		// If none of firstname and lastname is set return an error
 		if (!$olvidUser->getFirstname() && !$olvidUser->getLastname()) {
-			return new DataResponse('At least one of firstname and lastname must be set', 400);
+			return new DataResponse(['error' => 'At least one of firstname and lastname must be set'], Http::STATUS_BAD_REQUEST);
 		}
 
 		// details did not change, stop here
@@ -67,6 +69,6 @@ class UserUpdate {
 			$this->context->olvidServer->sendSingleUserNotificationNoFail($userDetails->base64Identity);
 		}
 
-		return new DataResponse();
+		return new DataResponse([]);
 	}
 }

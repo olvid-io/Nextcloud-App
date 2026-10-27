@@ -22,7 +22,7 @@ class GroupsUpdate {
 	) {
 	}
 
-	/*
+	/**
 	 * Update an OlvidGroup task, shared between Nextcloud groups and circles.
 	 * - $groupId: the Nextcloud group id
 	 * - $displayName: resolved by caller, used to compute olvid discussion name
@@ -33,6 +33,7 @@ class GroupsUpdate {
 	 * This task notify Olvid concerned Olvid devices if necessary
 	 *
 	 * @param string[] $memberUserIds
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 */
 	public function handle(string $groupId, ?string $displayName, array $memberUserIds, ?bool $enabled, ?string $discussionName, ?string $discussionDescription): DataResponse {
 		// group status (enable/disabled) have been changed in this update
@@ -65,7 +66,7 @@ class GroupsUpdate {
 
 			// if nothing changed we can end now
 			if (!$updated) {
-				return new DataResponse(null, Http::STATUS_OK);
+				return new DataResponse([]);
 			}
 			// always save current group state to be sure modifications are saved in all cases
 			$this->context->db->group->update($olvidGroup);
@@ -140,7 +141,7 @@ class GroupsUpdate {
 				$olvidGroup = $this->context->db->group->update($olvidGroup);
 			}
 
-			return new DataResponse($olvidGroup);
+			return new DataResponse([]);
 		} catch (Exception|MultipleObjectsReturnedException $exception) {
 			$this->logger->error('Unexpected exception', ['exception' => $exception]);
 			return new DataResponse(['error' => 'internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);

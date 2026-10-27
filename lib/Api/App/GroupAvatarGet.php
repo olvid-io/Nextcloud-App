@@ -29,6 +29,7 @@ class GroupAvatarGet {
 	}
 
 	/**
+	 * @return DataDisplayResponse<Http::STATUS_OK|Http::STATUS_NOT_FOUND, array{}>
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */

@@ -11,7 +11,6 @@ use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use Psr\Log\LoggerInterface;
@@ -36,9 +35,10 @@ class UserGetMagicLink {
 	 *   "magic": {"username": "<uid>", "token": "<token>"}
 	 * }
 	 *
+	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @throws Exception
 	 */
-	public function handle(IUser $nextcloudUser): Response|DataResponse {
+	public function handle(IUser $nextcloudUser): DataResponse {
 		try {
 			// get or create olvid user in database
 			$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
