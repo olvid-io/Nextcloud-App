@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 18:38+0100\n"
+"POT-Creation-Date: 2026-10-28 18:57+0100\n"
 "PO-Revision-Date: 2026-06-30 15:25+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -321,11 +321,13 @@ msgid "The Nextcloud groups you are member of."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:181
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:61
 #, fuzzy
 msgid "Olvid discussion enabled"
 msgstr "Olvid discussion active"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:181
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:63
 #, fuzzy
 msgid "Olvid discussion disabled"
 msgstr "Olvid discussion active"
@@ -673,13 +675,10 @@ msgid "Set Olvid discussion name"
 msgstr "Olvid discussion active"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:45
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:50
 #, fuzzy
 msgid "Olvid discussion description"
 msgstr "Olvid discussion active"
-
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:50
-msgid "Group description in Olvid"
-msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:65
 msgid "Members ({n})"
@@ -706,17 +705,17 @@ msgstr ""
 msgid "e.g. members"
 msgstr "{n} member"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:53
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:70
 #, fuzzy
 msgid "Enrolled with Olvid, but inactive"
 msgstr "Scan with Olvid"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:55
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:72
 #, fuzzy
 msgid "Enrolled with Olvid"
 msgstr "Scan with Olvid"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:58
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:75
 #, fuzzy
 msgid "Not enrolled with Olvid"
 msgstr "Open with Olvid"

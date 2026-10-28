@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 18:38+0100\n"
+"POT-Creation-Date: 2026-10-28 18:57+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -301,10 +301,12 @@ msgid "The Nextcloud groups you are member of."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:181
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:61
 msgid "Olvid discussion enabled"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:181
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:63
 msgid "Olvid discussion disabled"
 msgstr ""
 
@@ -617,11 +619,8 @@ msgid "Set Olvid discussion name"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:45
-msgid "Olvid discussion description"
-msgstr ""
-
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:50
-msgid "Group description in Olvid"
+msgid "Olvid discussion description"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:65
@@ -648,15 +647,15 @@ msgstr ""
 msgid "e.g. members"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:53
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:70
 msgid "Enrolled with Olvid, but inactive"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:55
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:72
 msgid "Enrolled with Olvid"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:58
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:75
 msgid "Not enrolled with Olvid"
 msgstr ""
 

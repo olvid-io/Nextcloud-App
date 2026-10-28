@@ -3,6 +3,8 @@
 		<NcAvatar
 			v-bind="$attrs"
 			hide-status="true"
+			:title="title"
+			:is-no-user="isNoUser"
 			:size="size" />
 		<img
 			v-if="useOlvid"
@@ -31,6 +33,11 @@ export default {
 			type: Boolean,
 			required: true,
 		},
+		isNoUser: {
+			type: Boolean,
+			required: true,
+			default: false,
+		},
 		isInactive: {
 			type: Boolean,
 			default: false,
@@ -48,14 +55,24 @@ export default {
 			return generateFilePath('olvid', 'img', file)
 		},
 		title() {
-			if (this.useOlvid) {
-				if (this.isInactive) {
-					return this.t('olvid', 'Enrolled with Olvid, but inactive')
+			if (this.isNoUser) {
+			// groups
+				if (this.useOlvid) {
+					return this.t('olvid', 'Olvid discussion enabled')
 				} else {
-					return this.t('olvid', 'Enrolled with Olvid')
+					return this.t('olvid', 'Olvid discussion disabled')
 				}
 			} else {
-				return this.t('olvid', 'Not enrolled with Olvid')
+				// user
+				if (this.useOlvid) {
+					if (this.isInactive) {
+						return this.t('olvid', 'Enrolled with Olvid, but inactive')
+					} else {
+						return this.t('olvid', 'Enrolled with Olvid')
+					}
+				} else {
+					return this.t('olvid', 'Not enrolled with Olvid')
+				}
 			}
 		},
 	},

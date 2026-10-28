@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 18:38+0100\n"
+"POT-Creation-Date: 2026-10-28 18:57+0100\n"
 "PO-Revision-Date: 2026-06-30 15:24+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -316,10 +316,12 @@ msgid "The Nextcloud groups you are member of."
 msgstr "Les groupes Nextcloud dont vous faites partie."
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:181
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:61
 msgid "Olvid discussion enabled"
 msgstr "Discussion Olvid activée"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:181
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:63
 msgid "Olvid discussion disabled"
 msgstr "Discussion Olvid désactivée"
 
@@ -663,12 +665,9 @@ msgid "Set Olvid discussion name"
 msgstr "Définir le nom de la discussion Olvid"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:45
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:50
 msgid "Olvid discussion description"
 msgstr "Description de la discussion Olvid"
-
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:50
-msgid "Group description in Olvid"
-msgstr "Description du groupe dans Olvid"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:65
 msgid "Members ({n})"
@@ -694,15 +693,15 @@ msgstr "Nom du groupe"
 msgid "e.g. members"
 msgstr "ex. membres"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:53
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:70
 msgid "Enrolled with Olvid, but inactive"
 msgstr "Utilise Olvid, mais est inactif."
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:55
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:72
 msgid "Enrolled with Olvid"
 msgstr "Utilise Olvid"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:58
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAvatar.vue:75
 msgid "Not enrolled with Olvid"
 msgstr "N'utilise pas Olvid"
 
@@ -729,6 +728,9 @@ msgstr "Groupes"
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/OlvidNavigation.vue:36
 msgid "Statistics"
 msgstr "Statistiques"
+
+#~ msgid "Group description in Olvid"
+#~ msgstr "Description du groupe dans Olvid"
 
 #~ msgid "Automatic groups"
 #~ msgstr "Groupes automatiques"

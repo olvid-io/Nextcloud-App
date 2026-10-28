@@ -47,7 +47,7 @@
 						v-model="form.discussionDescription"
 						class="group-sidebar__textarea"
 						rows="4"
-						:placeholder="t('olvid', 'Group description in Olvid')" />
+						:placeholder="t('olvid', 'Olvid discussion description')" />
 				</div>
 				<p v-if="saveError" class="group-sidebar__error">
 					{{ saveError }}
