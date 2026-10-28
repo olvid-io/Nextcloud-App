@@ -46,10 +46,10 @@ echo "$SIGNATURE"
 echo ""
 
 # delete existing release if necessary
-gh release delete -y "v${VERSION}" && echo deleted previoud release || true
+#gh release delete -y "v${VERSION}" && echo deleted previoud release || true
 
 # create release
-gh release create -n "" -p -t "v${VERSION}" "v${VERSION}" "./build/olvid-${VERSION}.tar.gz"
+gh release create -n "" -t "v${VERSION}" "v${VERSION}" "./build/olvid-${VERSION}.tar.gz"
 DOWNLOAD_URL="https://github.com/olvid-io/Nextcloud-App/releases/download/v${VERSION}/olvid-${VERSION}.tar.gz"
 echo "DOWNLOAD_URL=${DOWNLOAD_URL}"
 
