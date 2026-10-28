@@ -11,7 +11,7 @@
 - 🪄 Magic Links: easily bind your Olvid identity to your Nextcloud account
 - ✉️ Security: Your messages are still exchanged using Olvid cryptographic protocols, your Nextcloud server cannot access it.
 	</description>
-	<version>0.0.6</version>
+	<version>0.0.7</version>
 	<licence>agpl</licence>
 	<author mail="nextcloud@olvid.io" homepage="https://olvid.io">Olvid</author>
 	<namespace>Olvid</namespace>

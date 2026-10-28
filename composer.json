@@ -2,7 +2,7 @@
 	"name": "nextcloud/olvid",
 	"description": "Olvid integration",
 	"license": "AGPL-3.0-or-later",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"authors": [
 		{
 			"name": "Olvid",

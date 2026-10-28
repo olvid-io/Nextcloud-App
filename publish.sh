@@ -6,6 +6,10 @@ cd "$(dirname "$0")"
 source ~/.nextcloud/token
 if [ -z "$NEXTCLOUD_TOKEN" ]  ; then echo Specify your nextcloud API token as NEXTCLOUD_TOKEN ; exit 1 ; fi
 
+# check you are on main branch, and content was pushed, else source code will be outdated
+if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ] ; then echo You are not on main branch ; exit 1 ; fi
+if [ "$(git push --dry-run)" != "Everything up-to-date\n" ] ; then echo There is un-pushed commits ; exit 1 ; fi
+
 # Version must match appinfo/info.xml
 VERSION=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
 echo "Building version: $VERSION"
