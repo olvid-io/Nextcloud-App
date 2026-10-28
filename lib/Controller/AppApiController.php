@@ -524,6 +524,8 @@ class AppApiController extends OCSController {
 			$olvidUser->setCompany(trim($company));
 		}
 
+		$this->context->db->user->update($olvidUser);
+
 		// add user to groups
 		foreach ($nextcloudGroups as $nextcloudGroup) {
 			$nextcloudGroup->addUser($nextcloudUser);
