@@ -6,6 +6,7 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
@@ -13,9 +14,15 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
+/**
+ * @template-extends AbstractAuthenticatedDeviceApiHandler<JSONResponse<Http::STATUS_OK, OlvidDirectoryMeResponse|OlvidDirectoryApiError, array{}>>
+ * @psalm-import-type OlvidDirectoryMeResponse from ResponseDefinitions
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
+ */
 class Me extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws \OCP\DB\Exception
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryMeResponse|OlvidDirectoryApiError, array{}>
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// parse request (don't fail on parse error)
@@ -27,6 +34,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		}
 
 		$currentTimestamp = TimeUtil::currentTimeMillis();
+		$response = [];
 
 		// get or create the base OlvidUser
 		$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
@@ -37,9 +45,10 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// set or update full search string attributes
 		$olvidUser->setFullSearchField($jsonUserDetails->computeFullSearchString());
 
-		// re-sign user details (compute or refresh them, they expire every	 two months)
-		$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
-		$response[Constants::ME_RESPONSE_SIGNATURE] = $olvidUser->getSignedDetails();
+		// re-sign user details (compute or refresh them, they expire every	two months)
+		$signedDetails = $this->context->signatory->sign($jsonUserDetails->jsonSerialize());
+		$olvidUser->setSignedDetails($signedDetails);
+		$response[Constants::ME_RESPONSE_SIGNATURE] = $signedDetails;
 
 		// if identity was already uploaded create an api key if necessary
 		if ($olvidUser->hasIdentity() && $olvidUser->getApiKey() === null) {
@@ -95,10 +104,9 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		// list every revocation since timestamp passed in request
 		$signedRevocations = $this->context->db->revocation->getSinceTimestamp($timestamp);
 
-		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = array_map(function ($revocation) {
-			return $revocation->getSignedRevocation();
-		}, $signedRevocations);
-		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS]) !== 0 ? $response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] : null;
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($signedRevocations) !== 0
+			? array_map(fn ($revocation) => $revocation->getSignedRevocation(), $signedRevocations)
+			: null;
 
 		$response[Constants::ME_RESPONSE_CURRENT_TIMESTAMP] = $currentTimestamp;
 

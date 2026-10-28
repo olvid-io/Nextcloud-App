@@ -61,7 +61,8 @@ class AppApiController extends OCSController {
 	 *
 	 * @return DataResponse<Http::STATUS_OK, OlvidMe, array{}>
 	 * @noinspection PhpUnused
-	 * @throws Exception|MultipleObjectsReturnedException
+	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
 	 */
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/me')]
@@ -88,7 +89,7 @@ class AppApiController extends OCSController {
 	 * @param string $lastname Last name
 	 * @param string $position Job position
 	 * @param string $company Company name
-	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -101,7 +102,7 @@ class AppApiController extends OCSController {
 	/**
 	 * Generates a magic link (configuration URL) to enroll the current user's Olvid identity
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -116,7 +117,7 @@ class AppApiController extends OCSController {
 	 * When $revoke is true the identity is also permanently blocked for all contacts
 	 *
 	 * @param bool $revoke Permanently revoke the identity (irreversible)
-	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -198,7 +199,7 @@ class AppApiController extends OCSController {
 	 * Creates a new Nextcloud group
 	 *
 	 * @param string $id Group ID (must be unique and non-empty)
-	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>
+	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'POST', url: '/app/groups')]
@@ -237,7 +238,7 @@ class AppApiController extends OCSController {
 	 * @param bool|null $enabled Enable or disable the Olvid discussion for this group
 	 * @param string|null $discussionName Override the Olvid discussion name (ignored if null or empty)
 	 * @param string|null $discussionDescription Discussion description
-	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
@@ -282,8 +283,9 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $groupId Group ID (URL path)
 	 * @param string $photoUid Base64-encoded photo UID (query parameter, used for cache validation)
-	 * @return DataDisplayResponse<Http::STATUS_NOT_FOUND, array{}>
-	 * @throws Exception|MultipleObjectsReturnedException
+	 * @return DataDisplayResponse<Http::STATUS_OK|Http::STATUS_NOT_FOUND, array{}>
+	 * @throws Exception
+	 * @throws MultipleObjectsReturnedException
 	 * @noinspection PhpUnused
 	 */
 	# disable CSRF verification for static read only resources
@@ -301,7 +303,7 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $groupId Group ID (URL path)
 	 * @param ?string $photoData Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
-	 * @return DataResponse<Http::STATUS_OK, array{photoUid: string}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{photoUid: string|null}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
@@ -388,7 +390,6 @@ class AppApiController extends OCSController {
 				'company' => $olvidUser->getCompany(),
 				'useOlvid' => $olvidUser->hasIdentity() ?? false,
 				'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
-				'isAdmin' => $this->context->nextcloud->groupManager->isUserANextcloudAdmin($this->userId),
 			];
 		}
 		return new DataResponse(['users' => $result]);
@@ -403,7 +404,7 @@ class AppApiController extends OCSController {
 	 * @param string $position Job position (optional)
 	 * @param string $company Company name (optional)
 	 * @param ?string $password Initial password (optional)
-	 * @param ?string[] $groups Groups to add user to (optional)
+	 * @param list<string>|null $groups Groups to add user to (optional)
 	 * @return DataResponse<Http::STATUS_OK, OlvidUserFull, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 * @throws Exception
@@ -487,7 +488,7 @@ class AppApiController extends OCSController {
 	 * @param string $lastname Last name
 	 * @param string $position Job position
 	 * @param string $company Company name
-	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -526,7 +527,7 @@ class AppApiController extends OCSController {
 	 * Returns the groups a specific user belongs to
 	 *
 	 * @param string $userId User ID (URL path)
-	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupRef>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<array{id: string, displayName: string, enabled: bool, discussionName: string|null, discussionDescription: string|null, photoUid: string|null}>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
@@ -563,7 +564,7 @@ class AppApiController extends OCSController {
 	 * Generates a magic link (configuration URL) to enroll a specific user's Olvid identity
 	 *
 	 * @param string $userId User ID (URL path)
-	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -582,7 +583,7 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $userId User ID (URL path)
 	 * @param bool $revoke Permanently revoke the identity (irreversible)
-	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -637,7 +638,7 @@ class AppApiController extends OCSController {
 	 * Unlinks the Olvid identity of a specific user
 	 * When $revoke is true the identity is also permanently blocked for all contacts
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{OlvidStatistics}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, OlvidStatistics, array{}>
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */

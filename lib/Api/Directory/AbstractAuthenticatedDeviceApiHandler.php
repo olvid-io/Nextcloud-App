@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace OCA\Olvid\Api\Directory;
 
 use Exception;
+use OCA\Olvid\ResponseDefinitions;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\Response;
 use OCP\IUser;
+use Override;
 
 /*
  * DeviceApi:
@@ -17,8 +19,17 @@ use OCP\IUser;
  * Some entrypoint requires authentication. We use bearer tokens issued by call
  * to /requestChallenge and /magicSession.
  */
+/**
+ * @template TResponse of JSONResponse
+ * @template-extends AbstractDeviceApiHandler<TResponse>
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
+ */
 abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHandler {
-	public function handle(?array $jsonParameters = null): Response|JSONResponse {
+	/**
+	 * @return TResponse|JSONResponse<Http::STATUS_OK, OlvidDirectoryApiError, array{}>
+	 */
+	#[Override]
+	public function handle(?array $jsonParameters = null): JSONResponse {
 		// check authentication
 		$this->user = $this->requiresAuth();
 		if ($this->user === null) {

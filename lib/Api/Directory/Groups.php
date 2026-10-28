@@ -6,18 +6,26 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
 /**
  * POST /olvid-rest/groups
  */
+/**
+ * @template-extends AbstractAuthenticatedDeviceApiHandler<JSONResponse<Http::STATUS_OK, OlvidDirectoryGroupsResponse|OlvidDirectoryApiError, array{}>>
+ * @psalm-import-type OlvidDirectoryGroupsResponse from ResponseDefinitions
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
+ */
 class Groups extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws \OCP\DB\Exception
 	 * @throws MultipleObjectsReturnedException
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryGroupsResponse|OlvidDirectoryApiError, array{}>
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// parse request (don't fail on parse error)
@@ -43,8 +51,9 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 			}
 
 			// only add groups that were modified recently
-			if ($requestTimestamp === null || $requestTimestamp < $olvidGroup->getLastModificationTimestamp()) {
-				$signedGroupBlobs[] = $olvidGroup->getSignedGroupBlob();
+			$signedGroupBlob = $olvidGroup->getSignedGroupBlob();
+			if ($signedGroupBlob !== null && ($requestTimestamp === null || $requestTimestamp < $olvidGroup->getLastModificationTimestamp())) {
+				$signedGroupBlobs[] = $signedGroupBlob;
 			}
 		}
 
@@ -57,9 +66,9 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 		$signedGroupKicks = $this->context->db->groupKicked->getByUserIdAfterTimestamp($nextcloudUser->getUID(), $earliestRevocationTimestamp);
 
 		$response = [
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_BLOBS => count($signedGroupBlobs) ? $signedGroupBlobs : [],
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS => count($signedGroupDeletions) ? array_map(fn ($v) => $v->getSignedDeletion(), $signedGroupDeletions) : [],
-			Constants::GROUPS_RESPONSE_SIGNED_GROUP_KICKS => count($signedGroupKicks) ? array_map(fn ($v) => $v->getSignedKick(), $signedGroupKicks) : [],
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_BLOBS => $signedGroupBlobs,
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS => array_map(fn ($v) => $v->getSignedDeletion(), $signedGroupDeletions),
+			Constants::GROUPS_RESPONSE_SIGNED_GROUP_KICKS => array_map(fn ($v) => $v->getSignedKick(), $signedGroupKicks),
 			Constants::GROUPS_RESPONSE_CURRENT_TIMESTAMP => $currentTimestamp,
 		];
 

@@ -6,8 +6,10 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
@@ -21,15 +23,19 @@ use OCP\IUser;
  *
  * Request body: {"username": "...", "token": "..."}
  * Response: JSON token on success, error JSON on failure.
+ *
+ * @template-extends AbstractDeviceApiHandler<JSONResponse<Http::STATUS_OK, OlvidDirectoryGetMagicSessionResponse|OlvidDirectoryApiError, array{}>>
+ * @psalm-import-type OlvidDirectoryGetMagicSessionResponse from ResponseDefinitions
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
  */
 class GetMagicSession extends AbstractDeviceApiHandler {
 	// unauthenticated entrypoint, argument $user is null
 	/**
 	 * @param array $jsonParameters
 	 * @param IUser|null $nextcloudUser: always null (unauthenticated entry point)
-	 * @return JSONResponse
 	 * @throws \OCP\DB\Exception
 	 * @throws MultipleObjectsReturnedException
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryGetMagicSessionResponse|OlvidDirectoryApiError, array{}>
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// Parse request

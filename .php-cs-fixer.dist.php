@@ -13,7 +13,8 @@ $config
 	->notPath('l10n')
 	->notPath('node_modules')
 	->notPath('src')
-	->notPath('vendor')
+	->notPath('composer')
+	->notPath('vendor-bin')
 	->in(__DIR__);
 
 return $config;

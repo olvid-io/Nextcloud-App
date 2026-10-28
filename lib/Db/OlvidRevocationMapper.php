@@ -70,7 +70,7 @@ class OlvidRevocationMapper extends QBMapper {
 	}
 
 	/**
-	 * @return OlvidRevocation[]
+	 * @return list<OlvidRevocation>
 	 * @throws Exception
 	 */
 	public function getSinceTimestamp(int $timestamp): array {

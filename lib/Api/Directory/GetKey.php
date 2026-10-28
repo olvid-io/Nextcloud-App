@@ -6,14 +6,22 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\ResponseDefinitions;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
+/**
+ * @template-extends AbstractAuthenticatedDeviceApiHandler<JSONResponse<Http::STATUS_OK, OlvidDirectoryGetKeyResponse|OlvidDirectoryApiError, array{}>>
+ * @psalm-import-type OlvidDirectoryGetKeyResponse from ResponseDefinitions
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
+ */
 class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws MultipleObjectsReturnedException
 	 * @throws \OCP\DB\Exception
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryGetKeyResponse|OlvidDirectoryApiError, array{}>
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// Parse request
@@ -29,13 +37,14 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 
 		// get user in database
 		$otherOlvidUser = $this->context->db->user->getByUserIdOrNull($otherNextcloudUserId);
-		if (!$otherOlvidUser?->getSignedDetails()) {
+		$signedDetails = $otherOlvidUser?->getSignedDetails();
+		if (!$signedDetails) {
 			return $this->invalidRequest();
 		}
 
 		// set user signed details in response
-		$response[Constants::GET_KEY_RESPONSE_SIGNATURE] = $otherOlvidUser->getSignedDetails();
-
-		return new JSONResponse($response);
+		return new JSONResponse([
+			Constants::GET_KEY_RESPONSE_SIGNATURE => $signedDetails,
+		]);
 	}
 }

@@ -9,7 +9,10 @@ return RectorConfig::configure()
 		__DIR__ . '/lib',
 		__DIR__ . '/tests',
 	])
-	->withPhpSets(php80: true)
+	// target PHP version is read from composer.json ("php": "^8.1")
+	->withPhpSets()
+	// note: composer based sets (twig, phpunit set group, ...) are not usable as they expect vendor/composer/installed.json
+	// and this project uses composer/ as vendor dir
 	->withPreparedSets(
 		deadCode: true,
 		codeQuality: true,
@@ -19,12 +22,6 @@ return RectorConfig::configure()
 		instanceOf: true,
 		earlyReturn: true,
 		strictBooleans: true,
-		carbon: true,
 		rectorPreset: true,
 		phpunitCodeQuality: true,
-		doctrineCodeQuality: true,
-		symfonyCodeQuality: true,
-		symfonyConfigs: true,
-		twig: true,
-		phpunit: true,
 	);

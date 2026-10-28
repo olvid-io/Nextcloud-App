@@ -8,10 +8,6 @@ namespace OCA\Olvid;
  * Shared psalm types for OpenAPI response shapes.
  * Used to document APIs and generate OpenAPI specifications.
  *
- * @psalm-type OlvidMe = OlvidUserFull|array{
- *   isAdmin: bool,
- * })
- *
  * TODO is this structure really necessary ? Rename to OlvidUserMinimalist ?
  * @psalm-type OlvidUser = array{
  *   id: string,
@@ -24,10 +20,14 @@ namespace OCA\Olvid;
  *   displayName: string,
  *   useOlvid: bool,
  *   isInactive: bool,
- *   firstname: string,
- *   lastname: string,
- *   position: string,
- *   company: string,
+ *   firstname: string|null,
+ *   lastname: string|null,
+ *   position: string|null,
+ *   company: string|null,
+ * }
+ *
+ * @psalm-type OlvidMe = OlvidUserFull|array{
+ * 		isAdmin: bool,
  * }
  *
  * TODO is this structure really necessary ? Rename to OlvidGroupMinimalist ?
@@ -42,7 +42,7 @@ namespace OCA\Olvid;
  *   id: string,
  *   displayName: string,
  *   enabled: bool,
- *   discussionName: string,
+ *   discussionName: string|null,
  *   discussionDescription: string|null,
  *   photoUid: string|null,
  *   members: list<OlvidUser>,
@@ -54,7 +54,7 @@ namespace OCA\Olvid;
  * }
  *
  * ── Statistics API ───────────────────────────────────────────────────────────
- * @psalm-type Statistics = array{
+ * @psalm-type OlvidStatistics = array{
  *     olvidUsersCount: int,
  *     nextcloudUsersCount: int,
  *     olvidInactiveUsers: int,
@@ -133,7 +133,7 @@ namespace OCA\Olvid;
  *
  * @psalm-type OlvidDirectorySearchResponse = array{
  *   results: list<mixed>,
- *   resultsUnactivatedUsers: int,
+ *   resultsUnactivatedUsers: list<mixed>,
  *   count: int,
  *   countUnactivatedUsers: int,
  * }

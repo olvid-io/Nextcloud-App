@@ -6,10 +6,20 @@ namespace OCA\Olvid\Api\Directory;
 
 use Exception;
 use OCA\Olvid\Api\Constants;
+use OCA\Olvid\ResponseDefinitions;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 
+/**
+ * @template-extends AbstractAuthenticatedDeviceApiHandler<JSONResponse<Http::STATUS_OK, OlvidDirectorySearchResponse|OlvidDirectoryApiError, array{}>>
+ * @psalm-import-type OlvidDirectorySearchResponse from ResponseDefinitions
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
+ */
 class Search extends AbstractAuthenticatedDeviceApiHandler {
+	/**
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectorySearchResponse|OlvidDirectoryApiError, array{}>
+	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
 			/** @var [String] $filter */

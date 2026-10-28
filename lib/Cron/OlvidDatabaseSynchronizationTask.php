@@ -222,7 +222,13 @@ class OlvidDatabaseSynchronizationTask {
 		try {
 			$allOlvidData = $this->context->db->data->getAll();
 			$olvidGroupsWithPhoto = $this->context->db->group->getGroupsWithPhoto();
-			$olvidGroupByDataUidMap = array_combine(array_map(function ($group) { return $group->getBytesGroupPhotoUid(); }, $olvidGroupsWithPhoto), $olvidGroupsWithPhoto);
+			$olvidGroupByDataUidMap = [];
+			foreach ($olvidGroupsWithPhoto as $olvidGroup) {
+				$bytesPhotoUid = $olvidGroup->getBytesGroupPhotoUid();
+				if ($bytesPhotoUid !== null) {
+					$olvidGroupByDataUidMap[$bytesPhotoUid] = $olvidGroup;
+				}
+			}
 		} catch (Exception $e) {
 			$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidData: cannot load db data', ['exception' => $e]);
 			return;

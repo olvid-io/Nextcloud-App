@@ -56,7 +56,8 @@ class OlvidGroupDeletionMapper extends QBMapper {
 		}
 	}
 
-	/** @return OlvidGroupDeletion[]
+	/**
+	 * @return list<OlvidGroupDeletion>
 	 * @throws Exception
 	 */
 	public function getAfterTimestamp(int $earliestRevocationTimestamp) : array {

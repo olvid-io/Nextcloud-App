@@ -65,7 +65,8 @@ class OlvidGroupKickedMapper extends QBMapper {
 		}
 	}
 
-	/** @return OlvidGroupKicked[]
+	/**
+	 * @return list<OlvidGroupKicked>
 	 * @throws Exception
 	 */
 	public function getByUserIdAfterTimestamp(String $userId, int $earliestRevocationTimestamp) : array {

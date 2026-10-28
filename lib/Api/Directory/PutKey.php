@@ -8,19 +8,29 @@ use Exception;
 use OCA\Olvid\Api\Constants;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\JsonRevocationData;
+use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
 use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 
+/**
+ * @template-extends AbstractAuthenticatedDeviceApiHandler<JSONResponse<Http::STATUS_OK, OlvidDirectoryApiSuccess|OlvidDirectoryApiError, array{}>>
+ * @psalm-import-type OlvidDirectoryApiSuccess from ResponseDefinitions
+ * @psalm-import-type OlvidDirectoryApiError from ResponseDefinitions
+ */
 class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 	/**
 	 * @throws MultipleObjectsReturnedException
 	 * @throws \OCP\DB\Exception
+	 * @return JSONResponse<Http::STATUS_OK, OlvidDirectoryApiSuccess|OlvidDirectoryApiError, array{}>
+	 *                                                                                                 Psalm compares the unexpanded type-alias union from @template-extends with the merged shape: same type, false positive
+	 * @psalm-suppress LessSpecificImplementedReturnType
 	 */
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
