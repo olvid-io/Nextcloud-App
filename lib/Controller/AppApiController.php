@@ -60,6 +60,8 @@ class AppApiController extends OCSController {
 	 * Returns the current user's Olvid profile fields and admin status
 	 *
 	 * @return DataResponse<Http::STATUS_OK, OlvidMe, array{}>
+	 *
+	 * 200: Current user profile returned
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
@@ -90,6 +92,9 @@ class AppApiController extends OCSController {
 	 * @param string $position Job position
 	 * @param string $company Company name
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
+	 *
+	 * 200: Profile updated
+	 * 400: Neither firstname nor lastname is set
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -103,6 +108,9 @@ class AppApiController extends OCSController {
 	 * Generates a magic link (configuration URL) to enroll the current user's Olvid identity
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 *
+	 * 200: Magic link generated
+	 * 500: Magic link could not be generated
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -118,6 +126,9 @@ class AppApiController extends OCSController {
 	 *
 	 * @param bool $revoke Permanently revoke the identity (irreversible)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: Identity unlinked
+	 * 404: No Olvid identity linked to the current user
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -131,6 +142,8 @@ class AppApiController extends OCSController {
 	 * Returns all Nextcloud groups the current user belongs to, with their Olvid discussion status
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroup>}, array{}>
+	 *
+	 * 200: Groups returned
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
@@ -161,6 +174,8 @@ class AppApiController extends OCSController {
 	 * Returns all Nextcloud groups with their Olvid discussion configuration and member list
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupFull>}, array{}>
+	 *
+	 * 200: Groups returned
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
@@ -203,6 +218,9 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $id Group ID (must be unique and non-empty)
 	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
+	 *
+	 * 200: Group created
+	 * 400: Missing or already existing group ID, or group could not be created
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'POST', url: '/app/groups')]
@@ -242,6 +260,10 @@ class AppApiController extends OCSController {
 	 * @param string|null $discussionName Override the Olvid discussion name (ignored if null or empty)
 	 * @param string|null $discussionDescription Discussion description
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 *
+	 * 200: Group settings updated
+	 * 404: Group not found
+	 * 500: Group settings could not be updated
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}')]
@@ -262,6 +284,10 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $groupId Group ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, OlvidGroupRef, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{}, array{}>
+	 *
+	 * 200: Group deleted
+	 * 404: Group not found
+	 * 500: Group could not be deleted
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'DELETE', url: '/app/groups/{groupId}')]
@@ -287,6 +313,9 @@ class AppApiController extends OCSController {
 	 * @param string $groupId Group ID (URL path)
 	 * @param string $photoUid Base64-encoded photo UID (query parameter, used for cache validation)
 	 * @return DataDisplayResponse<Http::STATUS_OK|Http::STATUS_NOT_FOUND, array{}>
+	 *
+	 * 200: Avatar image returned
+	 * 404: Group or avatar not found, or photoUid mismatch
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
 	 * @noinspection PhpUnused
@@ -307,6 +336,11 @@ class AppApiController extends OCSController {
 	 * @param string $groupId Group ID (URL path)
 	 * @param ?string $photoData Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current
 	 * @return DataResponse<Http::STATUS_OK, array{photoUid: string|null}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 *
+	 * 200: Avatar updated or removed
+	 * 400: Invalid image data
+	 * 404: Group not found
+	 * 500: Avatar could not be saved
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
@@ -326,6 +360,9 @@ class AppApiController extends OCSController {
 	 * @param string $groupId Group ID (URL path)
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: User added to group
+	 * 404: Group or user not found
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'POST', url: '/app/groups/{groupId}/members/{userId}')]
@@ -350,6 +387,10 @@ class AppApiController extends OCSController {
 	 * @param string $groupId Group ID (URL path)
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: User removed from group
+	 * 400: Cannot remove yourself from the admin group
+	 * 404: Group or user not found
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'DELETE', url: '/app/groups/{groupId}/members/{userId}')]
@@ -366,7 +407,7 @@ class AppApiController extends OCSController {
 
 		// protect against last admin deletion !
 		if ($nextcloudGroup->getGID() === 'admin' && $nextcloudUser->getUID() === $this->userSession->getUser()->getUID()) {
-			return new DataResponse(['error' => 'you can remove yourself from admin group'], Http::STATUS_BAD_REQUEST);
+			return new DataResponse(['error' => 'you cannot remove yourself from admin group'], Http::STATUS_BAD_REQUEST);
 		}
 
 		$nextcloudGroup->removeUser($nextcloudUser);
@@ -379,6 +420,8 @@ class AppApiController extends OCSController {
 	 * Returns all Nextcloud users with their Olvid profile fields
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{users: list<OlvidUserFull>}, array{}>
+	 *
+	 * 200: Users returned
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
@@ -415,6 +458,10 @@ class AppApiController extends OCSController {
 	 * @param ?string $password Initial password (optional)
 	 * @param list<string>|null $groups Groups to add user to (optional)
 	 * @return DataResponse<Http::STATUS_OK, OlvidUserFull, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 *
+	 * 200: User created
+	 * 400: Missing uid, user already exists, or unknown group
+	 * 500: User could not be created
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
@@ -436,7 +483,7 @@ class AppApiController extends OCSController {
 			foreach ($groups as $group) {
 				$nextcloudGroup = $this->context->nextcloud->groupManager->get($group);
 				if ($nextcloudGroup === null) {
-					return new DataResponse(['error' => 'group does not exists: ' . $group], Http::STATUS_BAD_REQUEST);
+					return new DataResponse(['error' => 'group does not exist: ' . $group], Http::STATUS_BAD_REQUEST);
 				}
 
 				$nextcloudGroups[] = $nextcloudGroup;
@@ -503,6 +550,10 @@ class AppApiController extends OCSController {
 	 * @param string $position Job position
 	 * @param string $company Company name
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: User profile updated
+	 * 400: Neither firstname nor lastname is set
+	 * 404: User not found
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -522,6 +573,10 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: User deleted
+	 * 400: Cannot delete the currently authenticated user
+	 * 404: User not found
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'DELETE', url: '/app/users/{userId}')]
@@ -544,6 +599,9 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{groups: list<array{id: string, displayName: string, enabled: bool, discussionName: string|null, discussionDescription: string|null, photoUid: string|null}>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: Groups returned
+	 * 404: User not found
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
@@ -581,6 +639,10 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $userId User ID (URL path)
 	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
+	 *
+	 * 200: Magic link generated
+	 * 404: User not found
+	 * 500: Magic link could not be generated
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -601,6 +663,9 @@ class AppApiController extends OCSController {
 	 * @param string $userId User ID (URL path)
 	 * @param bool $revoke Permanently revoke the identity (irreversible)
 	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 *
+	 * 200: Identity unlinked
+	 * 404: User not found or no Olvid identity linked
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
@@ -614,6 +679,8 @@ class AppApiController extends OCSController {
 	 *
 	 * @param string $query Search string (query parameter)
 	 * @return DataResponse<Http::STATUS_OK, array{users: list<OlvidUser>}, array{}>
+	 *
+	 * 200: Matching users returned
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/search')]
@@ -634,10 +701,12 @@ class AppApiController extends OCSController {
 
 	// ── Misc endpoints (admin only) ───────────────────────────────
 	/**
-	 * Unlinks the Olvid identity of a specific user
-	 * When $revoke is true the identity is also permanently blocked for all contacts
+	 * Returns whether the Olvid app configuration is valid or not
+	 * If not UI will show an alert message to the user
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{isConfigurationValid: boolean}, array{}>
+	 *
+	 * 200: Configuration validity returned
 	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/isAppConfigurationValid')]
@@ -653,10 +722,11 @@ class AppApiController extends OCSController {
 	}
 
 	/**
-	 * Unlinks the Olvid identity of a specific user
-	 * When $revoke is true the identity is also permanently blocked for all contacts
+	 * Returns Olvid usage statistics (users, groups, inactive users)
 	 *
 	 * @return DataResponse<Http::STATUS_OK, OlvidStatistics, array{}>
+	 *
+	 * 200: Statistics returned
 	 * @throws Exception
 	 * @noinspection PhpUnused
 	 */
