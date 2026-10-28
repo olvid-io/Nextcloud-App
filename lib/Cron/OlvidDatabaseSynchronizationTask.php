@@ -33,8 +33,9 @@ class OlvidDatabaseSynchronizationTask {
 		// delete olvid data if they are not referenced anymore
 		$this->syncAndValidateOlvidData();
 
-		// OlvidRevocation, OlvidGroupDeletion, OlvidGroupKicked are long term database that cannot be cleaned
-		// even if original group / user does not exist anymore
+		// OlvidRevocation, OlvidGroupDeletion, OlvidGroupKicked clean expired elements
+		// (elements older than DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS)
+		$this->expireTables();
 
 		$this->logger->info('OlvidDatabaseSynchronizationTask: task end');
 	}
@@ -250,6 +251,26 @@ class OlvidDatabaseSynchronizationTask {
 					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidData: cannot delete olvid data: ' . $olvidData->getBytesDataUid(), ['exception' => $exception]);
 				}
 			}
+		}
+	}
+
+	private function expireTables(): void {
+		try {
+			$this->context->db->revocation->deleteExpiredElements();
+		} catch (Exception $exception) {
+			$this->logger->error('OlvidDatabaseSynchronizationTask: expireTables: cannot clean revocations', ['exception' => $exception]);
+		}
+
+		try {
+			$this->context->db->groupKicked->deleteExpiredElements();
+		} catch (Exception $exception) {
+			$this->logger->error('OlvidDatabaseSynchronizationTask: expireTables: cannot clean group kick', ['exception' => $exception]);
+		}
+
+		try {
+			$this->context->db->groupDeletion->deleteExpiredElements();
+		} catch (Exception $exception) {
+			$this->logger->error('OlvidDatabaseSynchronizationTask: expireTables: cannot clean group deletion', ['exception' => $exception]);
 		}
 	}
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\Db;
 
+use OCA\Olvid\Api\Constants;
 use OCA\Olvid\Models\JsonGroupDeletionData;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\TimeUtil;
@@ -28,6 +29,16 @@ class OlvidGroupDeletionMapper extends QBMapper {
 	public function deleteAll(): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName());
+		$qb->executeStatement();
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function deleteExpiredElements(): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->lte('timestamp', $qb->createNamedParameter(TimeUtil::currentTimeMillis() - Constants::DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS, Types::BIGINT)));
 		$qb->executeStatement();
 	}
 

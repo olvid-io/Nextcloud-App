@@ -32,7 +32,7 @@ class Constants {
 
 	public const GROUP_INVITATION_NONCE_SIZE = 16;
 
-	public const DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS = 60 * 86_400_000; // 60 days in millis
+	public const DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS = 365 * 86_400_000; // 365 days in millis
 
 	/*
 	 * Engine API (binary Encoded protocol — requestChallenge / getSession)
