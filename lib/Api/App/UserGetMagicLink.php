@@ -43,6 +43,11 @@ class UserGetMagicLink {
 			// get or create olvid user in database
 			$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 
+			// force to unlink or revoke identity before generating a new magic link
+			if ($olvidUser->hasIdentity()) {
+				return new DataResponse(['error' => 'user already have an associated identity'], Http::STATUS_BAD_REQUEST);
+			}
+
 			// create token and store in db
 			$token = RandomUtil::uuid_create();
 			$olvidUser->setMagicToken($token);

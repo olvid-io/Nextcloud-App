@@ -1,16 +1,15 @@
 <template>
 	<div class="olvid-avatar">
 		<NcAvatar
-			:preloaded-user-status="useOlvid && isInactive ? status.inactive : null"
 			v-bind="$attrs"
-			:size="size"
-			v-on="$listeners" />
+			hide-status="true"
+			:size="size" />
 		<img
 			v-if="useOlvid"
 			:src="badgeUrl"
 			:width="Math.round(size / 3)"
 			:height="Math.round(size / 3)"
-			:title="useOlvid ? t('olvid', 'Enrolled with Olvid') : t('olvid', 'Not enrolled with Olvid')"
+			:title="title"
 			aria-hidden="true"
 			class="olvid-avatar__badge"
 			alt="olvid badge">
@@ -42,22 +41,22 @@ export default {
 		},
 	},
 
-	data() {
-		return {
-			status: {
-				inactive: {
-					icon: '🔴',
-					status: 'inactive',
-					message: 'Inactive',
-				},
-			},
-		}
-	},
-
 	computed: {
 		badgeUrl() {
-			// const file = this.useOlvid ? 'olvid-enabled.svg' : 'olvid-disabled.svg'
-			return generateFilePath('olvid', 'img', 'olvid.svg')
+			// const file = this.useOlvid && !this.isInactive ? 'olvid-enabled.svg' : 'olvid-disabled.svg'
+			const file = this.useOlvid && !this.isInactive ? 'olvid.svg' : 'olvid-disabled.svg'
+			return generateFilePath('olvid', 'img', file)
+		},
+		title() {
+			if (this.useOlvid) {
+				if (this.isInactive) {
+					return this.t('olvid', 'Enrolled with Olvid, but inactive')
+				} else {
+					return this.t('olvid', 'Enrolled with Olvid')
+				}
+			} else {
+				return this.t('olvid', 'Not enrolled with Olvid')
+			}
 		},
 	},
 }
