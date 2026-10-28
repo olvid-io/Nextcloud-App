@@ -44,6 +44,7 @@
 		<template #footer>
 			<ul class="app-navigation-entry__settings">
 				<NcAppNavigationItem
+					v-if="isAdmin"
 					:name="t('olvid', 'Olvid Settings')"
 					data-cy-olvid-navigation-settings-button
 					@click="settingsOpened = !settingsOpened">
