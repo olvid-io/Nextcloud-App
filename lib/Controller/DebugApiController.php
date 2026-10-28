@@ -46,16 +46,16 @@ class DebugApiController extends OCSController {
 		$appFields = [];
 		try {
 			$appFields = $this->appConfig->getAllValues(Application::APP_ID);
-		} catch (Exception $e) {
-			$this->logger->error('debug: Cannot compute user fields: ' . $e);
+		} catch (Exception $exception) {
+			$this->logger->error('debug: Cannot compute user fields: ' . $exception);
 		}
 
 		$userFields = [];
 		try {
 			$olvidUser = $this->context->db->user->getByUserIdOrNull($this->userSession->getUser()->getUID());
 			$userFields = $olvidUser?->jsonSerialize() ?? [];
-		} catch (Exception $e) {
-			$this->logger->error('debug: Cannot compute user fields: ' . $e);
+		} catch (Exception $exception) {
+			$this->logger->error('debug: Cannot compute user fields: ' . $exception);
 		}
 
 		return new JSONResponse([
@@ -200,6 +200,7 @@ class DebugApiController extends OCSController {
 		if ($olvidUser !== null) {
 			$this->context->db->user->delete($olvidUser);
 		}
+
 		return new TextPlainResponse('reset ' . $this->userSession->getUser()->getUID());
 	}
 
@@ -257,8 +258,6 @@ class DebugApiController extends OCSController {
 		}
 
 		$this->context->db->revocation->deleteAll();
-		return new JSONResponse(['deletedRevocations' => array_map(function ($revocation) {
-			return $revocation->getUserId();
-		}, $revocations)]);
+		return new JSONResponse(['deletedRevocations' => array_map(fn ($revocation) => $revocation->getUserId(), $revocations)]);
 	}
 }

@@ -67,10 +67,10 @@ class UserGetMagicLink {
 
 			// build url
 			$encoded = base64_encode((string)json_encode($payload));
-			$configurationUrl = "https://configuration.olvid.io/#$encoded";
+			$configurationUrl = 'https://configuration.olvid.io/#' . $encoded;
 			return new DataResponse(['configurationUrl' => $configurationUrl], Http::STATUS_OK);
-		} catch (Exception $e) {
-			$this->logger->error('magicLink: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->error('magicLink: ', ['exception' => $exception]);
 			return new DataResponse(['error' => 'internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}

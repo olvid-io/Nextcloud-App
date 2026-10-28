@@ -27,10 +27,15 @@ use Throwable;
 abstract class AbstractEngineApiHandler {
 	// Status bytes shared across all engine endpoints (from AbstractEngineEntryPoint)
 	protected const STATUS_OK = "\x00";
+
 	protected const STATUS_NOT_FOUND = "\x09";
+
 	protected const STATUS_PERMISSION_DENIED = "\x0e";
+
 	protected const STATUS_PARSING_ERROR = "\xfe";
+
 	protected const STATUS_GENERAL_ERROR = "\xff";
+
 	// cache is used to store session challenges (no need to persist them)
 	private ?ICache $cache = null;
 
@@ -50,7 +55,7 @@ abstract class AbstractEngineApiHandler {
 		try {
 			return $this->handler($rawInput);
 		} catch (Exception $exception) {
-			$this->logger->error(get_class($this) . ': unexpected exception', ['exception' => $exception]);
+			$this->logger->error(static::class . ': unexpected exception', ['exception' => $exception]);
 			return $this->generalError();
 		}
 	}
@@ -63,17 +68,19 @@ abstract class AbstractEngineApiHandler {
 		if ($this->cache !== null) {
 			return $this->cache;
 		}
+
 		try {
 			$this->cache = $this->cacheFactory->createDistributed(Application::APP_ID);
 			return $this->cache;
-		} catch (Throwable $exception) {
-			$this->logger->error(get_class($this) . ': cannot create distributed cache, fallback to memory cache', ['exception' => $exception]);
+		} catch (Throwable $throwable) {
+			$this->logger->error(static::class . ': cannot create distributed cache, fallback to memory cache', ['exception' => $throwable]);
 		}
+
 		try {
 			$this->cache = $this->cacheFactory->createInMemory();
 			return $this->cache;
-		} catch (Throwable $exception) {
-			$this->logger->error(get_class($this) . ': cannot create memory cache, fallback to local cache', ['exception' => $exception]);
+		} catch (Throwable $throwable) {
+			$this->logger->error(static::class . ': cannot create memory cache, fallback to local cache', ['exception' => $throwable]);
 		}
 
 		$this->cache = $this->cacheFactory->createLocal();

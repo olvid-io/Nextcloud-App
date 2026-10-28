@@ -30,9 +30,9 @@ class Groups extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		// parse request (don't fail on parse error)
 		try {
-			$requestTimestamp = array_key_exists(Constants::GROUPS_REQUEST_TIMESTAMP, $jsonParameters) ? $jsonParameters[Constants::GROUPS_REQUEST_TIMESTAMP] : null;
-		} catch (Exception $e) {
-			$this->logger->warning('groups: parse error: ', ['exception' => $e]);
+			$requestTimestamp = $jsonParameters[Constants::GROUPS_REQUEST_TIMESTAMP] ?? null;
+		} catch (Exception $exception) {
+			$this->logger->warning('groups: parse error: ', ['exception' => $exception]);
 		}
 
 		$currentTimestamp = TimeUtil::currentTimeMillis();

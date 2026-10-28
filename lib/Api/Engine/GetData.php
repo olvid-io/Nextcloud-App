@@ -34,6 +34,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 class GetData extends AbstractEngineApiHandler {
 	// Algorithm class 0x02 = ALGO_CLASS_AUTHENTICATED_SYMMETRIC_ENCRYPTION
 	private const EXPECTED_ALGO_CLASS = 0x02;
+
 	// Algorithm implementation 0x00 = AES-256-CTR + HMAC-SHA256
 	private const EXPECTED_ALGO_IMPL = 0x00;
 
@@ -41,6 +42,7 @@ class GetData extends AbstractEngineApiHandler {
 	//   MACKey.MACKEY_KEY_NAME  = "mackey"
 	//   SymEncKey.SYMENC_KEY_NAME = "enckey"
 	private const DICT_KEY_MAC = 'mackey';
+
 	private const DICT_KEY_ENC = 'enckey';
 
 	// Expected key material lengths (bytes)
@@ -57,6 +59,7 @@ class GetData extends AbstractEngineApiHandler {
 			$this->logger->warning('getData: wrong UID length, got ' . strlen($rawInput));
 			return $this->generalError();
 		}
+
 		$bytesDataUid = $rawInput;
 
 		// search for data entry in database
@@ -71,8 +74,8 @@ class GetData extends AbstractEngineApiHandler {
 		//   [0x90][len] [Encoded.of([0x02, 0x00])] [Encoded dict{"mackey"->32B, "enckey"->32B}]
 		try {
 			$keyComponents = Encoded::decodeSymmetricKey($olvidData->getBytesEncodedKey());
-		} catch (Exception $e) {
-			$this->logger->warning('getData: cannot decode stored key: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('getData: cannot decode stored key: ', ['exception' => $exception]);
 			return $this->notFound();
 		}
 
@@ -101,8 +104,8 @@ class GetData extends AbstractEngineApiHandler {
 		// A fresh random IV is generated every call so each response is unique.
 		try {
 			$encryptedData = AuthEnc::encrypt($macKey, $encKey, $olvidData->getBytesData());
-		} catch (Exception $e) {
-			$this->logger->error('getData: encryption failed: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->error('getData: encryption failed: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
 

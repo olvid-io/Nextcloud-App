@@ -151,6 +151,7 @@ class AppApiController extends OCSController {
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
 			];
 		}
+
 		return new DataResponse(['groups' => $result]);
 	}
 
@@ -180,6 +181,7 @@ class AppApiController extends OCSController {
 					'useOlvid' => $this->context->db->user->hasUserAnIdentity($member->getUID()),
 				];
 			}
+
 			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
 			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$response['groups'][] = [
@@ -192,6 +194,7 @@ class AppApiController extends OCSController {
 				'members' => $members,
 			];
 		}
+
 		return new DataResponse($response);
 	}
 
@@ -267,14 +270,14 @@ class AppApiController extends OCSController {
 		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		if ($nextcloudGroup->delete()) {
 			return new DataResponse([
 				'id' => $groupId,
 				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 			], Http::STATUS_OK);
-		} else {
-			return new DataResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+		return new DataResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
 
 	/**
@@ -331,10 +334,12 @@ class AppApiController extends OCSController {
 		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
 		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		$nextcloudGroup->addUser($nextcloudUser);
 		return new DataResponse([]);
 	}
@@ -353,14 +358,17 @@ class AppApiController extends OCSController {
 		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
 		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		// protect against last admin deletion !
 		if ($nextcloudGroup->getGID() === 'admin' && $nextcloudUser->getUID() === $this->userSession->getUser()->getUID()) {
 			return new DataResponse(['error' => 'you can remove yourself from admin group'], Http::STATUS_BAD_REQUEST);
 		}
+
 		$nextcloudGroup->removeUser($nextcloudUser);
 		return new DataResponse([]);
 	}
@@ -392,6 +400,7 @@ class AppApiController extends OCSController {
 				'isInactive' => ($olvidUser->hasIdentity() ?? false) && $olvidUser->isInactive(),
 			];
 		}
+
 		return new DataResponse(['users' => $result]);
 	}
 
@@ -421,13 +430,15 @@ class AppApiController extends OCSController {
 		if ($this->context->nextcloud->userManager->get($uid) !== null) {
 			return new DataResponse(['error' => 'user already exists'], Http::STATUS_BAD_REQUEST);
 		}
+
 		$nextcloudGroups = [];
-		if ($groups !== null && count($groups) > 0) {
+		if ($groups !== null && $groups !== []) {
 			foreach ($groups as $group) {
 				$nextcloudGroup = $this->context->nextcloud->groupManager->get($group);
 				if ($nextcloudGroup === null) {
-					return new DataResponse(['error' => "group does not exists: $group"], Http::STATUS_BAD_REQUEST);
+					return new DataResponse(['error' => 'group does not exists: ' . $group], Http::STATUS_BAD_REQUEST);
 				}
+
 				$nextcloudGroups[] = $nextcloudGroup;
 			}
 		}
@@ -442,9 +453,9 @@ class AppApiController extends OCSController {
 			if ($nextcloudUser === null) {
 				return new DataResponse(['error' => 'Could not create user'], Http::STATUS_INTERNAL_SERVER_ERROR);
 			}
-		} catch (Exception $e) {
-			$this->logger->error('createUser failed', ['exception' => $e]);
-			return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		} catch (Exception $exception) {
+			$this->logger->error('createUser failed', ['exception' => $exception]);
+			return new DataResponse(['error' => $exception->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		// create Olvid user
@@ -453,12 +464,15 @@ class AppApiController extends OCSController {
 		if (trim($firstname) !== '') {
 			$olvidUser->setFirstname(trim($firstname));
 		}
+
 		if (trim($lastname) !== '') {
 			$olvidUser->setLastname(trim($lastname));
 		}
+
 		if (trim($position) !== '') {
 			$olvidUser->setPosition(trim($position));
 		}
+
 		if (trim($company) !== '') {
 			$olvidUser->setCompany(trim($company));
 		}
@@ -515,10 +529,12 @@ class AppApiController extends OCSController {
 		if ($userId === $this->userId) {
 			return new DataResponse(['error' => 'Cannot delete yourself'], Http::STATUS_BAD_REQUEST);
 		}
+
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
 		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		$nextcloudUser->delete();
 		return new DataResponse([]);
 	}
@@ -537,15 +553,14 @@ class AppApiController extends OCSController {
 		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
 		$olvidGroups = $this->context->db->group->getAll();
-		$olvidGroupMap = array_combine(array_map(function ($og) {
-			return $og->getGroupId();
-		}, $olvidGroups), $olvidGroups);
+		$olvidGroupMap = array_combine(array_map(fn ($og) => $og->getGroupId(), $olvidGroups), $olvidGroups);
 
 		$result = [];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
-			$olvidGroup = array_key_exists($nextcloudGroup->getGID(), $olvidGroupMap) ? $olvidGroupMap[$nextcloudGroup->getGID()] : null;
+			$olvidGroup = $olvidGroupMap[$nextcloudGroup->getGID()] ?? null;
 			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
 			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
 			$result[] = [
@@ -554,9 +569,10 @@ class AppApiController extends OCSController {
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
 				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
-				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
+				'photoUid' => $bytesPhotoUid !== null ? base64_encode((string)$bytesPhotoUid) : null,
 			];
 		}
+
 		return new DataResponse(['groups' => $result]);
 	}
 
@@ -574,6 +590,7 @@ class AppApiController extends OCSController {
 		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
+
 		return $this->userGetMagicLink->handle($nextcloudUser);
 	}
 
@@ -611,6 +628,7 @@ class AppApiController extends OCSController {
 				'useOlvid' => $this->context->db->user->hasUserAnIdentity($nextcloudUser->getUID()),
 			];
 		}
+
 		return new DataResponse(['users' => $result]);
 	}
 
@@ -647,20 +665,14 @@ class AppApiController extends OCSController {
 		$allNextcloudUsers = $this->context->nextcloud->userManager->getAll();
 		$allOlvidUsers = $this->context->db->user->getAll();
 
-		$olvidUsersCount = count(array_filter($allOlvidUsers, function ($olvidUser) {
-			return $olvidUser->hasIdentity();
-		}));
+		$olvidUsersCount = count(array_filter($allOlvidUsers, fn ($olvidUser): bool => $olvidUser->hasIdentity()));
 		$nextcloudUsersCount = count($allNextcloudUsers);
-		$olvidInactiveUsersCount = count(array_filter($allOlvidUsers, function ($olvidUser) {
-			return $olvidUser->hasIdentity() && $olvidUser->isInactive();
-		}));
+		$olvidInactiveUsersCount = count(array_filter($allOlvidUsers, fn ($olvidUser): bool => $olvidUser->hasIdentity() && $olvidUser->isInactive()));
 
 		$allNextcloudGroups = $this->context->nextcloud->groupManager->getAll();
 		$allOlvidGroups = $this->context->db->group->getAll();
 
-		$olvidGroupsCount = count(array_filter($allOlvidGroups, function ($olvidGroup) {
-			return $olvidGroup->getEnabled();
-		}));
+		$olvidGroupsCount = count(array_filter($allOlvidGroups, fn ($olvidGroup) => $olvidGroup->getEnabled()));
 		$nextcloudGroupsCount = count($allNextcloudGroups);
 
 		return new DataResponse([

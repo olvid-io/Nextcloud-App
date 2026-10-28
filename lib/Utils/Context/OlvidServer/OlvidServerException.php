@@ -9,9 +9,13 @@ use Exception;
 abstract class OlvidServerException extends Exception {
 	// local error raised if server api key or url is not set
 	public const ERROR_INVALID_REQUEST = 1;
+
 	public const ERROR_INTERNAL = 2;
+
 	public const ERROR_INVALID_API_KEY = 3;
+
 	public const ERROR_API_KEY_NOT_FOUND = 4;
+
 	public const ERROR_MISSING_BOT_PERMISSION = 5;
 }
 

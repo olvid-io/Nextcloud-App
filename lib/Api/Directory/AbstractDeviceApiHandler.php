@@ -45,16 +45,16 @@ abstract class AbstractDeviceApiHandler {
 			try {
 				$jsonParameters = json_decode(file_get_contents('php://input'), true) ?? [];
 			} catch (Exception $exception) {
-				$this->logger->error(get_class($this) . ': cannot parse request: ', ['exception' => $exception]);
-				return $this->internalError();
+				$this->logger->error(static::class . ': cannot parse request: ', ['exception' => $exception]);
+				return static::internalError();
 			}
 		}
 
 		try {
 			return $this->handler($jsonParameters, $this->user);
 		} catch (Throwable $throwable) {
-			$this->logger->error(get_class($this) . ': unexpected exception in handler', ['exception' => $throwable]);
-			return $this->internalError();
+			$this->logger->error(static::class . ': unexpected exception in handler', ['exception' => $throwable]);
+			return static::internalError();
 		}
 	}
 

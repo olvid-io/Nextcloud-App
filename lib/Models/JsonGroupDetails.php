@@ -16,8 +16,8 @@ class JsonGroupDetails implements JsonSerializable {
 	public ?string $description = null;
 
 	public function __construct(?string $name = null, ?string $description = null) {
-		$this->name = self::nullOrTrim($name);
-		$this->description = self::nullOrTrim($description);
+		$this->name = $this->nullOrTrim($name);
+		$this->description = $this->nullOrTrim($description);
 	}
 
 	public function isEmpty(): bool {
@@ -29,10 +29,11 @@ class JsonGroupDetails implements JsonSerializable {
 			&& $this->description === $other->description;
 	}
 
-	private static function nullOrTrim(?string $value): ?string {
+	private function nullOrTrim(?string $value): ?string {
 		if ($value === null) {
 			return null;
 		}
+
 		$trimmed = trim($value);
 		return $trimmed !== '' ? $trimmed : null;
 	}

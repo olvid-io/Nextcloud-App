@@ -26,8 +26,6 @@ class OlvidUserMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $userId
-	 * @return OlvidUser
 	 * @throws DoesNotExistException
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
@@ -52,12 +50,11 @@ class OlvidUserMapper extends QBMapper {
 				->where($qb->expr()->in('user_id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_STR_ARRAY)));
 			array_push($users, ...$this->findEntities($qb));
 		}
+
 		return $users;
 	}
 
 	/**
-	 * @param string $userId
-	 * @return ?OlvidUser
 	 * @throws MultipleObjectsReturnedException|Exception
 	 */
 	public function getByUserIdOrNull(string $userId): ?OlvidUser {
@@ -69,9 +66,6 @@ class OlvidUserMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $userId
-	 * @param string $nextcloudDisplayName
-	 * @return OlvidUser
 	 * @throws Exception|MultipleObjectsReturnedException
 	 */
 	public function getOrCreate(string $userId, string $nextcloudDisplayName): OlvidUser {
@@ -84,6 +78,7 @@ class OlvidUserMapper extends QBMapper {
 				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
 					throw $e;
 				}
+
 				// a concurrent request inserted it first: read the committed row
 				try {
 					return $this->getByUserId($userId);
@@ -107,12 +102,12 @@ class OlvidUserMapper extends QBMapper {
 			$preparedFilter = $this->db->escapeLikeParameter(JsonUserDetails::normalizeForSearch($filter));
 			$qb = $qb->andWhere($qb->expr()->like('full_search_field', $qb->createNamedParameter('%' . $preparedFilter . '%', Types::STRING)));
 		}
+
 		$qb->setMaxResults($limit);
 		return $this->findEntities($qb);
 	}
 
 	/**
-	 * @param int $timestamp
 	 * @return OlvidUser[]
 	 * @throws Exception
 	 */
@@ -124,7 +119,6 @@ class OlvidUserMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $nonce
 	 * @return OlvidUser[]
 	 * @throws Exception
 	 */
@@ -135,10 +129,6 @@ class OlvidUserMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	/**
-	 * @param string $userId
-	 * @return bool
-	 */
 	public function hasUserAnIdentity(string $userId): bool {
 		try {
 			$qb = $this->db->getQueryBuilder();
@@ -155,10 +145,6 @@ class OlvidUserMapper extends QBMapper {
 		}
 	}
 
-	/**
-	 * @param OlvidUser $olvidUser
-	 * @return OlvidUser|null
-	 */
 	public function updateNoFail(OlvidUser $olvidUser): ?OlvidUser {
 		try {
 			return $this->update($olvidUser);

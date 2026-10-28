@@ -33,6 +33,7 @@ enum GroupPermission: string {
 				$res[] = $permission;
 			}
 		}
+
 		return $res;
 	}
 
@@ -43,15 +44,17 @@ enum GroupPermission: string {
 		$permissionStrings = [];
 		$startPos = 0;
 		$length = strlen($serializedPermissions);
-		for ($i = 0; $i < $length; $i++) {
+		for ($i = 0; $i < $length; ++$i) {
 			if ($serializedPermissions[$i] === "\x00") {
 				$permissionStrings[] = substr($serializedPermissions, $startPos, $i - $startPos);
 				$startPos = $i + 1;
 			}
 		}
+
 		if ($startPos !== $length) {
 			$permissionStrings[] = substr($serializedPermissions, $startPos);
 		}
+
 		return $permissionStrings;
 	}
 }

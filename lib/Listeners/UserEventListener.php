@@ -91,7 +91,10 @@ class UserEventListener implements IEventListener {
 			foreach ($nextcloudGroups as $nextcloudGroup) {
 				try {
 					$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
-					if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
+					if ($olvidGroup === null) {
+						continue;
+					}
+					if (!$olvidGroup->getEnabled()) {
 						continue;
 					}
 

@@ -9,7 +9,6 @@ use OCA\Olvid\ResponseDefinitions;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUser;
-use Override;
 
 /*
  * DeviceApi:
@@ -28,7 +27,6 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 	/**
 	 * @return TResponse|JSONResponse<Http::STATUS_OK, OlvidDirectoryApiError, array{}>
 	 */
-	#[Override]
 	public function handle(?array $jsonParameters = null): JSONResponse {
 		// check authentication
 		$this->user = $this->requiresAuth();
@@ -52,8 +50,8 @@ abstract class AbstractAuthenticatedDeviceApiHandler extends AbstractDeviceApiHa
 		// check token validity
 		try {
 			return $this->context->signatory->verifyBearerToken($token, $this->context);
-		} catch (Exception $e) {
-			$this->logger->error('Bearer token is invalid: ' . $e->getMessage());
+		} catch (Exception $exception) {
+			$this->logger->error('Bearer token is invalid: ' . $exception->getMessage());
 			return null;
 		}
 	}

@@ -48,8 +48,8 @@ class GroupAvatarUpload {
 		else {
 			// Strip the "data:image/<type>;base64," prefix and decode
 			$base64 = preg_replace('/^data:image\/\w+;base64,/', '', $photoData);
-			$jpegBytes = base64_decode($base64, true);
-			if ($jpegBytes === false || strlen($jpegBytes) === 0) {
+			$jpegBytes = base64_decode((string)$base64, true);
+			if ($jpegBytes === false || $jpegBytes === '') {
 				return new DataResponse(['error' => 'invalid image data'], Http::STATUS_BAD_REQUEST);
 			}
 

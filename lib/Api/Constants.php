@@ -16,24 +16,32 @@ class Constants {
 
 	// Minimum build numbers supporting this version of the keycloak plugin API
 	public const MIN_BUILD_ANDROID = 200;
+
 	public const MIN_BUILD_IOS = 650;
+
 	public const MIN_BUILD_DAEMON = 200000;
+
 	public const MIN_BUILD_DESKTOP = 20000;
+
 	public const OLVID_DIRECTORY_API_VERSION = 1;
 
 	/*
 	 ** time and sizes
 	 */
 	public const UID_SIZE = 32;
+
 	public const GROUP_INVITATION_NONCE_SIZE = 16;
+
 	public const DEFAULT_REVOCATION_LISTS_MAX_AGE_MILLIS = 60 * 86_400_000; // 60 days in millis
 
 	/*
 	 * Engine API (binary Encoded protocol — requestChallenge / getSession)
 	 */
 	public const ENGINE_NONCE_LENGTH = 32;
+
 	public const ENGINE_CHALLENGE_LENGTH = 32;
-	public const ENGINE_RESPONSE_LENGTH = 80;   // 16 prefix + 32 SHA-256 hash + 32 y scalar
+
+	public const ENGINE_RESPONSE_LENGTH = 80; // 16 prefix + 32 SHA-256 hash + 32 y scalar
 	public const ENGINE_RESPONSE_LENGTH_SHA512 = 112;  // 16 prefix + 64 SHA-512 hash + 32 y scalar
 	// Prefix prepended to the challenge before signing: "keycloakChallenge"
 	public const ENGINE_TOKEN_SIGNATURE_PREFIX = 'keycloakChallenge';
@@ -42,11 +50,17 @@ class Constants {
 	 * OlvidUserDetailsKey
 	 */
 	public const DETAILS_KEY_ID = 'id';
+
 	public const DETAILS_KEY_IDENTITY = 'identity';
+
 	public const DETAILS_KEY_FIRST_NAME = 'first-name';
+
 	public const DETAILS_KEY_LAST_NAME = 'last-name';
+
 	public const DETAILS_KEY_POSITION = 'position';
+
 	public const DETAILS_KEY_COMPANY = 'company';
+
 	public const DETAILS_KEY_TIMESTAMP = 'timestamp';
 
 	/*
@@ -54,22 +68,36 @@ class Constants {
 	 */
 	// /me constants
 	public const ME_REQUEST_TIMESTAMP = 'timestamp';
+
 	public const ME_REQUEST_DEVICE_UID = 'deviceUid';
+
 	public const ME_RESPONSE_SIGNATURE = 'signature';
+
 	public const ME_RESPONSE_API_KEY = 'api-key';
+
 	public const ME_RESPONSE_SERVER = 'server';
+
 	public const ME_RESPONSE_REVOCATION_ALLOWED = 'revocation-allowed';
+
 	public const ME_RESPONSE_TRANSFER_RESTRICTED = 'transfer-restricted';
+
 	public const ME_RESPONSE_PUSH_TOPICS = 'push-topics';
+
 	public const ME_RESPONSE_NONCE = 'nonce';
+
 	public const ME_RESPONSE_SIGNED_REVOCATIONS = 'signed-revocations';
+
 	public const ME_RESPONSE_CURRENT_TIMESTAMP = 'current-timestamp';
+
 	public const ME_RESPONSE_MINIMUM_BUILD_VERSIONS = 'min-build-versions';
+
 	public const ME_RESPONSE_MINIMUM_BUILD_VERSION_ANDROID_LABEL = 'android';
+
 	public const ME_RESPONSE_MINIMUM_BUILD_VERSION_IOS_LABEL = 'ios';
 
 	// /getKey constants
 	public const GET_KEY_REQUEST_USER_ID = 'user-id';
+
 	public const GET_KEY_RESPONSE_SIGNATURE = 'signature';
 
 	// /putKey constants
@@ -77,10 +105,15 @@ class Constants {
 
 	// /search constants
 	public const SEARCH_REQUEST_FILTER = 'filter';
+
 	public const SEARCH_COUNT_LIMIT = 50;
+
 	public const SEARCH_RESPONSE_RESULTS = 'results';
+
 	public const SEARCH_RESPONSE_RESULTS_UNACTIVATED_USERS = 'resultsUnactivatedUsers';
+
 	public const SEARCH_RESPONSE_COUNT = 'count';
+
 	public const SEARCH_RESPONSE_COUNT_UNACTIVATED_USERS = 'countUnactivatedUsers';
 
 	// /verify constants
@@ -91,18 +124,25 @@ class Constants {
 
 	// /getMagicSession constants
 	public const GET_MAGIC_SESSION_REQUEST_USERNAME = 'username';
+
 	public const GET_MAGIC_SESSION_REQUEST_TOKEN = 'token';
 
 	// /groups constants
 	public const GROUPS_REQUEST_TIMESTAMP = 'timestamp';
+
 	public const GROUPS_RESPONSE_SIGNED_GROUP_BLOBS = 'signed_group_blobs';
+
 	public const GROUPS_RESPONSE_SIGNED_GROUP_DELETIONS = 'signed_group_deletions';
+
 	public const GROUPS_RESPONSE_SIGNED_GROUP_KICKS = 'signed_group_kicks';
+
 	public const GROUPS_RESPONSE_CURRENT_TIMESTAMP = 'current_timestamp';
 
 
 	// /listUsers
 	public const LIST_USERS_REQUEST_TIMESTAMP = 'timestamp';
+
 	public const LIST_USERS_RESPONSE_USERS = 'users';
+
 	public const LIST_USERS_RESPONSE_TIMESTAMP = 'timestamp';
 }

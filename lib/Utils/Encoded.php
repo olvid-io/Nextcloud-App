@@ -19,8 +19,11 @@ use Exception;
  */
 class Encoded {
 	private const TYPE_BYTES = "\x00";
+
 	private const TYPE_LIST = "\x03";
+
 	private const TYPE_DICTIONARY = "\x04";
+
 	private const TYPE_SYM_KEY = "\x90";
 
 	public static function encodeBytes(string $bytes): string {
@@ -57,9 +60,11 @@ class Encoded {
 		if (strlen($data) < 5) {
 			throw new Exception('Encoded data too short');
 		}
+
 		if ($data[0] !== self::TYPE_LIST) {
 			throw new Exception('Expected list type');
 		}
+
 		['length' => $bodyLen] = unpack('Nlength', substr($data, 1, 4));
 		if (strlen($data) !== 5 + $bodyLen) {
 			throw new Exception('List length mismatch');
@@ -71,14 +76,17 @@ class Encoded {
 			if ($offset + 5 > strlen($data)) {
 				throw new Exception('Truncated element header');
 			}
+
 			['length' => $elemLen] = unpack('Nlength', substr($data, $offset + 1, 4));
 			$total = 5 + $elemLen;
 			if ($offset + $total > strlen($data)) {
 				throw new Exception('Element overflows buffer');
 			}
+
 			$items[] = substr($data, $offset, $total);
 			$offset += $total;
 		}
+
 		return $items;
 	}
 
@@ -91,13 +99,16 @@ class Encoded {
 		if (strlen($encoded) < 5) {
 			throw new Exception('Encoded element too short');
 		}
+
 		if ($encoded[0] !== self::TYPE_BYTES) {
 			throw new Exception('Expected bytes type');
 		}
+
 		['length' => $len] = unpack('Nlength', substr($encoded, 1, 4));
 		if (strlen($encoded) !== 5 + $len) {
 			throw new Exception('Bytes length mismatch');
 		}
+
 		return substr($encoded, 5);
 	}
 
@@ -126,6 +137,7 @@ class Encoded {
 			$body .= self::encodeBytes($keyName);
 			$body .= self::encodeBytes($valueBytes);
 		}
+
 		return self::TYPE_DICTIONARY . pack('N', strlen($body)) . $body;
 	}
 
@@ -139,6 +151,7 @@ class Encoded {
 		if (strlen($encoded) < 5 || $encoded[0] !== self::TYPE_DICTIONARY) {
 			throw new Exception('Expected dictionary type');
 		}
+
 		['length' => $bodyLen] = unpack('Nlength', substr($encoded, 1, 4));
 		if (strlen($encoded) !== 5 + $bodyLen) {
 			throw new Exception('Dictionary length mismatch');
@@ -151,23 +164,28 @@ class Encoded {
 			if ($offset + 5 > $end) {
 				throw new Exception('Truncated dict key header');
 			}
+
 			['length' => $kLen] = unpack('Nlength', substr($encoded, $offset + 1, 4));
 			if ($offset + 5 + $kLen > $end) {
 				throw new Exception('Dict key overflows buffer');
 			}
+
 			$keyName = self::decodeBytes(substr($encoded, $offset, 5 + $kLen));
 			$offset += 5 + $kLen;
 
 			if ($offset + 5 > $end) {
 				throw new Exception('Truncated dict value header');
 			}
+
 			['length' => $vLen] = unpack('Nlength', substr($encoded, $offset + 1, 4));
 			if ($offset + 5 + $vLen > $end) {
 				throw new Exception('Dict value overflows buffer');
 			}
+
 			$result[$keyName] = self::decodeBytes(substr($encoded, $offset, 5 + $vLen));
 			$offset += 5 + $vLen;
 		}
+
 		return $result;
 	}
 
@@ -197,6 +215,7 @@ class Encoded {
 		if (strlen($encoded) < 5 || $encoded[0] !== self::TYPE_SYM_KEY) {
 			throw new Exception('Expected symmetric key type (0x90)');
 		}
+
 		['length' => $bodyLen] = unpack('Nlength', substr($encoded, 1, 4));
 		if (strlen($encoded) !== 5 + $bodyLen) {
 			throw new Exception('Symmetric key length mismatch');
@@ -210,13 +229,16 @@ class Encoded {
 			if ($offset + 5 > $end) {
 				throw new Exception('Truncated child item header');
 			}
+
 			['length' => $itemLen] = unpack('Nlength', substr($encoded, $offset + 1, 4));
 			if ($offset + 5 + $itemLen > $end) {
 				throw new Exception('Child item overflows buffer');
 			}
+
 			$items[] = substr($encoded, $offset, 5 + $itemLen);
 			$offset += 5 + $itemLen;
 		}
+
 		if (count($items) !== 2) {
 			throw new Exception('Symmetric key must have exactly 2 child items');
 		}

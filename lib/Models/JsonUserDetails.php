@@ -10,16 +10,22 @@ class JsonUserDetails implements JsonSerializable {
 
 	#[JsonField(Constants::DETAILS_KEY_ID)]
 	public String $id;
+
 	#[JsonField(Constants::DETAILS_KEY_IDENTITY)]
-	public ?String $base64Identity;
+	public ?String $base64Identity = null;
+
 	#[JsonField(Constants::DETAILS_KEY_FIRST_NAME)]
 	public String $firstname;
+
 	#[JsonField(Constants::DETAILS_KEY_LAST_NAME)]
 	public String $lastname;
+
 	#[JsonField(Constants::DETAILS_KEY_POSITION)]
-	public ?String $position;
+	public ?String $position = null;
+
 	#[JsonField(Constants::DETAILS_KEY_COMPANY)]
-	public ?String $company;
+	public ?String $company = null;
+
 	#[JsonField(Constants::DETAILS_KEY_TIMESTAMP)]
 	public int $timestamp;
 
@@ -38,7 +44,7 @@ class JsonUserDetails implements JsonSerializable {
 		// replace html entities with non accentuated characters
 		$str = preg_replace('#&([A-Za-z])(?:acute|grave|cedil|circ|orn|ring|slash|th|tilde|uml);#', '\1', $str);
 		// replace ligature: Œ, Æ ...
-		$str = preg_replace('#&([A-Za-z]{2})(?:lig);#', '\1', $str);
+		$str = preg_replace('#&([A-Za-z]{2})(?:lig);#', '\1', (string)$str);
 		// delete the rest
 		// $str = preg_replace('#&[^;]+;#', '', $str);
 		return $str;

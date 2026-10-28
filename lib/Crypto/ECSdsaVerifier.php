@@ -71,6 +71,7 @@ class ECSdsaVerifier {
 				return true;
 			}
 		}
+
 		return false;
 	}
 }

@@ -15,7 +15,7 @@ class RandomUtil {
 	public static function random_bytes(int $size): ?string {
 		try {
 			return random_bytes($size);
-		} catch (Exception $e) {
+		} catch (Exception) {
 			return null;
 		}
 	}

@@ -35,6 +35,7 @@ class OlvidDataMapper extends QBMapper {
 		$qb->select('*')->from($this->getTableName());
 		return $this->findEntities($qb);
 	}
+
 	/**
 	 * @throws Exception
 	 */
@@ -45,8 +46,6 @@ class OlvidDataMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $bytesDataUid
-	 * @return OlvidData
 	 * @throws DoesNotExistException when no row exists for that UID.
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
@@ -60,8 +59,6 @@ class OlvidDataMapper extends QBMapper {
 	}
 
 	/** Same as getByUid() but returns null instead of throwing on a missing row.
-	 * @param string $bytesDataUid
-	 * @return OlvidData|null
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
 	 */

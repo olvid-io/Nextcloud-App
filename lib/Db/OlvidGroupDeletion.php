@@ -18,9 +18,11 @@ use OCP\DB\Types;
  * @method int getTimestamp()
  * @method void setTimestamp(int $timestamp)
  */
-class OlvidGroupDeletion extends Entity {
+class OlvidGroupDeletion extends Entity implements \Stringable {
 	protected string $bytesGroupUid = '';
+
 	protected int $timestamp = 0;
+
 	protected string $signedDeletion = '';
 
 	public function __construct() {

@@ -72,6 +72,7 @@ class UserDeleteIdentity {
 		$olvidUser->setBytesIdentity(null);
 		$olvidUser->setNonce(null);
 		$olvidUser->setSignedDetails(null);
+
 		$this->context->db->user->update($olvidUser);
 
 		// remove user from Olvid groups (ignore exceptions)
@@ -80,7 +81,10 @@ class UserDeleteIdentity {
 			foreach ($nextcloudGroups as $nextcloudGroup) {
 				try {
 					$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
-					if ($olvidGroup === null || !$olvidGroup->getEnabled()) {
+					if ($olvidGroup === null) {
+						continue;
+					}
+					if (!$olvidGroup->getEnabled()) {
 						continue;
 					}
 

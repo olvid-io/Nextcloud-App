@@ -31,14 +31,17 @@ class UserUpdate {
 			$olvidUser->setFirstname($newFirstname);
 			$updated = true;
 		}
+
 		if ($olvidUser->getLastname() !== $newLastname) {
 			$olvidUser->setLastname($newLastname);
 			$updated = true;
 		}
+
 		if ($olvidUser->getPosition() !== $newPosition) {
 			$olvidUser->setPosition($newPosition);
 			$updated = true;
 		}
+
 		if ($olvidUser->getCompany() !== $newCompany) {
 			$olvidUser->setCompany($newCompany);
 			$updated = true;

@@ -106,6 +106,7 @@ class OlvidGroupKickedMapper extends QBMapper {
 				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
 					throw $e;
 				}
+
 				// a concurrent request inserted it first: read the committed row
 				$groupKick = $this->getByBytesGroupUidAndUserIdOrNull($olvidGroup->getBytesGroupUid(), $userId);
 				if ($groupKick === null) {

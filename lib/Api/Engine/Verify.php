@@ -32,8 +32,8 @@ class Verify extends AbstractEngineApiHandler {
 			if ($signature === null) {
 				throw new Exception('Missing signature field');
 			}
-		} catch (Exception $e) {
-			$this->logger->warning('verify: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('verify: parse error: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
 
@@ -45,38 +45,23 @@ class Verify extends AbstractEngineApiHandler {
 			if ($jsonUserDetails?->id === null || $jsonUserDetails?->base64Identity === null) {
 				throw new Exception('Missing id or identity in JWT payload');
 			}
+
 			$userId = $jsonUserDetails->id;
 			$base64Identity = $jsonUserDetails->base64Identity;
 
 			// Check identity matches stored value
 			$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
 			if ($olvidUser === null || !$olvidUser->hasIdentity()
-				|| base64_encode($olvidUser->getBytesIdentity()) !== $base64Identity) {
+				|| base64_encode((string)$olvidUser->getBytesIdentity()) !== $base64Identity) {
 				$this->logger->debug('verify: identity mismatch for user ' . $userId);
 				return $this->binaryResult(false);
 			}
 
 			return $this->binaryResult(true);
-		} catch (Exception $e) {
-			$this->logger->warning('verify: error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('verify: error: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
-	}
-
-	/**
-	 * Convert a raw ECDSA signature (R||S, 64 bytes) to DER format for openssl_verify.
-	 */
-	private static function rawToDer(string $raw): string {
-		$r = ltrim(substr($raw, 0, 32), "\x00") ?: "\x00";
-		$s = ltrim(substr($raw, 32, 32), "\x00") ?: "\x00";
-		if (ord($r[0]) >= 0x80) {
-			$r = "\x00" . $r;
-		}
-		if (ord($s[0]) >= 0x80) {
-			$s = "\x00" . $s;
-		}
-		$seq = "\x02" . chr(strlen($r)) . $r . "\x02" . chr(strlen($s)) . $s;
-		return "\x30" . chr(strlen($seq)) . $seq;
 	}
 
 	private function binaryResult(bool $value): BinaryResponse {

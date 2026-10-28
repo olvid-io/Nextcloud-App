@@ -46,8 +46,8 @@ class InstallRepairStep implements IRepairStep {
 			$details = openssl_pkey_get_details($res);
 
 			// compute public key coordinates to display in jwks format
-			$x = rtrim(strtr(base64_encode($details['ec']['x']), '+/', '-_'), '='); // base64 url encode
-			$y = rtrim(strtr(base64_encode($details['ec']['y']), '+/', '-_'), '='); // base64 url encode
+			$x = rtrim(strtr(base64_encode((string)$details['ec']['x']), '+/', '-_'), '='); // base64 url encode
+			$y = rtrim(strtr(base64_encode((string)$details['ec']['y']), '+/', '-_'), '='); // base64 url encode
 
 			// store key in app config
 			$olvidAppConfig->setJwkKeyType('ES256');

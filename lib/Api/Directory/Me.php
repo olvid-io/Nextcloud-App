@@ -29,8 +29,8 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		try {
 			$timestamp = (int)($jsonParameters[Constants::ME_REQUEST_TIMESTAMP] ?? 0);
 			// $deviceUid = isset($jsonParameters[Constants::ME_REQUEST_DEVICE_UID]) ? (string)$jsonParameters[Constants::ME_REQUEST_DEVICE_UID] : null;
-		} catch (Exception $e) {
-			$this->logger->warning('me: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('me: parse error: ', ['exception' => $exception]);
 		}
 
 		$currentTimestamp = TimeUtil::currentTimeMillis();
@@ -62,6 +62,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 				$this->logger->error('Me: cannot create user api key: unexpected exception', ['exception' => $e]);
 			}
 		}
+
 		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getApiKey();
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
@@ -69,7 +70,8 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			if ($olvidUser->getNonce() === null) {
 				$olvidUser->setNonce(RandomUtil::uuid_create());
 			}
-			$response[Constants::ME_RESPONSE_NONCE] = base64_encode($olvidUser->getNonce());
+
+			$response[Constants::ME_RESPONSE_NONCE] = base64_encode((string)$olvidUser->getNonce());
 		}
 
 		// update user last connection timestamp
@@ -95,16 +97,17 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 				$this->context->nextcloud->appManager->setGlobalPushTopic($this->context->olvidServer->requestNewPushTopic());
 			} catch (InvalidConfigurationException) {
 				$this->logger->error('Me: cannot create global push topic: invalid configuration');
-			} catch (Exception $e) {
-				$this->logger->error('Me: cannot create global push topic unexpected exception', ['exception' => $e]);
+			} catch (Exception $exception) {
+				$this->logger->error('Me: cannot create global push topic unexpected exception', ['exception' => $exception]);
 			}
 		}
+
 		$response[Constants::ME_RESPONSE_PUSH_TOPICS] = $globalPushTopic ? [$globalPushTopic] : null;
 
 		// list every revocation since timestamp passed in request
 		$signedRevocations = $this->context->db->revocation->getSinceTimestamp($timestamp);
 
-		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = count($signedRevocations) !== 0
+		$response[Constants::ME_RESPONSE_SIGNED_REVOCATIONS] = $signedRevocations !== []
 			? array_map(fn ($revocation) => $revocation->getSignedRevocation(), $signedRevocations)
 			: null;
 

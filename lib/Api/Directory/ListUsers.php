@@ -25,8 +25,8 @@ class ListUsers extends AbstractAuthenticatedDeviceApiHandler {
 	public function handler(array $jsonParameters, ?IUser $nextcloudUser): JSONResponse {
 		try {
 			$timestamp = (int)($jsonParameters[Constants::LIST_USERS_REQUEST_TIMESTAMP] ?? 0);
-		} catch (Exception $e) {
-			$this->logger->warning('listUsers: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('listUsers: parse error: ', ['exception' => $exception]);
 			return $this->invalidRequest();
 		}
 

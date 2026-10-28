@@ -31,7 +31,6 @@ use OCP\IUser;
 class GetMagicSession extends AbstractDeviceApiHandler {
 	// unauthenticated entrypoint, argument $user is null
 	/**
-	 * @param array $jsonParameters
 	 * @param IUser|null $nextcloudUser: always null (unauthenticated entry point)
 	 * @throws \OCP\DB\Exception
 	 * @throws MultipleObjectsReturnedException
@@ -45,8 +44,8 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 			if ($nextcloudUserId === null || $token === null) {
 				throw new Exception('Missing username or token');
 			}
-		} catch (Exception $e) {
-			$this->logger->warning('getMagicSession: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('getMagicSession: parse error: ', ['exception' => $exception]);
 			return $this->invalidRequest();
 		}
 
@@ -73,6 +72,7 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 				$this->context->db->user->update($olvidUser);
 			} catch (\OCP\DB\Exception) {
 			}
+
 			return $this->invalidRequest();
 		}
 

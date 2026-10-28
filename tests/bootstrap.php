@@ -9,7 +9,7 @@ $ncBootstrap = __DIR__ . '/../../../tests/bootstrap.php';
 if (file_exists($ncBootstrap)) {
 	try {
 		require_once $ncBootstrap;
-	} catch (\Exception $e) {
+	} catch (Exception) {
 		// NC not installed/configured; running in standalone unit-test mode.
 	}
 }

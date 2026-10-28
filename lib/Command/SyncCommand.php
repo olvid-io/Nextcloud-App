@@ -38,7 +38,9 @@ class SyncCommand extends Command {
 		$runServer = (bool)$input->getOption('server');
 		$runSignatures = (bool)$input->getOption('signatures');
 		if (!$runDatabase && !$runServer && !$runSignatures) {
-			$runDatabase = $runServer = $runSignatures = true;
+			$runDatabase = true;
+			$runServer = true;
+			$runSignatures = true;
 		}
 
 		// forward task logs to the console (info and above shown by default, debug with -v)
@@ -58,9 +60,11 @@ class SyncCommand extends Command {
 		if ($runDatabase) {
 			$failed |= !$this->runStep($output, 'Database synchronization', fn () => (new OlvidDatabaseSynchronizationTask($this->context, $logger))->run());
 		}
+
 		if ($runServer) {
 			$failed |= !$this->runStep($output, 'Server synchronization', fn () => (new OlvidServerSynchronizationTask($this->context, $logger))->run());
 		}
+
 		if ($runSignatures) {
 			$failed |= !$this->runStep($output, 'Signatures refresh', fn () => (new OlvidRefreshSignatureTask($this->context, $logger))->run());
 		}
@@ -69,16 +73,17 @@ class SyncCommand extends Command {
 	}
 
 	private function runStep(OutputInterface $output, string $name, callable $step): bool {
-		$output->writeln("<info>$name...</info>");
+		$output->writeln(sprintf('<info>%s...</info>', $name));
 		try {
 			$step();
-			$output->writeln("<info>$name: done</info>");
+			$output->writeln(sprintf('<info>%s: done</info>', $name));
 			return true;
-		} catch (Throwable $e) {
-			$output->writeln("<error>$name: failed: {$e->getMessage()}</error>");
+		} catch (Throwable $throwable) {
+			$output->writeln(sprintf('<error>%s: failed: %s</error>', $name, $throwable->getMessage()));
 			if ($output->isVerbose()) {
-				$output->writeln($e->getTraceAsString());
+				$output->writeln($throwable->getTraceAsString());
 			}
+
 			return false;
 		}
 	}

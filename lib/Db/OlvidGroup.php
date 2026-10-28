@@ -51,18 +51,27 @@ use ReflectionException;
  * @method string|null getDiscussionDescription()
  * @method void setDiscussionDescription(string|null $discussionDescription)
  */
-class OlvidGroup extends Entity {
+class OlvidGroup extends Entity implements \Stringable {
 	// Nextcloud group id
 	protected string $groupId = '';
+
 	// Olvid group Uid as bytes
 	protected string $bytesGroupUid = '';
+
 	protected bool $enabled = false;
+
 	protected ?string $signedGroupBlob = null;
+
 	protected int $lastModificationTimestamp = 0;
+
 	protected ?string $pushTopic = null;
+
 	protected ?string $bytesGroupPhotoUid = null;
+
 	protected ?string $serializedSharedSettings = null;
+
 	protected ?string $discussionName = null;
+
 	protected ?string $discussionDescription = null;
 
 	public function __construct() {
@@ -92,8 +101,6 @@ class OlvidGroup extends Entity {
 
 	/**
 	 * @param array<string> $groupMemberIds
-	 * @param OlvidContext $context
-	 * @return JsonGroupBlob
 	 * @throws Exception
 	 */
 	public function computeBlob(array $groupMemberIds, OlvidContext $context): JsonGroupBlob {
@@ -119,6 +126,7 @@ class OlvidGroup extends Entity {
 			if (!$olvidUserMember?->hasIdentity()) {
 				continue;
 			}
+
 			if (isset($previousMembers[$olvidUserMember->getUserId()])) {
 				$permissions = $previousMembers[$olvidUserMember->getUserId()]->permissions;
 				$invitationNonce = $previousMembers[$olvidUserMember->getUserId()]->groupInvitationNonce;
@@ -136,7 +144,7 @@ class OlvidGroup extends Entity {
 
 			$groupMembersAndPermissions[] = new JsonGroupMemberAndPermissions(
 				$olvidUserMember->getUserId(),
-				base64_encode($olvidUserMember->getBytesIdentity()),
+				base64_encode((string)$olvidUserMember->getBytesIdentity()),
 				$signedUserDetails,
 				$permissions,
 				$invitationNonce
@@ -156,6 +164,7 @@ class OlvidGroup extends Entity {
 			} catch (MultipleObjectsReturnedException|Exception) {
 			}
 		}
+
 		$blob->groupDetails = new JsonGroupDetails($this->getDiscussionName(), $this->getDiscussionDescription());
 		$blob->pushTopic = $this->getPushTopic();
 		$blob->groupMembersAndPermissions = $groupMembersAndPermissions;

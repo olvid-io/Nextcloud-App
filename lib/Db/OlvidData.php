@@ -6,6 +6,7 @@ namespace OCA\Olvid\Db;
 
 use OCP\AppFramework\Db\Entity;
 use OCP\DB\Types;
+use Stringable;
 
 /**
  * Currently this table is used to store group photos only, but it might be extended
@@ -32,14 +33,13 @@ use OCP\DB\Types;
  * @method string getBytesData()
  * @method void setBytesData(string $bytesData)
  */
-class OlvidData extends Entity {
-	/** @var string */
+class OlvidData extends Entity implements Stringable {
 	protected string $bytesDataUid = '';
 
 	/** @var string Olvid-encoded AuthEncAES256ThenSHA256 key */
 	protected string $bytesEncodedKey = '';
 
-	/** @var string */
+	/** @var string the payload as bytes */
 	protected string $bytesData = '';
 
 	public function __construct() {

@@ -21,10 +21,13 @@ use OCP\DB\Types;
  * @method int getTimestamp()
  * @method void setTimestamp(int $timestamp)
  */
-class OlvidGroupKicked extends Entity {
+class OlvidGroupKicked extends Entity implements \Stringable {
 	protected string $bytesGroupUid = '';
+
 	protected string $userId = '';
+
 	protected int $timestamp = 0;
+
 	protected string $signedKick = '';
 
 	public function __construct() {

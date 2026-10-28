@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 
 class OlvidContextServer {
 	private ?string $cachedServerUrl = null;
+
 	private ?string $cachedApiKey = null;
 
 	public function __construct(
@@ -30,12 +31,15 @@ class OlvidContextServer {
 		if ($this->cachedApiKey === null) {
 			$this->cachedApiKey = $this->olvidAppManager->getOlvidServerApiKey();
 		}
+
 		return $this->cachedApiKey;
 	}
+
 	private function getCachedServerUrl(): ?string {
 		if ($this->cachedServerUrl === null) {
 			$this->cachedServerUrl = $this->olvidAppManager->getOlvidServerUrl();
 		}
+
 		return $this->cachedServerUrl;
 	}
 
@@ -52,11 +56,11 @@ class OlvidContextServer {
 			$this->logger->error('OlvidServer:: requestNewApiKey: apiKey not set in response');
 			throw new InternalErrorException();
 		}
+
 		return $serverResponse['apiKey'];
 	}
 
 	/**
-	 * @param string $apiKeyToRevoke
 	 *
 	 * @return true
 	 *
@@ -77,9 +81,6 @@ class OlvidContextServer {
 		}
 	}
 
-	/**
-	 * @param string $apiKeyToRevoke
-	 */
 	public function revokeApiKeyNoFail(string $apiKeyToRevoke): bool {
 		try {
 			return $this->revokeApiKey($apiKeyToRevoke);
@@ -105,14 +106,13 @@ class OlvidContextServer {
 			$this->logger->error('OlvidServer:: requestNewPushTopic: pushTopic not set in response');
 			throw new InternalErrorException();
 		}
+
 		return $serverResponse['pushTopic'];
 	}
 
 	/**
-	 * @param string $pushTopic
 	 *
 	 * @return true
-	 *
 	 * @noinspection PhpUnused
 	 */
 	public function revokePushTopic(string $pushTopic): bool {
@@ -125,11 +125,7 @@ class OlvidContextServer {
 		return true;
 	}
 
-	/**
-	 * @param string $pushTopic
-	 *
-	 * @return bool
-	 */
+
 	public function revokePushTopicNoFail(string $pushTopic): bool {
 		try {
 			return $this->revokePushTopic($pushTopic);
@@ -156,8 +152,6 @@ class OlvidContextServer {
 	}
 
 	/**
-	 * @param string $base64UserIdentity
-	 * @return bool
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
@@ -170,10 +164,6 @@ class OlvidContextServer {
 		return true;
 	}
 
-	/**
-	 * @param string $pushTopic
-	 * @return bool
-	 */
 	public function sendGroupNotificationNoFail(string $pushTopic): bool {
 		try {
 			return $this->sendGroupNotification($pushTopic);
@@ -186,10 +176,6 @@ class OlvidContextServer {
 		}
 	}
 
-	/**
-	 * @param string $base64UserIdentity
-	 * @return bool
-	 */
 	public function sendSingleUserNotificationNoFail(string $base64UserIdentity): bool {
 		try {
 			return $this->sendSingleUserNotification($base64UserIdentity);
@@ -227,6 +213,7 @@ class OlvidContextServer {
 		if ($serverUrl === null || $jsonRequest->keycloakApiKey === null) {
 			throw new InvalidConfigurationException();
 		}
+
 		if (!$jsonRequest->q) {
 			throw new InvalidRequestException();
 		}
@@ -240,14 +227,15 @@ class OlvidContextServer {
 				'body' => json_encode($jsonRequest)
 			]);
 			$jsonResponse = json_decode($response->getBody(), associative: true);
-		} catch (Exception $e) {
-			$this->logger->error("OlvidContextServer: serverApiRequest: exception (query: $jsonRequest->q)", ['exception' => $e]);
-			throw new NetworkException("$e");
+		} catch (Exception $exception) {
+			$this->logger->error(sprintf('OlvidContextServer: serverApiRequest: exception (query: %d)', $jsonRequest->q), ['exception' => $exception]);
+			throw new NetworkException($exception);
 		}
-
 		if ($jsonResponse === null) {
 			throw new InternalErrorException();
-		} elseif (array_key_exists('error', $jsonResponse) && $jsonResponse['error']) {
+		}
+
+		if (array_key_exists('error', $jsonResponse) && $jsonResponse['error']) {
 			throw match ($jsonResponse['error']) {
 				OlvidServerException::ERROR_INVALID_REQUEST => new InvalidRequestException(),
 				OlvidServerException::ERROR_INVALID_API_KEY => new InvalidApiKeyException(),
@@ -256,6 +244,7 @@ class OlvidContextServer {
 				default => new InternalErrorException(),
 			};
 		}
+
 		return $jsonResponse;
 	}
 }

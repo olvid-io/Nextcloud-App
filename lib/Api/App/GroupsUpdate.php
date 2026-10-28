@@ -55,10 +55,12 @@ class GroupsUpdate {
 				$enableStatusChanged = true;
 				$updated = true;
 			}
+
 			if ($discussionName !== null && trim($discussionName) && $discussionName !== $olvidGroup->getDiscussionName()) {
 				$olvidGroup->setDiscussionName($discussionName);
 				$updated = true;
 			}
+
 			if ($discussionDescription !== null && $discussionDescription !== $olvidGroup->getDiscussionDescription()) {
 				$olvidGroup->setDiscussionDescription($discussionDescription);
 				$updated = true;
@@ -68,6 +70,7 @@ class GroupsUpdate {
 			if (!$updated) {
 				return new DataResponse([]);
 			}
+
 			// always save current group state to be sure modifications are saved in all cases
 			$this->context->db->group->update($olvidGroup);
 
@@ -117,21 +120,17 @@ class GroupsUpdate {
 			 */
 			if (!$olvidGroup->getEnabled() && !$enableStatusChanged) {
 				// if group is disabled and was not disabled now, do not send a notification
-			} else {
+			} elseif ($newlyCreatedPushTopic || $olvidGroup->getPushTopic() === null) {
 				// notify users individually
-				if ($newlyCreatedPushTopic || $olvidGroup->getPushTopic() === null) {
-					$olvidUserMembers = $this->context->db->user->getUsersById($memberUserIds);
-					foreach ($olvidUserMembers as $olvidUserMember) {
-						$olvidUser = $this->context->db->user->getByUserIdOrNull($olvidUserMember->getUserId());
-						if ($olvidUser?->hasIdentity()) {
-							$this->context->olvidServer->sendSingleUserNotificationNoFail(base64_encode($olvidUser->getBytesIdentity()));
-						}
+				$olvidUserMembers = $this->context->db->user->getUsersById($memberUserIds);
+				foreach ($olvidUserMembers as $olvidUserMember) {
+					$olvidUser = $this->context->db->user->getByUserIdOrNull($olvidUserMember->getUserId());
+					if ($olvidUser?->hasIdentity()) {
+						$this->context->olvidServer->sendSingleUserNotificationNoFail(base64_encode((string)$olvidUser->getBytesIdentity()));
 					}
 				}
-				// use existing group push topic
-				else {
-					$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
-				}
+			} else {
+				$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 			}
 
 			// delete push topic for disabled group

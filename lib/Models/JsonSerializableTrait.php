@@ -18,16 +18,19 @@ trait JsonSerializableTrait {
 			if (empty($attrs)) {
 				continue;
 			}
+
 			$field = $attrs[0]->newInstance();
 			if ($field->excludeFromJson) {
 				continue;
 			}
+
 			$value = $prop->getValue($this);
 			$serialized = self::serializeValue($value, $field);
 			if ($serialized !== null) {
 				$result[$field->key] = $serialized;
 			}
 		}
+
 		return $result;
 	}
 
@@ -49,18 +52,22 @@ trait JsonSerializableTrait {
 			if (empty($attrs)) {
 				continue;
 			}
+
 			$field = $attrs[0]->newInstance();
 			if ($field->excludeFromJson) {
 				$prop->setValue($instance, self::typeDefault($prop->getType()));
 				continue;
 			}
+
 			$raw = $data[$field->key] ?? null;
 			$value = self::deserializeValue($raw, $field);
 			if ($value === null) {
 				$value = self::typeDefault($prop->getType());
 			}
+
 			$prop->setValue($instance, $value);
 		}
+
 		return $instance;
 	}
 
@@ -68,20 +75,25 @@ trait JsonSerializableTrait {
 		if ($value === null || $value === '' || $value === []) {
 			return null;
 		}
+
 		if ($field->isBytes) {
-			return base64_encode($value);
+			return base64_encode((string)$value);
 		}
+
 		if ($field->class !== null && $field->isArray) {
 			$mapped = array_map(fn ($item) => $item->jsonSerialize(), $value);
-			return empty($mapped) ? null : $mapped;
+			return $mapped === [] ? null : $mapped;
 		}
+
 		if ($field->class !== null) {
 			$serialized = $value->jsonSerialize();
 			if (empty($serialized)) {
 				return $field->emptyAsObject ? (object)[] : null;
 			}
+
 			return $serialized;
 		}
+
 		return $value;
 	}
 
@@ -89,18 +101,22 @@ trait JsonSerializableTrait {
 		if ($value === null || $value === '' || $value === []) {
 			return null;
 		}
+
 		if ($field->isBytes) {
 			$decoded = base64_decode((string)$value, true);
 			return $decoded !== false ? $decoded : null;
 		}
+
 		if ($field->class !== null && $field->isArray) {
 			$class = $field->class;
 			$items = array_map(fn ($m) => $class::fromArray((array)$m), (array)$value);
-			return empty($items) ? null : $items;
+			return $items === [] ? null : $items;
 		}
+
 		if ($field->class !== null) {
 			return ($field->class)::fromArray((array)$value);
 		}
+
 		return $value;
 	}
 
@@ -108,6 +124,7 @@ trait JsonSerializableTrait {
 		if ($type === null || $type->allowsNull()) {
 			return null;
 		}
+
 		if ($type instanceof ReflectionNamedType) {
 			return match ($type->getName()) {
 				'int', 'float' => 0,
@@ -117,6 +134,7 @@ trait JsonSerializableTrait {
 				default => null,
 			};
 		}
+
 		return null;
 	}
 }

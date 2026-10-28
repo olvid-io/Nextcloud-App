@@ -40,17 +40,19 @@ class GetSession extends AbstractEngineApiHandler {
 			if (count($items) < 2) {
 				throw new Exception('Not enough list items');
 			}
+
 			$bytesChallengeResponse = Encoded::decodeBytes($items[0]);
 			if (strlen($bytesChallengeResponse) !== Constants::ENGINE_RESPONSE_LENGTH
 				&& strlen($bytesChallengeResponse) !== Constants::ENGINE_RESPONSE_LENGTH_SHA512) {
 				throw new Exception('Bad challengeResponse length');
 			}
+
 			$bytesNonce = Encoded::decodeBytes($items[1]);
 			if (strlen($bytesNonce) !== Constants::ENGINE_NONCE_LENGTH) {
 				throw new Exception('Bad nonce length');
 			}
-		} catch (Exception $e) {
-			$this->logger->warning('getSession: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('getSession: parse error: ', ['exception' => $exception]);
 			return $this->parsingError();
 		}
 
@@ -63,6 +65,7 @@ class GetSession extends AbstractEngineApiHandler {
 			$this->logger->error('getSession: challenge not found in cache');
 			return $this->permissionDenied();
 		}
+
 		$this->getCache()->remove($cacheKey);
 
 		// Decode cached {userId, challenge} pair
@@ -71,10 +74,11 @@ class GetSession extends AbstractEngineApiHandler {
 			if (count($challengeItems) < 2) {
 				throw new Exception('Malformed cached challenge');
 			}
+
 			$userId = Encoded::decodeString($challengeItems[0]);
 			$challenge = Encoded::decodeBytes($challengeItems[1]);
-		} catch (Exception $e) {
-			$this->logger->error('getSession: cannot decode cached challenge: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->error('getSession: cannot decode cached challenge: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
 
@@ -97,8 +101,8 @@ class GetSession extends AbstractEngineApiHandler {
 				$this->logger->error('getSession: signature verification failed');
 				return $this->permissionDenied();
 			}
-		} catch (Exception $e) {
-			$this->logger->error('getSession: signature verification error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->error('getSession: signature verification error: ', ['exception' => $exception]);
 			return $this->permissionDenied();
 		}
 

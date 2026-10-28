@@ -45,9 +45,9 @@ class OlvidServerSynchronizationTask {
 		if ($syncResponse === null) {
 			$this->logger->info('OlvidServerSynchronizationTask: task end with an error');
 		} else {
-			$unknownApiKeysCount = array_key_exists('unknownApiKeys', $syncResponse) ? sizeof($syncResponse['unknownApiKeys']) : 0;
-			$unknownPushTopicsCount = array_key_exists('unknownPushTopics', $syncResponse) ? sizeof($syncResponse['unknownPushTopics']) : 0;
-			$this->logger->info("OlvidServerSynchronizationTask: task end (cleaned api keys: $unknownApiKeysCount, cleaned push topics: $unknownPushTopicsCount)");
+			$unknownApiKeysCount = array_key_exists('unknownApiKeys', $syncResponse) ? count($syncResponse['unknownApiKeys']) : 0;
+			$unknownPushTopicsCount = array_key_exists('unknownPushTopics', $syncResponse) ? count($syncResponse['unknownPushTopics']) : 0;
+			$this->logger->info(sprintf('OlvidServerSynchronizationTask: task end (cleaned api keys: %d, cleaned push topics: %d)', $unknownApiKeysCount, $unknownPushTopicsCount));
 		}
 	}
 
@@ -75,6 +75,7 @@ class OlvidServerSynchronizationTask {
 		if ($globalPushTopic !== null) {
 			$knownPushTopics[] = $globalPushTopic;
 		}
+
 		// group push topics
 		$allOlvidGroups = $this->context->db->group->getAll();
 		foreach ($allOlvidGroups as $olvidGroup) {
@@ -112,6 +113,7 @@ class OlvidServerSynchronizationTask {
 					$apiKeyToUserMap[$olvidUser->getApiKey()] = $olvidUser;
 				}
 			}
+
 			// remove api key for users with an unknown api key
 			foreach ($unknownApiKeys as $unknownApiKey) {
 				if (array_key_exists($unknownApiKey, $apiKeyToUserMap) && $apiKeyToUserMap[$unknownApiKey] !== null) {
@@ -132,6 +134,7 @@ class OlvidServerSynchronizationTask {
 		if (in_array($globalPushTopic, $unknownPushTopics)) {
 			$this->context->nextcloud->appManager->unsetGlobalPushTopic();
 		}
+
 		// unset groups push topic if unknown
 		if ($unknownPushTopics) {
 			// build a push topic to group map
@@ -141,6 +144,7 @@ class OlvidServerSynchronizationTask {
 					$pushTopicsToGroupMap[$olvidGroup->getPushTopic()] = $olvidGroup;
 				}
 			}
+
 			// revoke push topic for groups with an unknown push topic
 			foreach ($unknownPushTopics as $unknownPushTopic) {
 				if (array_key_exists($unknownPushTopic, $pushTopicsToGroupMap) && $pushTopicsToGroupMap[$unknownPushTopic] !== null) {

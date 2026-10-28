@@ -12,15 +12,15 @@ class AdminSection implements IIconSection {
 	) {
 	}
 
-	public function getID() {
+	public function getID(): string {
 		return 'olvid'; //or a generic id if feasible
 	}
 
-	public function getName() {
+	public function getName(): string {
 		return 'Olvid';
 	}
 
-	public function getPriority() {
+	public function getPriority(): int {
 		return 80;
 	}
 

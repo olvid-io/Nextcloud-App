@@ -36,12 +36,13 @@ class OlvidRefreshSignatureTask {
 			$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 			try {
 				$this->context->db->user->update($olvidUser);
-				$count++;
+				++$count;
 			} catch (Exception $e) {
 				$this->logger->error('OlvidRefreshSignatureTask: refreshUserSignature: cannot update user details in db', ['exception' => $e]);
 			}
 		}
-		$this->logger->info("OlvidRefreshSignatureTask: refreshUserSignature: refreshed $count user signatures");
+
+		$this->logger->info(sprintf('OlvidRefreshSignatureTask: refreshUserSignature: refreshed %d user signatures', $count));
 	}
 
 	/**
@@ -52,12 +53,12 @@ class OlvidRefreshSignatureTask {
 		$count = 0;
 		foreach ($allEnabledOlvidGroups as $olvidGroup) {
 			$nextcloudGroup = $this->context->nextcloud->groupManager->get($olvidGroup->getGroupId());
-			if ($nextcloudGroup) {
+			if ($nextcloudGroup !== null) {
 				$jsonGroupBlob = $olvidGroup->computeBlob($this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($nextcloudGroup), $this->context);
 				$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
 				try {
 					$this->context->db->group->update($olvidGroup);
-					$count++;
+					++$count;
 				} catch (Exception $e) {
 					$this->logger->error('OlvidRefreshSignatureTask: refreshGroupsSignature: cannot update group blob in db', ['exception' => $e]);
 				}
@@ -65,6 +66,7 @@ class OlvidRefreshSignatureTask {
 				$this->logger->error('OlvidRefreshSignatureTask: refreshGroupsSignature: associated Nextcloud group not found');
 			}
 		}
-		$this->logger->info("OlvidRefreshSignatureTask: refreshGroupsSignature: refreshed $count group signatures");
+
+		$this->logger->info(sprintf('OlvidRefreshSignatureTask: refreshGroupsSignature: refreshed %d group signatures', $count));
 	}
 }

@@ -43,7 +43,7 @@ class GroupEventListener implements IEventListener {
 			$this->logger->info('GroupEventListener: UserRemovedEvent: ' . $event->getGroup()->getGID() . ': ' . $event->getUser()->getUID());
 			$this->userRemovedHandler($event->getGroup()->getGID(), $event->getUser()->getUID(), $this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($event->getGroup()));
 		} else {
-			$this->logger->info('GroupEventListener: unknown event: ' . get_class($event));
+			$this->logger->info('GroupEventListener: unknown event: ' . $event::class);
 		}
 	}
 
@@ -95,8 +95,6 @@ class GroupEventListener implements IEventListener {
 	}
 
 	/**
-	 * @param string $groupId
-	 * @param string $userId
 	 * @param array<string> $groupMemberIds
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
@@ -135,13 +133,11 @@ class GroupEventListener implements IEventListener {
 			// notify current members using group topic
 			$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
 			// notify new member individually
-			$this->context->olvidServer->sendSingleUserNotificationNoFail(base64_encode($olvidUser->getBytesIdentity()));
+			$this->context->olvidServer->sendSingleUserNotificationNoFail(base64_encode((string)$olvidUser->getBytesIdentity()));
 		}
 	}
 
 	/**
-	 * @param string $groupId
-	 * @param string $userId
 	 * @param array<string> $groupMemberIds
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
@@ -162,6 +158,7 @@ class GroupEventListener implements IEventListener {
 			$this->logger->error('GroupEventListener: userRemovedHandler: cannot get user', ['exception' => $e]);
 			return;
 		}
+
 		if (!$olvidUser?->hasIdentity()) {
 			return;
 		}

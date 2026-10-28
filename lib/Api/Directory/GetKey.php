@@ -30,8 +30,8 @@ class GetKey extends AbstractAuthenticatedDeviceApiHandler {
 			if (!$otherNextcloudUserId) {
 				return $this->invalidRequest();
 			}
-		} catch (Exception $e) {
-			$this->logger->warning('getKey: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('getKey: parse error: ', ['exception' => $exception]);
 			return $this->invalidRequest();
 		}
 

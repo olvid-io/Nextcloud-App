@@ -37,21 +37,22 @@ class RequestChallenge extends AbstractEngineApiHandler {
 			if (count($items) < 2) {
 				throw new Exception('Not enough list items');
 			}
+
 			$userId = Encoded::decodeString($items[0]);
 			$bytesNonce = Encoded::decodeBytes($items[1]);
 			if (strlen($bytesNonce) !== Constants::ENGINE_NONCE_LENGTH) {
 				throw new Exception('Invalid nonce length');
 			}
-		} catch (Exception $e) {
-			$this->logger->warning('requestChallenge: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('requestChallenge: parse error: ', ['exception' => $exception]);
 			return $this->parsingError();
 		}
 
 		// generate challenge (always, even for unknown users, to avoid leaking existence)
 		try {
 			$bytesChallenge = RandomUtil::random_bytes(Constants::ENGINE_CHALLENGE_LENGTH);
-		} catch (Exception $e) {
-			$this->logger->error('requestChallenge: cannot generate random bytes: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->error('requestChallenge: cannot generate random bytes: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
 
@@ -68,6 +69,7 @@ class RequestChallenge extends AbstractEngineApiHandler {
 			$this->logger->warning('requestChallenge: user not found');
 			return $response;
 		}
+
 		if (!$olvidUser->hasIdentity()) {
 			$this->logger->warning('requestChallenge: user has no Olvid identity');
 			return $response;

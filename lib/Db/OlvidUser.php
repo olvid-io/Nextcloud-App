@@ -58,21 +58,35 @@ use OCP\DB\Types;
  * @method string|null getFullSearchField()
  * @method void setFullSearchField(string|null $fullSearchField)
  */
-class OlvidUser extends Entity {
+class OlvidUser extends Entity implements \Stringable {
 	protected string $userId = '';
+
 	protected ?string $bytesIdentity = null;
+
 	protected ?string $apiKey = null;
+
 	protected ?string $nonce = null;
+
 	protected ?string $magicToken = null;
+
 	protected ?int $magicTokenExpiration = null;
+
 	protected ?int $sessionRevokedBefore = null;
+
 	protected ?int $registrationTimestamp = null;
+
 	protected ?int $lastConnectionTimestamp = null;
+
 	protected ?string $signedDetails = null;
+
 	protected ?string $firstname = null;
+
 	protected ?string $lastname = null;
+
 	protected ?string $position = null;
+
 	protected ?string $company = null;
+
 	protected ?string $fullSearchField = null;
 
 	public function __construct() {
@@ -109,9 +123,6 @@ class OlvidUser extends Entity {
 		return $this->lastConnectionTimestamp === null || ($this->lastConnectionTimestamp < (TimeUtil::currentTimeMillis() - Constants::INACTIVE_USER_DURATION_S * 1000));
 	}
 
-	/**
-	 * @return JsonUserDetails
-	 */
 	public function computeJsonUserDetails(): JsonUserDetails {
 		// get user details from attributes
 		$firstname = trim($this->getFirstname() ?? '');
@@ -124,6 +135,7 @@ class OlvidUser extends Entity {
 		if (!$base64Identity) {
 			$base64Identity = null;
 		}
+
 		$details = new JsonUserDetails();
 		$details->id = $this->getUserId();
 		$details->firstname = $firstname;

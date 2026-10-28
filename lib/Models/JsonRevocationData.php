@@ -10,7 +10,9 @@ class JsonRevocationData implements JsonSerializable {
 	use JsonSerializableTrait;
 
 	public const REVOCATION_TYPE_REVOKE_ID = 0;
+
 	public const REVOCATION_TYPE_DELETE_USER = 1;
+
 	public const REVOCATION_TYPE_DISABLE_USER = 2;
 
 

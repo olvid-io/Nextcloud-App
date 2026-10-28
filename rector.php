@@ -24,4 +24,20 @@ return RectorConfig::configure()
 		strictBooleans: true,
 		rectorPreset: true,
 		phpunitCodeQuality: true,
-	);
+	)
+	->withSkip([
+		// stubs must mirror the real classes signatures
+		__DIR__ . '/tests/Stubs.php',
+		// can introduce runtime TypeErrors, enable file by file with manual review
+		\Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector::class,
+		// these rules trust declared types and rewrite (or drop) null/falsy checks, which is unsafe on untrusted input
+		\Rector\Strict\Rector\BooleanNot\BooleanInBooleanNotRuleFixerRector::class,
+		\Rector\Strict\Rector\Ternary\BooleanInTernaryOperatorRuleFixerRector::class,
+		\Rector\Strict\Rector\If_\BooleanInIfConditionRuleFixerRector::class,
+		\Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector::class,
+		\Rector\DeadCode\Rector\If_\ReduceAlwaysFalseIfOrRector::class,
+		// moves trailing comments (`$a = 1; // comment`) to the next line, attaching them to the wrong statement
+		\Rector\CodingStyle\Rector\Stmt\NewlineAfterStatementRector::class,
+		// prefer `!== null` over `instanceof \Fully\Qualified\Name`
+		\Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector::class,
+	]);

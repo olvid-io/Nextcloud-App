@@ -25,7 +25,7 @@ class RevocationTest extends AbstractEngineApiHandler {
 	/**
 	 * @throws \OCP\DB\Exception
 	 */
-	public function handler(string $rawInput): BinaryResponse {
+	protected function handler(string $rawInput): BinaryResponse {
 		// parse request
 		try {
 			$json = json_decode($rawInput, true);
@@ -33,12 +33,13 @@ class RevocationTest extends AbstractEngineApiHandler {
 			if ($base64_nonce === null) {
 				throw new Exception('Missing nonce field');
 			}
-			$nonce = base64_decode($base64_nonce, true);
+
+			$nonce = base64_decode((string)$base64_nonce, true);
 			if ($nonce === false) {
 				throw new Exception('Cannot decode nonce field');
 			}
-		} catch (Exception $e) {
-			$this->logger->warning('revocationTest: parse error: ', ['exception' => $e]);
+		} catch (Exception $exception) {
+			$this->logger->warning('revocationTest: parse error: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
 
@@ -49,10 +50,11 @@ class RevocationTest extends AbstractEngineApiHandler {
 
 		// get user associated with this nonce
 		$olvidUsersForNonce = $this->context->db->user->getByNonce($nonce);
-		if (count($olvidUsersForNonce) === 0) {
+		if ($olvidUsersForNonce === []) {
 			$this->logger->error('revocationTest: nonce not found');
 			return new BinaryResponse("\x01");
 		}
+
 		if (count($olvidUsersForNonce) > 1) {
 			$this->logger->error('revocationTest: found more than one user with the same nonce');
 			return new BinaryResponse("\x01");

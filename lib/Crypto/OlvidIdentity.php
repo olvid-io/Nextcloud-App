@@ -20,10 +20,13 @@ use Exception;
  */
 class OlvidIdentity {
 	public const ALGO_MDC = 0x00;
+
 	public const ALGO_CURVE25519 = 0x01;
 
 	private const COMPACT_KEY_ALGO_BYTE_LENGTH = 1;
+
 	private const COMPACT_KEY_Y_BYTE_LENGTH = 32;
+
 	private const COMPACT_KEY_TOTAL_LENGTH = self::COMPACT_KEY_ALGO_BYTE_LENGTH + self::COMPACT_KEY_Y_BYTE_LENGTH;
 
 	/**

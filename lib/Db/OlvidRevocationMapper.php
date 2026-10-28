@@ -135,6 +135,7 @@ class OlvidRevocationMapper extends QBMapper {
 				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
 					throw $e;
 				}
+
 				// a concurrent request inserted it first: read the committed row
 				$revocation = $this->getByUserIdAndBytesIdentityOrNull($userId, $bytesIdentity);
 				if ($revocation === null) {

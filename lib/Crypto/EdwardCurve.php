@@ -20,16 +20,18 @@ use GMP;
  * result when the modulus is positive, which we rely on throughout.
  */
 abstract class EdwardCurve {
-	public GMP $p;         // field prime
-	public GMP $q;         // subgroup order
-	public GMP $d;         // curve constant
-	public GMP $gx;        // generator X
-	public GMP $gy;        // generator Y
+	public GMP $p; // field prime
+	public GMP $q; // subgroup order
+	public GMP $d; // curve constant
+	public GMP $gx; // generator X
+	public GMP $gy; // generator Y
 	public int $byteLength; // 32 for both MDC and Curve25519
 
 	// Tonelli–Shanks parameters for modular square root
 	protected GMP $tsNonQR;
+
 	protected GMP $tsT;
+
 	protected int $tsS;
 
 	// -------------------------------------------------------------------------
@@ -39,6 +41,7 @@ abstract class EdwardCurve {
 	public static function mdc(): self {
 		return MdcCurve::instance();
 	}
+
 	public static function curve25519(): self {
 		return Curve25519Curve::instance();
 	}
@@ -84,6 +87,7 @@ abstract class EdwardCurve {
 		if (gmp_cmp($n, 0) === 0 || gmp_cmp($py, $ONE) === 0) {
 			return [$ZERO, $ONE];
 		}
+
 		if (gmp_cmp($py, $pMin1) === 0) {
 			return gmp_testbit($n, 0) ? [$ZERO, $pMin1] : [$ZERO, $ONE];
 		}
@@ -93,7 +97,7 @@ abstract class EdwardCurve {
 		$qx = $px;
 		$qy = $py;  // Q = P
 
-		for ($i = strlen(gmp_strval($n, 2)) - 1; $i >= 0; $i--) {
+		for ($i = strlen(gmp_strval($n, 2)) - 1; $i >= 0; --$i) {
 			if (gmp_testbit($n, $i)) {
 				[$rx, $ry] = $this->pointAdd($rx, $ry, $qx, $qy);
 				[$qx, $qy] = $this->pointAdd($qx, $qy, $qx, $qy);
@@ -102,6 +106,7 @@ abstract class EdwardCurve {
 				[$rx, $ry] = $this->pointAdd($rx, $ry, $rx, $ry);
 			}
 		}
+
 		return [$rx, $ry];
 	}
 
@@ -120,6 +125,7 @@ abstract class EdwardCurve {
 		if (gmp_cmp($n, 0) === 0 || gmp_cmp($y, $ONE) === 0) {
 			return $ONE;
 		}
+
 		if (gmp_cmp($y, $pMin1) === 0) {
 			return gmp_testbit($n, 0) ? $pMin1 : $ONE;
 		}
@@ -135,7 +141,7 @@ abstract class EdwardCurve {
 		$uR = $uP;
 		$wR = $wP;   // R = P
 
-		for ($i = strlen(gmp_strval($n, 2)) - 1; $i >= 0; $i--) {
+		for ($i = strlen(gmp_strval($n, 2)) - 1; $i >= 0; --$i) {
 			// Compute Q+R (whose difference Q−R = P is fixed)
 			$t1 = gmp_mod(gmp_mul(gmp_sub($uQ, $wQ), gmp_add($uR, $wR)), $p);
 			$t2 = gmp_mod(gmp_mul(gmp_add($uQ, $wQ), gmp_sub($uR, $wR)), $p);
@@ -169,6 +175,7 @@ abstract class EdwardCurve {
 		if ($inv === false) {
 			throw new Exception('No modular inverse in scalarMulY');
 		}
+
 		return gmp_mod(gmp_mul(gmp_mod(gmp_sub($uQ, $wQ), $p), $inv), $p);
 	}
 
@@ -185,6 +192,7 @@ abstract class EdwardCurve {
 		if ($inv === false) {
 			return null;
 		}
+
 		return $this->modSqrt(gmp_mod(gmp_mul($num, $inv), $p));
 	}
 
@@ -236,7 +244,7 @@ abstract class EdwardCurve {
 
 		// General Tonelli–Shanks (used for Curve25519 where p ≡ 1 mod 4)
 		$e = gmp_init(0);
-		for ($i = 1; $i < $this->tsS; $i++) {
+		for ($i = 1; $i < $this->tsS; ++$i) {
 			// Check (nonQR^e · x)^((p-1)/2^(i+1)) mod p == 1
 			$base = gmp_mod(gmp_mul(gmp_powm($this->tsNonQR, $e, $p), $x), $p);
 			$exp = gmp_div(gmp_sub($p, 1), gmp_pow(2, $i + 1));
@@ -244,6 +252,7 @@ abstract class EdwardCurve {
 				$e = gmp_add($e, gmp_pow(2, $i));
 			}
 		}
+
 		$part1 = gmp_powm($this->tsNonQR, gmp_div(gmp_mul($this->tsT, $e), 2), $p);
 		$part2 = gmp_powm($x, gmp_div(gmp_add($this->tsT, 1), 2), $p);
 		return gmp_mod(gmp_mul($part1, $part2), $p);

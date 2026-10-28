@@ -19,12 +19,16 @@ use OCP\DB\Types;
  * @method int getTimestamp()
  * @method void setTimestamp(int $timestamp)
  */
-class OlvidRevocation extends Entity {
+class OlvidRevocation extends Entity implements \Stringable {
 	protected string $userId = '';
+
 	protected string $bytesIdentity = '';
+
 	// initialize to null, else they won't be considered as updated if set to 0
 	protected ?int $revocationType = null;
+
 	protected string $signedRevocation = '';
+
 	protected int $timestamp = 0;
 
 	public function __construct() {

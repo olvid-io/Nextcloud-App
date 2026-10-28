@@ -25,8 +25,6 @@ class OlvidGroupMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $groupId
-	 * @return OlvidGroup
 	 * @throws DoesNotExistException
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
@@ -51,9 +49,6 @@ class OlvidGroupMapper extends QBMapper {
 	}
 
 	/**
-	 * @param string $groupId
-	 * @param string $nextcloudDisplayName
-	 * @return OlvidGroup
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
 	 */
@@ -67,6 +62,7 @@ class OlvidGroupMapper extends QBMapper {
 				if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
 					throw $e;
 				}
+
 				// a concurrent request inserted it first: read the committed row
 				try {
 					return $this->getByGroupId($groupId);
@@ -128,6 +124,7 @@ class OlvidGroupMapper extends QBMapper {
 				// ignore
 			}
 		}
+
 		return $entity;
 	}
 
