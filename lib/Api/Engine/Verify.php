@@ -54,20 +54,19 @@ class Verify extends AbstractEngineApiHandler {
 			if ($olvidUser === null || !$olvidUser->hasIdentity()
 				|| base64_encode((string)$olvidUser->getBytesIdentity()) !== $base64Identity) {
 				$this->logger->debug('verify: identity mismatch for user ' . $userId);
-				return $this->binaryResult(false);
+				return new BinaryResponse(Encoded::encodeList([
+					Encoded::encodeBytes(self::STATUS_OK),
+					Encoded::encodeBoolean(false),
+				]));
 			}
 
-			return $this->binaryResult(true);
+			return new BinaryResponse(Encoded::encodeList([
+				Encoded::encodeBytes(self::STATUS_OK),
+				Encoded::encodeBoolean(true),
+			]));
 		} catch (Exception $exception) {
 			$this->logger->warning('verify: error: ', ['exception' => $exception]);
 			return $this->generalError();
 		}
-	}
-
-	private function binaryResult(bool $value): BinaryResponse {
-		return new BinaryResponse(Encoded::encodeList([
-			Encoded::encodeBytes(self::STATUS_OK),
-			Encoded::encodeBoolean($value),
-		]));
 	}
 }

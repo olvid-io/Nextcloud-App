@@ -56,7 +56,7 @@ class RequestChallenge extends AbstractEngineApiHandler {
 			return $this->generalError();
 		}
 
-		// prepare response
+		// prepare response (always return a valid response not to leak if a user exists or has an identity.
 		$response = new BinaryResponse(Encoded::encodeList([
 			Encoded::encodeBytes(self::STATUS_OK),
 			Encoded::encodeBytes($bytesChallenge),
