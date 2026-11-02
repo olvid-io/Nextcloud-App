@@ -2,7 +2,7 @@
 	<NcAppContent>
 		<div class="groups-view__header">
 			<span class="groups-view__title" />
-			<NcButton type="primary" @click="showCreateModal = true">
+			<NcButton variant="primary" @click="showCreateModal = true">
 				<template #icon>
 					<IconPlus :size="20" />
 				</template>
@@ -24,13 +24,13 @@
 					:key="group.id"
 					:name="group.displayName"
 					:active="$route.params.groupId === group.id"
-					:force-display-actions="true"
-					@click="$emit('open-group-sidebar', group)">
+					:forceDisplayActions="true"
+					@click="$emit('openGroupSidebar', group)">
 					<template #icon>
 						<OlvidAvatar
-							:display-name="group.displayName"
-							:is-no-user="true"
-							:use-olvid="group.enabled"
+							:displayName="group.displayName"
+							:isNoUser="true"
+							:useOlvid="group.enabled"
 							:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 					</template>
 
@@ -41,11 +41,11 @@
 					<template #indicator>
 						<NcCheckboxRadioSwitch
 							:id="`group-enabled-${group.id}`"
-							:checked="group.enabled"
+							:modelValue="group.enabled"
 							type="switch"
 							:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.displayName })"
-							@update:checked="enableOlvidDiscussionForGroup(group, $event)"
-							@click.native.stop>
+							@update:modelValue="enableOlvidDiscussionForGroup(group, $event)"
+							@click.stop>
 							{{ t('olvid', 'Olvid Discussion') }}
 						</NcCheckboxRadioSwitch>
 					</template>
@@ -54,7 +54,7 @@
 						<NcButton
 							size="small"
 							variant="primary"
-							@click.stop="$emit('open-group-sidebar', group)">
+							@click.stop="$emit('openGroupSidebar', group)">
 							<template #icon>
 								<IconPencil :size="20" />
 							</template>
@@ -75,24 +75,24 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
-import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
-import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import OlvidAvatar from '../components/OlvidAvatar.vue'
-import CreateGroupModal from '../components/CreateGroupModal.vue'
-import IconPlus from 'vue-material-design-icons/Plus.vue'
-import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
 import { showError } from '@nextcloud/dialogs'
+import { generateOcsUrl } from '@nextcloud/router'
+import NcAppContent from '@nextcloud/vue/components/NcAppContent'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcListItem from '@nextcloud/vue/components/NcListItem'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
+import IconPlus from 'vue-material-design-icons/Plus.vue'
+import CreateGroupModal from '../components/CreateGroupModal.vue'
+import OlvidAvatar from '../components/OlvidAvatar.vue'
 
 export default {
 	name: 'GroupsView',
 	components: { IconPencil, IconPlus, OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
 
-	emits: ['open-group-sidebar'],
+	emits: ['openGroupSidebar'],
 
 	data() {
 		return {
@@ -103,8 +103,10 @@ export default {
 	},
 
 	watch: {
-		'$route.params.groupId'(id) {
-			if (!id) return
+		'$route.params.groupId': function(id) {
+			if (!id) {
+				return
+			}
 			this.openGroupFromRoute()
 		},
 	},
@@ -130,9 +132,13 @@ export default {
 
 		openGroupFromRoute() {
 			const id = this.$route.params.groupId
-			if (!id) return
-			const group = this.groups.find(g => g.id === id)
-			if (group) this.$emit('open-group-sidebar', group)
+			if (!id) {
+				return
+			}
+			const group = this.groups.find((g) => g.id === id)
+			if (group) {
+				this.$emit('openGroupSidebar', group)
+			}
 		},
 
 		async enableOlvidDiscussionForGroup(group, enabled) {
@@ -147,7 +153,7 @@ export default {
 		},
 
 		applyGroupPatch(patch) {
-			const idx = this.groups.findIndex(g => g.id === patch.id)
+			const idx = this.groups.findIndex((g) => g.id === patch.id)
 			if (idx !== -1) {
 				this.groups.splice(idx, 1, { ...this.groups[idx], ...patch })
 			}

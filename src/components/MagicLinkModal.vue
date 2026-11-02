@@ -4,11 +4,11 @@
 		:open="true"
 		@update:open="$emit('close')">
 		<div class="magic-link-modal">
-			<OlvidQrDisplay :configuration-url="configurationUrl" />
+			<OlvidQrDisplay :configurationUrl="configurationUrl" />
 		</div>
 
 		<template #actions>
-			<NcButton type="primary" @click="$emit('close')">
+			<NcButton variant="primary" @click="$emit('close')">
 				{{ t('olvid', 'Close') }}
 			</NcButton>
 		</template>
@@ -16,8 +16,8 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
 import OlvidQrDisplay from './OlvidQrDisplay.vue'
 
 export default {
@@ -29,6 +29,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		configurationUrl: {
 			type: String,
 			required: true,

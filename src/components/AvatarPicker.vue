@@ -8,12 +8,12 @@
 				:src="pendingDataUrl || currentUrl"
 				:style="{ width: size + 'px', height: size + 'px' }"
 				class="avatar-picker__img"
-				:alt="displayName" />
+				:alt="displayName">
 			<OlvidAvatar
 				v-else
-				:use-olvid="false"
-				:display-name="displayName"
-				:is-no-user="true"
+				:useOlvid="false"
+				:displayName="displayName"
+				:isNoUser="true"
 				:size="size" />
 		</div>
 
@@ -23,7 +23,7 @@
 			type="file"
 			accept="image/*"
 			class="avatar-picker__file-input"
-			@change="handleLocalFile" />
+			@change="handleLocalFile">
 
 		<!-- Picker buttons -->
 		<div class="avatar-picker__actions">
@@ -56,11 +56,11 @@ import { getCurrentUser } from '@nextcloud/auth'
 import axios from '@nextcloud/axios'
 import { FilePickerClosed, getFilePickerBuilder } from '@nextcloud/dialogs'
 import { generateRemoteUrl } from '@nextcloud/router'
-import OlvidAvatar from './OlvidAvatar.vue'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import IconTrayArrowUp from 'vue-material-design-icons/TrayArrowUp.vue'
-import IconFolder from 'vue-material-design-icons/Folder.vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import IconCancel from 'vue-material-design-icons/Cancel.vue'
+import IconFolder from 'vue-material-design-icons/Folder.vue'
+import IconTrayArrowUp from 'vue-material-design-icons/TrayArrowUp.vue'
+import OlvidAvatar from './OlvidAvatar.vue'
 
 // Maximum side length of the output square in pixels
 const MAX_PIXEL_SIZE = 1080
@@ -79,11 +79,13 @@ export default {
 			type: String,
 			default: null,
 		},
+
 		/** Name used for NcAvatar's initials fallback. */
 		displayName: {
 			type: String,
 			required: true,
 		},
+
 		/** Avatar display size in pixels (both width and height). */
 		size: {
 			type: Number,
@@ -118,7 +120,9 @@ export default {
 
 		handleLocalFile(event) {
 			const file = event.target.files?.[0]
-			if (!file) return
+			if (!file) {
+				return
+			}
 
 			const reader = new FileReader()
 			reader.readAsArrayBuffer(file)
@@ -135,11 +139,11 @@ export default {
 			try {
 				// Open the Nextcloud FilePicker restricted to common image formats.
 				// addButton() is required: without it, pick() never resolves.
-				const filePath = await getFilePickerBuilder(t('olvid', 'Select an image'))
+				const filePath = await getFilePickerBuilder(this.t('olvid', 'Select an image'))
 					.setMultiSelect(false)
 					.setMimeTypeFilter(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 					.addButton({
-						label: t('olvid', 'Choose'),
+						label: this.t('olvid', 'Choose'),
 						variant: 'primary',
 						callback: () => {},
 					})
@@ -148,14 +152,14 @@ export default {
 
 				// Fetch the selected file via WebDAV using the current user's DAV root
 				const user = getCurrentUser()
-				const url = generateRemoteUrl(
-					`dav/files/${encodeURIComponent(user.uid)}${filePath}`,
-				)
+				const url = generateRemoteUrl(`dav/files/${encodeURIComponent(user.uid)}${filePath}`)
 				const res = await axios.get(url, { responseType: 'arraybuffer' })
 				this.processBuffer(res.data)
 			} catch (e) {
 				// FilePickerClosed is not an error — the user just cancelled the dialog
-				if (e instanceof FilePickerClosed) return
+				if (e instanceof FilePickerClosed) {
+					return
+				}
 				console.error('[AvatarPicker] Nextcloud file picker error', e)
 			}
 		},
@@ -165,6 +169,8 @@ export default {
 		/**
 		 * Convert an ArrayBuffer to a cropped + compressed base64 JPEG data URL
 		 * and emit it so the parent can upload it.
+		 *
+		 * @param {ArrayBuffer} buffer raw image file content
 		 */
 		processBuffer(buffer) {
 			// Wrap in a Blob so it can be used as an <img> src via createObjectURL
@@ -190,6 +196,8 @@ export default {
 		 *   if squareSize > MAX → scale both dims proportionally
 		 *   draw with a negative offset to center-crop the longer axis
 		 *   output: image/jpeg at quality 0.75
+		 *
+		 * @param {HTMLImageElement} img loaded source image
 		 */
 		cropAndCompress(img) {
 			const canvas = document.createElement('canvas')
@@ -219,7 +227,7 @@ export default {
 		unsetImage() {
 			this.pendingDataUrl = null
 			this.$emit('change', null)
-		}
+		},
 	},
 }
 </script>

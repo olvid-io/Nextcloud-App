@@ -5,7 +5,7 @@
 		@update:open="$emit('close')">
 		<div class="create-user-modal">
 			<NcTextField
-				:value.sync="form.uid"
+				v-model="form.uid"
 				:label="t('olvid', 'Nextcloud user ID')"
 				:placeholder="t('olvid', 'e.g. jsmith')"
 				:required="true" />
@@ -16,16 +16,16 @@
 				</summary>
 				<div class="create-user-modal__olvid-fields">
 					<NcTextField
-						:value.sync="form.firstname"
+						v-model="form.firstname"
 						:label="t('olvid', 'First name')" />
 					<NcTextField
-						:value.sync="form.lastname"
+						v-model="form.lastname"
 						:label="t('olvid', 'Last name')" />
 					<NcTextField
-						:value.sync="form.position"
+						v-model="form.position"
 						:label="t('olvid', 'Position')" />
 					<NcTextField
-						:value.sync="form.company"
+						v-model="form.company"
 						:label="t('olvid', 'Company')" />
 				</div>
 			</details>
@@ -39,7 +39,7 @@
 					<div>{{ t('olvid', 'You can set a password later in Nextcloud account settings if you change your mind.') }}</div>
 
 					<NcPasswordField
-						:value.sync="form.password"
+						v-model="form.password"
 						:label="t('olvid', 'Password')"
 						:required="true" />
 				</div>
@@ -49,10 +49,10 @@
 				<NcSelect
 					v-model="form.groups"
 					class="create-user-modal__select"
-					:input-label="t('olvid', 'Member of the following groups')"
+					:inputLabel="t('olvid', 'Member of the following groups')"
 					:placeholder="t('olvid', 'Set user groups')"
 					:options="allGroupIds"
-					keep-open
+					keepOpen
 					:multiple="true" />
 			</div>
 
@@ -66,7 +66,7 @@
 				{{ t('olvid', 'Cancel') }}
 			</NcButton>
 			<NcButton
-				type="primary"
+				variant="primary"
 				:disabled="saving || !form.uid"
 				@click="submit">
 				{{ saving ? t('olvid', 'Creating…') : t('olvid', 'Create') }}
@@ -77,13 +77,13 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 import { showError } from '@nextcloud/dialogs'
+import { generateOcsUrl } from '@nextcloud/router'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
 
 export default {
 	name: 'CreateUserModal',
@@ -102,6 +102,7 @@ export default {
 				company: '',
 				groups: [],
 			},
+
 			allGroupIds: [],
 			saving: false,
 			error: null,
@@ -114,13 +115,15 @@ export default {
 
 	methods: {
 		async submit() {
-			if (!this.form.uid) return
+			if (!this.form.uid) {
+				return
+			}
 			this.saving = true
 			this.error = null
 			try {
 				const res = await axios.post(generateOcsUrl('/apps/olvid/app/users'), this.form)
 				this.$emit('created', res.data)
-				this.$router.push({ name: 'user-detail', params: { userId: res.data.id } }).catch(() => {})
+				this.$router.push({ name: 'user-detail', params: { userId: res.data.id } })
 				this.$emit('close')
 			} catch (e) {
 				this.error = e.response?.data?.error ?? e.message
@@ -136,7 +139,7 @@ export default {
 			this.loading = true
 			try {
 				const res = await axios.get(generateOcsUrl('/apps/olvid/app/groups'))
-				this.allGroupIds = res.data.groups.map(g => g.id) ?? []
+				this.allGroupIds = res.data.groups.map((g) => g.id) ?? []
 			} catch (e) {
 				console.error('Could not load groups', e)
 				showError(this.t('olvid', 'Could not load groups'))

@@ -2,9 +2,9 @@
 	<div class="olvid-avatar">
 		<NcAvatar
 			v-bind="$attrs"
-			hide-status="true"
+			hideStatus
 			:title="title"
-			:is-no-user="isNoUser"
+			:isNoUser="isNoUser"
 			:size="size" />
 		<img
 			v-if="useOlvid"
@@ -20,7 +20,7 @@
 
 <script>
 import { generateFilePath } from '@nextcloud/router'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+import NcAvatar from '@nextcloud/vue/components/NcAvatar'
 
 export default {
 	name: 'OlvidAvatar',
@@ -33,15 +33,17 @@ export default {
 			type: Boolean,
 			required: true,
 		},
+
 		isNoUser: {
 			type: Boolean,
-			required: true,
 			default: false,
 		},
+
 		isInactive: {
 			type: Boolean,
 			default: false,
 		},
+
 		size: {
 			type: Number,
 			default: 32,
@@ -54,6 +56,7 @@ export default {
 			const file = this.useOlvid && !this.isInactive ? 'olvid.svg' : 'olvid-disabled.svg'
 			return generateFilePath('olvid', 'img', file)
 		},
+
 		title() {
 			if (this.isNoUser) {
 			// groups

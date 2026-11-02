@@ -5,18 +5,22 @@
 		@update:open="$emit('close')">
 		<div class="create-group-modal">
 			<NcTextField
-				:value.sync="form.id"
+				v-model="form.id"
 				:label="t('olvid', 'Group Name')"
 				:placeholder="t('olvid', 'e.g. members')"
 				:required="true" />
 
-			<p v-if="error" class="create-group-modal__error">{{ error }}</p>
+			<p v-if="error" class="create-group-modal__error">
+				{{ error }}
+			</p>
 		</div>
 
 		<template #actions>
-			<NcButton @click="$emit('close')">{{ t('olvid', 'Cancel') }}</NcButton>
+			<NcButton @click="$emit('close')">
+				{{ t('olvid', 'Cancel') }}
+			</NcButton>
 			<NcButton
-				type="primary"
+				variant="primary"
 				:disabled="saving || !form.id"
 				@click="submit">
 				{{ saving ? t('olvid', 'Creating…') : t('olvid', 'Create') }}
@@ -27,10 +31,11 @@
 
 <script>
 import axios from '@nextcloud/axios'
+import { t } from '@nextcloud/l10n'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
 
 export default {
 	name: 'CreateGroupModal',
@@ -43,20 +48,24 @@ export default {
 			form: {
 				id: '',
 			},
+
 			saving: false,
 			error: null,
 		}
 	},
 
 	methods: {
+		t,
 		async submit() {
-			if (!this.form.id) return
+			if (!this.form.id) {
+				return
+			}
 			this.saving = true
 			this.error = null
 			try {
 				const res = await axios.post(generateOcsUrl('/apps/olvid/app/groups'), this.form)
 				this.$emit('created', res.data)
-				this.$router.push({ name: 'group-detail', params: { groupId: res.data.id } }).catch(() => {})
+				this.$router.push({ name: 'group-detail', params: { groupId: res.data.id } })
 				this.$emit('close')
 			} catch (e) {
 				this.error = e.response?.data?.error ?? e.message

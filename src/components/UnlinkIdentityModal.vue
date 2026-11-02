@@ -7,7 +7,7 @@
 			{{ descriptionText }}
 		</p>
 		<NcCheckboxRadioSwitch
-			:checked.sync="revoke"
+			v-model="revoke"
 			class="unlink-identity-modal__checkbox">
 			{{ checkboxLabel }}
 		</NcCheckboxRadioSwitch>
@@ -21,7 +21,7 @@
 			<NcButton @click="$emit('close')">
 				{{ t('olvid', 'Cancel') }}
 			</NcButton>
-			<NcButton type="error" :disabled="unlinking" @click="unlink">
+			<NcButton variant="error" :disabled="unlinking" @click="unlink">
 				{{ unlinking ? t('olvid', 'Unlinking…') : (revoke ? t('olvid', 'Unlink and block') : t('olvid', 'Unlink')) }}
 			</NcButton>
 		</template>
@@ -31,9 +31,9 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
 
 export default {
 	name: 'UnlinkIdentityModal',
@@ -44,6 +44,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		isSelf: {
 			type: Boolean,
 			default: false,
@@ -63,23 +64,26 @@ export default {
 	computed: {
 		dialogTitle() {
 			return this.isSelf
-				? t('olvid', 'I no longer have access to my Olvid profile')
-				: t('olvid', 'Unlink Olvid identity — {name}', { name: this.user.displayName })
+				? this.t('olvid', 'I no longer have access to my Olvid profile')
+				: this.t('olvid', 'Unlink Olvid identity — {name}', { name: this.user.displayName })
 		},
+
 		descriptionText() {
 			return this.isSelf
-				? t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.')
-				: t('olvid', 'This will disconnect the Olvid profile linked to {name} from this directory and allow a new one to be registered.', { name: this.user.displayName })
+				? this.t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.')
+				: this.t('olvid', 'This will disconnect the Olvid profile linked to {name} from this directory and allow a new one to be registered.', { name: this.user.displayName })
 		},
+
 		checkboxLabel() {
 			return this.isSelf
-				? t('olvid', 'My Olvid profile was lost or replaced')
-				: t('olvid', 'The Olvid profile of {name} was lost or replaced', { name: this.user.displayName })
+				? this.t('olvid', 'My Olvid profile was lost or replaced')
+				: this.t('olvid', 'The Olvid profile of {name} was lost or replaced', { name: this.user.displayName })
 		},
+
 		warningText() {
 			return this.isSelf
-				? t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.')
-				: t('olvid', 'Warning: this action is not reversible. The Olvid identity of {name} will be blocked for every other contact in this directory. Other contacts will no longer be able to reach {name} through this identity, and it can never be re-registered. A new Olvid profile will need to be created and re-enrolled.', { name: this.user.displayName })
+				? this.t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.')
+				: this.t('olvid', 'Warning: this action is not reversible. The Olvid identity of {name} will be blocked for every other contact in this directory. Other contacts will no longer be able to reach {name} through this identity, and it can never be re-registered. A new Olvid profile will need to be created and re-enrolled.', { name: this.user.displayName })
 		},
 	},
 
@@ -97,7 +101,7 @@ export default {
 				}
 				this.$emit('unlinked', { revoke: this.revoke })
 			} catch (e) {
-				this.error = t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
+				this.error = this.t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
 			} finally {
 				this.unlinking = false
 			}
