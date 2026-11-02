@@ -24,10 +24,10 @@
 <script>
 
 import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
-import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import { showError } from '@nextcloud/dialogs'
+import { generateOcsUrl } from '@nextcloud/router'
+import NcAppContent from '@nextcloud/vue/components/NcAppContent'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 
 export default {
 	name: 'StatisticsView',
@@ -44,6 +44,7 @@ export default {
 				olvidGroupsCount: Number,
 				nextcloudGroupsCount: Number,
 			},
+
 			loading: true,
 		}
 	},
@@ -76,6 +77,7 @@ export default {
 	flex-wrap: wrap;
 	padding-top: 20px;
 }
+
 .statistics {
 	display: flex;
 	flex-direction: column;
@@ -87,14 +89,17 @@ export default {
 	width: 300px;
 	height: 150px;
 }
+
 .statistics p {
 	font-size: 2.5rem;
 	font-weight: bold;
 }
+
 .statistics h3 {
 	font-weight: normal;
 	text-transform: uppercase;
 }
+
 .statistics h3, .statistics p {
 	margin: 0;
 }

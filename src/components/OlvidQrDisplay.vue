@@ -32,7 +32,7 @@
 				{{ t('olvid', 'If Olvid is installed on this computer, click the button below to open it directly:') }}
 			</p>
 			<div class="olvid-qr-display__desktop-actions">
-				<NcButton type="primary" @click="openWithOlvid">
+				<NcButton variant="primary" @click="openWithOlvid">
 					{{ t('olvid', 'Open with Olvid') }}
 				</NcButton>
 				<NcButton @click="copyLink">
@@ -47,10 +47,10 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import QRCode from 'qrcode'
 import { showError } from '@nextcloud/dialogs'
+import QRCode from 'qrcode'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 
 export default {
 	name: 'OlvidQrDisplay',
@@ -82,7 +82,9 @@ export default {
 
 	methods: {
 		async generateQr(url) {
-			if (!url) return
+			if (!url) {
+				return
+			}
 			try {
 				this.qrDataUrl = await QRCode.toDataURL(url, {
 					width: 244,
@@ -106,7 +108,9 @@ export default {
 			try {
 				await navigator.clipboard.writeText(this.configurationUrl)
 				this.copied = true
-				setTimeout(() => { this.copied = false }, 2500)
+				setTimeout(() => {
+					this.copied = false
+				}, 2500)
 			} catch (e) {
 				console.error('Could not copy to clipboard', e)
 				showError(this.t('olvid', 'Could not copy to clipboard'))

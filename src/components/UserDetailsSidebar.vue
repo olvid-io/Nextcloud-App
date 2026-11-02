@@ -12,9 +12,9 @@
 			<div class="user-sidebar__fields">
 				<div style="display: flex; justify-content: center;">
 					<OlvidAvatar :user="user.id"
-						:display-name="user.displayName"
-						:use-olvid="user.useOlvid"
-						:is-inactive="user.isInactive"
+						:displayName="user.displayName"
+						:useOlvid="user.useOlvid"
+						:isInactive="user.isInactive"
 						:size="192" />
 				</div>
 
@@ -26,16 +26,16 @@
 
 				<div>{{ t('olvid', 'Olvid Profile') }}</div>
 				<NcTextField
-					:value.sync="form.firstname"
+					v-model="form.firstname"
 					:label="t('olvid', 'First name')" />
 				<NcTextField
-					:value.sync="form.lastname"
+					v-model="form.lastname"
 					:label="t('olvid', 'Last name')" />
 				<NcTextField
-					:value.sync="form.position"
+					v-model="form.position"
 					:label="t('olvid', 'Position')" />
 				<NcTextField
-					:value.sync="form.company"
+					v-model="form.company"
 					:label="t('olvid', 'Company')" />
 
 				<p v-if="saveError" class="user-sidebar__error">
@@ -61,12 +61,12 @@
 				<div class="user-sidebar__danger">
 					<NcButton v-if="user.useOlvid"
 						class="user-sidebar__button"
-						type="error"
+						variant="error"
 						@click="showUnlinkConfirm = true">
 						{{ t('olvid', 'Revoke user identity') }}
 					</NcButton>
 
-					<NcButton type="error" class="user-sidebar__button" @click="showDeleteConfirm = true">
+					<NcButton variant="error" class="user-sidebar__button" @click="showDeleteConfirm = true">
 						{{ t('olvid', 'Delete user') }}
 					</NcButton>
 				</div>
@@ -83,7 +83,7 @@
 				<!-- Add to group search -->
 				<div class="user-sidebar__search">
 					<NcTextField
-						:value.sync="groupSearchQuery"
+						v-model="groupSearchQuery"
 						:label="t('olvid', 'Add to group')"
 						:placeholder="t('olvid', 'Search groups…')" />
 					<ul v-if="groupSearchResults.length" class="user-sidebar__results">
@@ -93,7 +93,7 @@
 							:name="group.displayName"
 							compact>
 							<template #icon>
-								<OlvidAvatar :display-name="group.displayName" :is-no-user="true" :use-olvid="group.enabled" />
+								<OlvidAvatar :displayName="group.displayName" :isNoUser="true" :useOlvid="group.enabled" />
 							</template>
 							<template v-if="group.id !== group.displayName" #subname>
 								{{ group.id }}
@@ -116,9 +116,9 @@
 						:name="group.displayName">
 						<template #icon>
 							<OlvidAvatar
-								:display-name="group.displayName"
-								:is-no-user="true"
-								:use-olvid="group.enabled"
+								:displayName="group.displayName"
+								:isNoUser="true"
+								:useOlvid="group.enabled"
 								:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 						</template>
 						<template v-if="group.id !== group.displayName" #subname>
@@ -141,7 +141,7 @@
 		<MagicLinkModal
 			v-if="magicLinkTarget"
 			:user="magicLinkTarget"
-			:configuration-url="magicLinkUrl"
+			:configurationUrl="magicLinkUrl"
 			@close="magicLinkTarget = null" />
 
 		<!-- Unlink/revoke identity modal -->
@@ -162,20 +162,20 @@
 
 <script>
 import axios from '@nextcloud/axios'
+import { showError } from '@nextcloud/dialogs'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar.js'
-import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import OlvidAvatar from './OlvidAvatar.vue'
-import MagicLinkModal from './MagicLinkModal.vue'
-import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
-import DeleteUserModal from './DeleteUserModal.vue'
+import NcAppSidebar from '@nextcloud/vue/components/NcAppSidebar'
+import NcAppSidebarTab from '@nextcloud/vue/components/NcAppSidebarTab'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcListItem from '@nextcloud/vue/components/NcListItem'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
 import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
 import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
-import { showError } from '@nextcloud/dialogs'
+import DeleteUserModal from './DeleteUserModal.vue'
+import MagicLinkModal from './MagicLinkModal.vue'
+import OlvidAvatar from './OlvidAvatar.vue'
+import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
 
 export default {
 	name: 'UserDetailsSidebar',
@@ -198,6 +198,7 @@ export default {
 				position: this.user.position ?? '',
 				company: this.user.company ?? '',
 			},
+
 			saving: false,
 			saveError: null,
 			saveSuccess: false,
@@ -231,6 +232,7 @@ export default {
 			this.form.company = newUser.company ?? ''
 			this.loadGroups()
 		},
+
 		groupSearchQuery(val) {
 			clearTimeout(this.groupSearchTimer)
 			if (!val.trim()) {
@@ -289,11 +291,9 @@ export default {
 
 		searchGroups() {
 			const q = this.groupSearchQuery.toLowerCase()
-			const currentIds = new Set(this.groups.map(g => g.id))
-			this.groupSearchResults = this.allGroups.filter(g =>
-				!currentIds.has(g.id)
-				&& (g.displayName.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)),
-			)
+			const currentIds = new Set(this.groups.map((g) => g.id))
+			this.groupSearchResults = this.allGroups.filter((g) => !currentIds.has(g.id)
+				&& (g.displayName.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)))
 		},
 
 		buildGroupAvatarUrl(group) {
@@ -304,7 +304,7 @@ export default {
 			try {
 				await axios.post(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/members/${encodeURIComponent(this.user.id)}`))
 				this.groups.push(group)
-				this.groupSearchResults = this.groupSearchResults.filter(g => g.id !== group.id)
+				this.groupSearchResults = this.groupSearchResults.filter((g) => g.id !== group.id)
 			} catch (e) {
 				console.error('addToGroup failed', e)
 				showError(this.t('olvid', 'Could not update group'))
@@ -314,7 +314,7 @@ export default {
 		async removeFromGroup(group) {
 			try {
 				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/members/${encodeURIComponent(this.user.id)}`))
-				this.groups = this.groups.filter(g => g.id !== group.id)
+				this.groups = this.groups.filter((g) => g.id !== group.id)
 			} catch (e) {
 				console.error('removeFromGroup failed', e)
 				showError(this.t('olvid', 'Could not update group'))

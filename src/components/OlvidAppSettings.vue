@@ -2,8 +2,8 @@
 	<NcAppSettingsDialog
 		:open="open"
 		:name="t('olvid', 'Olvid Settings')"
-		show-navigation
-		@update:open="$emit('close')">
+		showNavigation
+		@update:open="$emit('update:open', $event)">
 		<NcAppSettingsSection v-if="isAdmin" id="admin-settings" :name="t('olvid', 'Admin settings')">
 			<NcButton
 				:href="getOlvidSettingsUrl()"
@@ -15,10 +15,10 @@
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import NcAppSettingsDialog from '@nextcloud/vue/components/NcAppSettingsDialog'
 import NcAppSettingsSection from '@nextcloud/vue/components/NcAppSettingsSection'
 import NcButton from '@nextcloud/vue/components/NcButton'
-import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'OlvidAppSettings',
@@ -29,11 +29,14 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		isAdmin: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
+	emits: ['update:open'],
 
 	methods: {
 		getOlvidSettingsUrl() {
@@ -43,7 +46,3 @@ export default {
 }
 
 </script>
-
-<style scoped lang="scss">
-
-</style>

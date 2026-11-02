@@ -2,7 +2,7 @@
 	<NcAppContent>
 		<div class="users-view__header">
 			<span class="users-view__title" />
-			<NcButton type="primary" @click="showCreateModal = true">
+			<NcButton variant="primary" @click="showCreateModal = true">
 				<template #icon>
 					<IconPlus :size="20" />
 				</template>
@@ -24,12 +24,12 @@
 					:key="user.id"
 					:name="user.displayName"
 					:active="$route.params.userId === user.id"
-					@click="$emit('open-user-sidebar', user)">
+					@click="$emit('openUserSidebar', user)">
 					<template #icon>
 						<OlvidAvatar :user="user.id"
-							:display-name="user.displayName"
-							:use-olvid="user.useOlvid"
-							:is-inactive="user.isInactive" />
+							:displayName="user.displayName"
+							:useOlvid="user.useOlvid"
+							:isInactive="user.isInactive" />
 					</template>
 
 					<template v-if="user.id !== user.displayName" #subname>
@@ -48,7 +48,7 @@
 						<NcButton
 							size="small"
 							variant="primary"
-							@click="$emit('open-user-sidebar', user)">
+							@click="$emit('openUserSidebar', user)">
 							<template #icon>
 								<IconPencil :size="20" />
 							</template>
@@ -63,7 +63,7 @@
 		<MagicLinkModal
 			v-if="magicLinkTarget"
 			:user="magicLinkTarget"
-			:configuration-url="magicLinkUrl"
+			:configurationUrl="magicLinkUrl"
 			@close="magicLinkTarget = null" />
 
 		<!-- Create user modal -->
@@ -77,24 +77,24 @@
 <script>
 
 import axios from '@nextcloud/axios'
+import { showError } from '@nextcloud/dialogs'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import IconPlus from 'vue-material-design-icons/Plus.vue'
+import NcAppContent from '@nextcloud/vue/components/NcAppContent'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcListItem from '@nextcloud/vue/components/NcListItem'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
+import IconPlus from 'vue-material-design-icons/Plus.vue'
 import CreateUserModal from '../components/CreateUserModal.vue'
 import MagicLinkModal from '../components/MagicLinkModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
-import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'UsersView',
 	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, OlvidAvatar, MagicLinkModal, CreateUserModal, IconPlus, IconPencil },
 
-	emits: ['open-user-sidebar'],
+	emits: ['openUserSidebar'],
 
 	data() {
 		return {
@@ -108,8 +108,10 @@ export default {
 	},
 
 	watch: {
-		'$route.params.userId'(id) {
-			if (!id) return
+		'$route.params.userId': function(id) {
+			if (!id) {
+				return
+			}
 			this.openUserFromRoute()
 		},
 	},
@@ -135,9 +137,13 @@ export default {
 
 		openUserFromRoute() {
 			const id = this.$route.params.userId
-			if (!id) return
-			const user = this.users.find(u => u.id === id)
-			if (user) this.$emit('open-user-sidebar', user)
+			if (!id) {
+				return
+			}
+			const user = this.users.find((u) => u.id === id)
+			if (user) {
+				this.$emit('openUserSidebar', user)
+			}
 		},
 
 		async openMagicLink(user) {
@@ -159,14 +165,14 @@ export default {
 		},
 
 		applyUserPatch(patch) {
-			const idx = this.users.findIndex(u => u.id === patch.id)
+			const idx = this.users.findIndex((u) => u.id === patch.id)
 			if (idx !== -1) {
 				this.users.splice(idx, 1, { ...this.users[idx], ...patch })
 			}
 		},
 
 		removeUser(userId) {
-			this.users = this.users.filter(u => u.id !== userId)
+			this.users = this.users.filter((u) => u.id !== userId)
 		},
 	},
 }

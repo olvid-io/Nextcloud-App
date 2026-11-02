@@ -5,7 +5,7 @@
 		<NcAppNavigationItem
 			:name="t('olvid', 'Profile')"
 			:active="$route.name === 'profile'"
-			@click="$router.push({ name: 'profile' }).catch(() => {})">
+			@click="$router.push({ name: 'profile' })">
 			<template #icon>
 				<IconAccount :size="20" />
 			</template>
@@ -15,7 +15,7 @@
 			v-if="isAdmin"
 			:name="t('olvid', 'Users')"
 			:active="$route.name === 'users' || $route.name === 'user-detail'"
-			@click="$router.push({ name: 'users' }).catch(() => {})">
+			@click="$router.push({ name: 'users' })">
 			<template #icon>
 				<IconAccountMultiple :size="20" />
 			</template>
@@ -25,7 +25,7 @@
 			v-if="isAdmin"
 			:name="t('olvid', 'Groups')"
 			:active="$route.name === 'groups' || $route.name === 'group-detail'"
-			@click="$router.push({ name: 'groups' }).catch(() => {})">
+			@click="$router.push({ name: 'groups' })">
 			<template #icon>
 				<IconAccountGroup :size="20" />
 			</template>
@@ -35,7 +35,7 @@
 			v-if="isAdmin"
 			:name="t('olvid', 'Statistics')"
 			:active="$route.name === 'statistics'"
-			@click="$router.push({ name: 'statistics' }).catch(() => {})">
+			@click="$router.push({ name: 'statistics' })">
 			<template #icon>
 				<IconChartBar :size="20" />
 			</template>
@@ -56,22 +56,21 @@
 		</template>
 
 		<OlvidAppSettings
+			v-model:open="settingsOpened"
 			data-cy-olvid-navigation-settings
-			:open.sync="settingsOpened"
-			:is-admin="isAdmin"
-			@close="settingsOpened = false" />
+			:isAdmin="isAdmin" />
 	</NcAppNavigation>
 </template>
 
 <script>
-import IconAccount from 'vue-material-design-icons/AccountOutline.vue'
+import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
+import NcAppNavigationCaption from '@nextcloud/vue/components/NcAppNavigationCaption'
+import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
 import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
-import IconCog from 'vue-material-design-icons/CogOutline.vue'
 import IconAccountMultiple from 'vue-material-design-icons/AccountMultipleOutline.vue'
+import IconAccount from 'vue-material-design-icons/AccountOutline.vue'
 import IconChartBar from 'vue-material-design-icons/ChartBar.vue'
-import NcAppNavigation from '@nextcloud/vue/dist/Components/NcAppNavigation.js'
-import NcAppNavigationCaption from '@nextcloud/vue/dist/Components/NcAppNavigationCaption.js'
-import NcAppNavigationItem from '@nextcloud/vue/dist/Components/NcAppNavigationItem.js'
+import IconCog from 'vue-material-design-icons/CogOutline.vue'
 import OlvidAppSettings from './components/OlvidAppSettings.vue'
 
 export default {
@@ -83,6 +82,7 @@ export default {
 			default: false,
 		},
 	},
+
 	data() {
 		return {
 			settingsOpened: false,

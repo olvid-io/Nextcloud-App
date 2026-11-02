@@ -13,8 +13,8 @@
 				<!-- Group avatar picker: uploads immediately on selection -->
 				<div class="group-sidebar__avatar">
 					<AvatarPicker
-						:current-url="currentAvatarUrl"
-						:display-name="group.displayName"
+						:currentUrl="currentAvatarUrl"
+						:displayName="group.displayName"
 						:size="192"
 						@change="handleAvatarChange" />
 					<p v-if="avatarUploading" class="group-sidebar__hint">
@@ -30,15 +30,15 @@
 
 				<NcCheckboxRadioSwitch
 					:id="`group-enabled-${group.id}`"
-					:checked="group.enabled"
+					:modelValue="group.enabled"
 					type="switch"
 					:aria-label="t('olvid', 'Enable Olvid for {name} group', { name: group.id })"
-					@update:checked="enableOlvidDiscussionForGroup(group, $event)"
-					@click.native.stop>
+					@update:modelValue="enableOlvidDiscussionForGroup(group, $event)"
+					@click.stop>
 					{{ t('olvid', 'Olvid Discussion') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField
-					:value.sync="form.discussionName"
+					v-model="form.discussionName"
 					:label="t('olvid', 'Olvid discussion name')"
 					:placeholder="t('olvid', 'Set Olvid discussion name')" />
 				<div class="group-sidebar__field">
@@ -71,7 +71,7 @@
 				<!-- Add member search -->
 				<div class="group-sidebar__search">
 					<NcTextField
-						:value.sync="searchQuery"
+						v-model="searchQuery"
 						:label="t('olvid', 'Search users to add')"
 						:placeholder="t('olvid', 'Type a name…')" />
 					<ul v-if="searchResults.length" class="group-sidebar__results">
@@ -81,7 +81,7 @@
 							:name="user.displayName"
 							compact>
 							<template #icon>
-								<OlvidAvatar :user="user.id" :display-name="user.displayName" :use-olvid="user.useOlvid" />
+								<OlvidAvatar :user="user.id" :displayName="user.displayName" :useOlvid="user.useOlvid" />
 							</template>
 							<template v-if="user.id !== user.displayName" #subname>
 								{{ user.id }}
@@ -103,7 +103,7 @@
 						:name="member.displayName"
 						compact>
 						<template #icon>
-							<OlvidAvatar :user="member.id" :display-name="member.displayName" :use-olvid="member.useOlvid" />
+							<OlvidAvatar :user="member.id" :displayName="member.displayName" :useOlvid="member.useOlvid" />
 						</template>
 						<template v-if="member.id !== member.displayName" #subname>
 							{{ member.id }}
@@ -125,18 +125,18 @@
 
 <script>
 import axios from '@nextcloud/axios'
+import { showError } from '@nextcloud/dialogs'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar.js'
-import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcAppSidebar from '@nextcloud/vue/components/NcAppSidebar'
+import NcAppSidebarTab from '@nextcloud/vue/components/NcAppSidebarTab'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcListItem from '@nextcloud/vue/components/NcListItem'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
+import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
 import AvatarPicker from './AvatarPicker.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
-import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
-import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
-import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'GroupDetailsSidebar',
@@ -157,6 +157,7 @@ export default {
 				discussionName: this.group.discussionName ?? '',
 				discussionDescription: this.group.discussionDescription ?? '',
 			},
+
 			members: [...(this.group.members ?? [])],
 			saving: false,
 			saveError: null,
@@ -176,7 +177,9 @@ export default {
 		 * fresh image whenever the avatar changes (cache-busting).
 		 */
 		currentAvatarUrl() {
-			if (!this.group.photoUid) return null
+			if (!this.group.photoUid) {
+				return null
+			}
 			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar?photoUid=${encodeURIComponent(this.group.photoUid)}`)
 		},
 	},
@@ -187,6 +190,7 @@ export default {
 			this.form.discussionDescription = newGroup.discussionDescription ?? ''
 			this.members = [...(newGroup.members ?? [])]
 		},
+
 		searchQuery(val) {
 			clearTimeout(this.searchTimer)
 			if (!val.trim()) {
@@ -201,6 +205,7 @@ export default {
 		/**
 		 * Called by AvatarPicker when the user selects a new image.
 		 * Uploads immediately — no need to click the Save button for the avatar.
+		 *
 		 * @param {string} dataUrl dataUrl
 		 */
 		async handleAvatarChange(dataUrl) {
@@ -255,9 +260,9 @@ export default {
 				const res = await axios.get(generateOcsUrl('/apps/olvid/app/users/search'), {
 					params: { query: this.searchQuery },
 				})
-				const memberIds = new Set(this.members.map(m => m.id))
-				this.searchResults = (res.data.users ?? []).filter(u => !memberIds.has(u.id))
-			} catch (e) {
+				const memberIds = new Set(this.members.map((m) => m.id))
+				this.searchResults = (res.data.users ?? []).filter((u) => !memberIds.has(u.id))
+			} catch {
 				this.searchResults = []
 			}
 		},
@@ -266,7 +271,7 @@ export default {
 			try {
 				await axios.post(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/members/${encodeURIComponent(user.id)}`))
 				this.members.push(user)
-				this.searchResults = this.searchResults.filter(u => u.id !== user.id)
+				this.searchResults = this.searchResults.filter((u) => u.id !== user.id)
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
 				console.error('addMember failed', e)
@@ -277,7 +282,7 @@ export default {
 		async removeMember(member) {
 			try {
 				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/members/${encodeURIComponent(member.id)}`))
-				this.members = this.members.filter(m => m.id !== member.id)
+				this.members = this.members.filter((m) => m.id !== member.id)
 				this.$emit('updated', { id: this.group.id, members: [...this.members] })
 			} catch (e) {
 				console.error('removeMember failed', e)

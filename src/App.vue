@@ -1,10 +1,14 @@
 <template>
-	<NcContent app-name="olvid">
-		<OlvidNavigation :is-admin="isAdmin" />
-		<router-view
-			ref="view"
-			@open-group-sidebar="onOpenGroupSidebar"
-			@open-user-sidebar="onOpenUserSidebar" />
+	<NcContent appName="olvid">
+		<OlvidNavigation :isAdmin="isAdmin" />
+		<!-- v-slot is required so that ref="view" targets the rendered view, not RouterView itself -->
+		<router-view v-slot="{ Component }">
+			<component
+				:is="Component"
+				ref="view"
+				@openGroupSidebar="onOpenGroupSidebar"
+				@openUserSidebar="onOpenUserSidebar" />
+		</router-view>
 
 		<GroupDetailsSidebar
 			v-if="selectedGroup"
@@ -23,12 +27,12 @@
 
 <script>
 import axios from '@nextcloud/axios'
+import { showError } from '@nextcloud/dialogs'
 import { generateOcsUrl } from '@nextcloud/router'
-import NcContent from '@nextcloud/vue/dist/Components/NcContent.js'
+import NcContent from '@nextcloud/vue/components/NcContent'
 import GroupDetailsSidebar from './components/GroupDetailsSidebar.vue'
 import UserDetailsSidebar from './components/UserDetailsSidebar.vue'
 import OlvidNavigation from './OlvidNavigation.vue'
-import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'App',
@@ -67,12 +71,12 @@ export default {
 		// ── Groups ──────────────────────────────────────────────────────────
 		onOpenGroupSidebar(group) {
 			this.selectedGroup = group
-			this.$router.push({ name: 'group-detail', params: { groupId: group.id } }).catch(() => {})
+			this.$router.push({ name: 'group-detail', params: { groupId: group.id } })
 		},
 
 		onGroupSidebarClose() {
 			this.selectedGroup = null
-			this.$router.push({ name: 'groups' }).catch(() => {})
+			this.$router.push({ name: 'groups' })
 		},
 
 		onGroupUpdated(patch) {
@@ -87,12 +91,12 @@ export default {
 		// ── Users ────────────────────────────────────────────────────────────
 		onOpenUserSidebar(user) {
 			this.selectedUser = user
-			this.$router.push({ name: 'user-detail', params: { userId: user.id } }).catch(() => {})
+			this.$router.push({ name: 'user-detail', params: { userId: user.id } })
 		},
 
 		onUserSidebarClose() {
 			this.selectedUser = null
-			this.$router.push({ name: 'users' }).catch(() => {})
+			this.$router.push({ name: 'users' })
 		},
 
 		onUserUpdated(patch) {
@@ -106,7 +110,7 @@ export default {
 
 		onUserDeleted(userId) {
 			this.selectedUser = null
-			this.$router.push({ name: 'users' }).catch(() => {})
+			this.$router.push({ name: 'users' })
 			if (this.$refs.view && typeof this.$refs.view.removeUser === 'function') {
 				this.$refs.view.removeUser(userId)
 			}

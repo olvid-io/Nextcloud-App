@@ -28,7 +28,7 @@
 						<NcButton>{{ t('olvid', 'Download Olvid') }}</NcButton>
 					</a>
 					<div class="profile-view__divider" />
-					<NcButton type="primary" @click="step = 'identity'">
+					<NcButton variant="primary" @click="step = 'identity'">
 						{{ t('olvid', 'I already have Olvid →') }}
 					</NcButton>
 				</div>
@@ -43,10 +43,10 @@
 					</p>
 
 					<div class="profile-view__form">
-						<NcTextField :value.sync="form.firstname" :label="t('olvid', 'First name')" />
-						<NcTextField :value.sync="form.lastname" :label="t('olvid', 'Last name')" />
-						<NcTextField :value.sync="form.position" :label="t('olvid', 'Position')" />
-						<NcTextField :value.sync="form.company" :label="t('olvid', 'Company')" />
+						<NcTextField v-model="form.firstname" :label="t('olvid', 'First name')" />
+						<NcTextField v-model="form.lastname" :label="t('olvid', 'Last name')" />
+						<NcTextField v-model="form.position" :label="t('olvid', 'Position')" />
+						<NcTextField v-model="form.company" :label="t('olvid', 'Company')" />
 					</div>
 
 					<p v-if="formError" class="profile-view__error">
@@ -60,7 +60,7 @@
 						<NcButton @click="step = 'install'">
 							{{ t('olvid', '← Back') }}
 						</NcButton>
-						<NcButton type="primary" :disabled="magicLinkLoading" @click="generateMagicLink">
+						<NcButton variant="primary" :disabled="magicLinkLoading" @click="generateMagicLink">
 							{{ magicLinkLoading ? t('olvid', 'Generating…') : t('olvid', 'Generate Magic Link') }}
 						</NcButton>
 					</div>
@@ -73,7 +73,7 @@
 					<h2 style="margin: auto;">
 						{{ t('olvid', 'Scan with Olvid') }}
 					</h2>
-					<OlvidQrDisplay :configuration-url="magicLink" />
+					<OlvidQrDisplay :configurationUrl="magicLink" />
 					<p class="profile-view__polling-hint">
 						{{ t('olvid', 'Waiting for you to complete enrollment in the app…') }}
 					</p>
@@ -94,7 +94,7 @@
 					<p class="profile-view__desc">
 						{{ t('olvid', 'Your Olvid identity is now linked to your Nextcloud account. You will appear in the Olvid directory and can join group discussions.') }}
 					</p>
-					<NcButton type="primary" @click="enterRegistered">
+					<NcButton variant="primary" @click="enterRegistered">
 						{{ t('olvid', 'View my profile') }}
 					</NcButton>
 				</div>
@@ -117,10 +117,10 @@
 					</div>
 
 					<div class="profile-view__form">
-						<NcTextField :value.sync="form.firstname" :label="t('olvid', 'First name')" />
-						<NcTextField :value.sync="form.lastname" :label="t('olvid', 'Last name')" />
-						<NcTextField :value.sync="form.position" :label="t('olvid', 'Position')" />
-						<NcTextField :value.sync="form.company" :label="t('olvid', 'Company')" />
+						<NcTextField v-model="form.firstname" :label="t('olvid', 'First name')" />
+						<NcTextField v-model="form.lastname" :label="t('olvid', 'Last name')" />
+						<NcTextField v-model="form.position" :label="t('olvid', 'Position')" />
+						<NcTextField v-model="form.company" :label="t('olvid', 'Company')" />
 					</div>
 
 					<p v-if="saveError" class="profile-view__error">
@@ -131,21 +131,21 @@
 					</p>
 
 					<div class="profile-view__actions">
-						<NcButton type="primary" :disabled="saving" @click="saveProfile">
+						<NcButton variant="primary" :disabled="saving" @click="saveProfile">
 							{{ saving ? t('olvid', 'Saving…') : t('olvid', 'Save') }}
 						</NcButton>
 					</div>
 
 					<!-- Unlink/Revoke identity ───────────────────────────────────── -->
 					<div class="profile-view__revoke">
-						<NcButton type="error" @click="unlinkModalOpen = true">
+						<NcButton variant="error" @click="unlinkModalOpen = true">
 							{{ t('olvid', 'I no longer have access to my Olvid profile') }}
 						</NcButton>
 
 						<UnlinkIdentityModal
 							v-if="unlinkModalOpen"
 							:user="currentUser"
-							is-self
+							isSelf
 							@close="unlinkModalOpen = false"
 							@unlinked="onIdentityUnlinked" />
 					</div>
@@ -169,12 +169,12 @@
 									v-for="group in ownGroups"
 									:key="group.id"
 									:name="group.displayName"
-									@click="isAdmin && $emit('open-group-sidebar', group)">
+									@click="isAdmin && $emit('openGroupSidebar', group)">
 									<template #icon>
 										<OlvidAvatar
-											:display-name="group.displayName"
-											:is-no-user="true"
-											:use-olvid="group.enabled"
+											:displayName="group.displayName"
+											:isNoUser="true"
+											:useOlvid="group.enabled"
 											:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
 									</template>
 									<template #subname>
@@ -192,24 +192,24 @@
 
 <script>
 import axios from '@nextcloud/axios'
+import { showError } from '@nextcloud/dialogs'
 import { generateFilePath, generateOcsUrl } from '@nextcloud/router'
-import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import NcAppContent from '@nextcloud/vue/components/NcAppContent'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcListItem from '@nextcloud/vue/components/NcListItem'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import InvalidConfigurationAlertModal from '../components/InvalidConfigurationAlertModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
-import InvalidConfigurationAlertModal from '../components/InvalidConfigurationAlertModal.vue'
-import { showError } from '@nextcloud/dialogs'
 
 export default {
 	name: 'ProfileView',
 	components: { InvalidConfigurationAlertModal, NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
 
-	emits: ['open-group-sidebar', 'updated'],
+	emits: ['openGroupSidebar', 'updated'],
 
 	data() {
 		return {
@@ -248,6 +248,7 @@ export default {
 		appLogoUrl() {
 			return generateFilePath('olvid', 'img', 'olvid.svg')
 		},
+
 		olvidDisplayNameFromForm() {
 			const name = `${this.form.firstname} ${this.form.lastname}`.trim()
 			const role = [this.form.position, this.form.company].filter(Boolean).join(' @ ')
@@ -279,7 +280,7 @@ export default {
 			}
 			// check in background if Olvid application configuration is valid or not, only if user is an admin and can fix it
 			if (res.data.isAdmin) {
-				await axios.get(generateOcsUrl('/apps/olvid/app/isAppConfigurationValid')).then(res => {
+				await axios.get(generateOcsUrl('/apps/olvid/app/isAppConfigurationValid')).then((res) => {
 					if (res.data.isConfigurationValid === false) {
 						this.showConfigurationAlert = true
 					}
@@ -297,7 +298,7 @@ export default {
 		}
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		this.stopPolling()
 	},
 
@@ -305,7 +306,7 @@ export default {
 		// ── enrollment flow ────────────────────────────────────────────────────
 		async generateMagicLink() {
 			if (!this.form.firstname.trim() && !this.form.lastname.trim()) {
-				this.formError = t('olvid', 'At least a first name or last name is required.')
+				this.formError = this.t('olvid', 'At least a first name or last name is required.')
 				return
 			}
 			this.formError = null
@@ -317,7 +318,7 @@ export default {
 				this.magicLink = res.data.configurationUrl
 				this.step = 'link'
 			} catch (e) {
-				this.magicLinkError = t('olvid', 'Could not generate magic link: {error}', { error: e.response?.data?.error ?? e.message })
+				this.magicLinkError = this.t('olvid', 'Could not generate magic link: {error}', { error: e.response?.data?.error ?? e.message })
 			} finally {
 				this.magicLinkLoading = false
 			}
@@ -366,7 +367,7 @@ export default {
 				await axios.put(generateOcsUrl('/apps/olvid/app/me'), this.form)
 				this.saveSuccess = true
 			} catch (e) {
-				this.saveError = t('olvid', 'Could not save profile: {error}', { error: e.response?.data?.error ?? e.message })
+				this.saveError = this.t('olvid', 'Could not save profile: {error}', { error: e.response?.data?.error ?? e.message })
 			} finally {
 				this.saving = false
 			}

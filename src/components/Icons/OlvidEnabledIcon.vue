@@ -1,5 +1,5 @@
 <template>
-	<span v-bind="$attrs"
+	<span
 		:aria-hidden="title ? null : 'true'"
 		:aria-label="title"
 		class="material-design-icon check-outline-icon"
@@ -23,16 +23,20 @@ export default {
 	props: {
 		title: {
 			type: String,
+			default: null,
 		},
+
 		fillColor: {
 			type: String,
 			default: '#275fee',
 		},
+
 		size: {
 			type: Number,
 			default: 24,
 		},
 	},
+
 	emits: ['click'],
 }
 </script>
