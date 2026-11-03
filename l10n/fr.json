@@ -108,7 +108,7 @@
     "Invalid application configuration": "Configuration Olvid invalide",
     "Go to admin settings": "Paramètres administrateur",
     "Dismiss": "Fermer",
-    "You shall configure an Olvid server API key in Administration settings before starting using the app.": "Vous devriez configurer une clé API Olvid dans les paramètres administrateur avant de commencer à utiliser l'application",
+    "You must configure an Olvid server API key in Administration settings before starting using the app.": "Vous devriez configurer une clé API Olvid dans les paramètres administrateur avant de commencer à utiliser l'application",
     "Delete user": "Supprimer l’utilisateur",
     "Are you sure you want to delete {name}? This action cannot be undone.": "Êtes-vous certain de vouloir supprimer {name} ? Cette action est irréversible.",
     "Also revoke the Olvid identity of {name}": "Bloquer l'identité Olvid de {name}",

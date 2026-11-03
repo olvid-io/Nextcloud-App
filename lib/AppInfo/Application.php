@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\Olvid\AppInfo;
 
-use OCA\Olvid\DeclarativeSettings\Admin;
 use OCA\Olvid\Listeners\GroupEventListener;
 use OCA\Olvid\Listeners\UserEventListener;
 use OCA\Olvid\Profile\OlvidProfileLinkAction;
@@ -27,7 +26,6 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function register(IRegistrationContext $context): void {
-		$context->registerDeclarativeSettings(Admin::class);
 		$context->registerProfileLinkAction(OlvidProfileLinkAction::class);
 		$context->registerSetupCheck(OlvidConfigurationSetupCheck::class);
 

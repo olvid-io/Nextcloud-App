@@ -567,10 +567,10 @@ msgstr "Fermer"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:9
 msgid ""
-"You shall configure an Olvid server API key in Administration settings "
+"You must configure an Olvid server API key in Administration settings "
 "before starting using the app."
 msgstr ""
-"Vous devriez configurer une clé API Olvid dans les paramètres administrateur "
+"Vous devez configurer une clé API Olvid dans les paramètres administrateur "
 "avant de commencer à utiliser l'application"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/DeleteUserModal.vue:4

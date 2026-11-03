@@ -46,6 +46,7 @@
 		<command>OCA\Olvid\Command\SyncCommand</command>
 	</commands>
 	<settings>
+		<admin>OCA\Olvid\Settings\Admin</admin>
 		<admin-section>OCA\Olvid\Settings\AdminSection</admin-section>
 	</settings>
 	<navigations>

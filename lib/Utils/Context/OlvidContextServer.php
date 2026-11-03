@@ -44,6 +44,26 @@ class OlvidContextServer {
 	}
 
 	/**
+	 * Check current directory configuration against olvid server.
+	 * Pass any value to serverUrl and/or apiKey to override configured value.
+	 *
+	 * @throws OlvidServerException
+	 * @throws InvalidConfigurationException
+	 */
+	public function requestCheckCredentials(?string $serverUrl = null, ?string $apiKey = null): bool {
+		$query = new JsonOlvidServerRequest();
+		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_CHECK_CREDENTIALS;
+		$serverResponse = $this->serverApiRequest($query, $serverUrl, $apiKey);
+		$this->logger->info('OlvidServer:: requestCheckAuthentication');
+		if (!array_key_exists('ok', $serverResponse)) {
+			$this->logger->error('OlvidServer:: requestCheckAuthentication: success not set in response');
+			throw new InternalErrorException();
+		}
+
+		return $serverResponse['ok'];
+	}
+
+	/**
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
@@ -205,11 +225,14 @@ class OlvidContextServer {
 	}
 
 	/**
+	 * pass $serverUrl and or $apiKey to force value
+	 *
 	 * @throws NetworkException|OlvidServerException|InvalidConfigurationException
 	 */
-	private function serverApiRequest(JsonOlvidServerRequest $jsonRequest): array {
-		$jsonRequest->keycloakApiKey = $this->getCachedApiKey();
-		$serverUrl = $this->getCachedServerUrl();
+	private function serverApiRequest(JsonOlvidServerRequest $jsonRequest, ?string $serverUrl = null, ?string $apiKey = null): array {
+		$jsonRequest->keycloakApiKey = $apiKey !== null ? $apiKey : $this->getCachedApiKey();
+		$serverUrl = $serverUrl !== null ? $serverUrl : $this->getCachedServerUrl();
+
 		if ($serverUrl === null || $jsonRequest->keycloakApiKey === null) {
 			throw new InvalidConfigurationException();
 		}

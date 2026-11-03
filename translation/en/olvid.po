@@ -575,7 +575,7 @@ msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:9
 msgid ""
-"You shall configure an Olvid server API key in Administration settings "
+"You must configure an Olvid server API key in Administration settings "
 "before starting using the app."
 msgstr ""
 

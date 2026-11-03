@@ -24,6 +24,8 @@ class JsonOlvidServerRequest implements JsonSerializable {
 
 	public const QUERY_CURRENT_KEYCLOAK_VERSION = 9;
 
+	public const QUERY_REQUEST_CHECK_CREDENTIALS = 10;
+
 
 	public int $q;
 

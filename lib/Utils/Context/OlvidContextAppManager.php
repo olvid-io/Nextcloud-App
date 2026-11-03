@@ -46,10 +46,16 @@ class OlvidContextAppManager {
 	public function getOlvidServerUrl(): string {
 		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_URL) ?? Constants::DEFAULT_OLVID_SERVER;
 	}
+	public function setOlvidServerUrl(string $value): void {
+		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_OLVID_SERVER_URL, $value);
+	}
 
 	// api key
 	public function getOlvidServerApiKey(): ?string {
 		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_API_KEY);
+	}
+	public function setOlvidServerApiKey(string $value): void {
+		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_OLVID_SERVER_API_KEY, $value, false, true);
 	}
 
 	// global push topic
