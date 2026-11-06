@@ -9,6 +9,7 @@ use OCA\Olvid\Models\JsonUserDetails;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\Entity;
 use OCP\DB\Types;
+use Stringable;
 
 /**
  * Nextcloud user id
@@ -19,8 +20,8 @@ use OCP\DB\Types;
  * @method string|null getBytesIdentity()
  * @method void setBytesIdentity(string|null $bytesIdentity)
  *
- * @method string|null getApiKey()
- * @method void setApiKey(string|null $apiKey)
+ * @method string|null getLicenseKey()
+ * @method void setLicenseKey(string|null $licenseKey)
  *
  * @method string|null getNonce()
  * @method void setNonce(string|null $nonce)
@@ -58,7 +59,7 @@ use OCP\DB\Types;
  * @method string|null getFullSearchField()
  * @method void setFullSearchField(string|null $fullSearchField)
  */
-class OlvidUser extends Entity implements \Stringable {
+class OlvidUser extends Entity implements Stringable {
 	protected string $userId = '';
 
 	protected ?string $bytesIdentity = null;
@@ -151,7 +152,7 @@ class OlvidUser extends Entity implements \Stringable {
 		return [
 			'userId' => $this->getUserId(),
 			'bytesIdentity' => base64_encode($this->getBytesIdentity() ?? ''),
-			'apiKey' => $this->getApiKey(),
+			'apiKey' => $this->getLicenseKey(),
 			'nonce' => $this->getNonce(),
 			'magicToken' => $this->getMagicToken(),
 			'magicTokenExpiration' => $this->getMagicTokenExpiration(),

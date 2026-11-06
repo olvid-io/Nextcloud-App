@@ -96,9 +96,9 @@ class OlvidDatabaseSynchronizationTask {
 					$olvidUser->setNonce(RandomUtil::uuid_create());
 				}
 
-				// request an api key if necessary
-				if (!$olvidUser->getApiKey()) {
-					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no api key: ' . $userId);
+				// request a license key if necessary
+				if (!$olvidUser->getLicenseKey()) {
+					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no license key: ' . $userId);
 					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
 				}
@@ -117,11 +117,11 @@ class OlvidDatabaseSynchronizationTask {
 					$olvidUser->setNonce(null);
 				}
 
-				// revoke api key
-				if ($olvidUser->getApiKey()) {
-					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with an api key: ' . $userId);
-					$this->context->olvidServer->revokeApiKeyNoFail($olvidUser->getApiKey());
-					$olvidUser->setApiKey(null);
+				// revoke license key
+				if ($olvidUser->getLicenseKey()) {
+					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with a license key: ' . $userId);
+					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
+					$olvidUser->setLicenseKey(null);
 				}
 			}
 

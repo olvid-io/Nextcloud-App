@@ -32,14 +32,14 @@ class UserDeleteIdentity {
 		$olvidUser = $this->context->db->user->getByUserIdOrNull($userId);
 
 		// delete any cached signed details (ignore exception)
-		// delete user api key if he has one
-		if ($olvidUser?->getApiKey() !== null) {
+		// delete user license key if he has one
+		if ($olvidUser?->getLicenseKey() !== null) {
 			try {
-				$this->context->olvidServer->revokeApiKey($olvidUser->getApiKey());
-				$olvidUser->setApiKey(null);
+				$this->context->olvidServer->revokeLicenseKey($olvidUser->getLicenseKey());
+				$olvidUser->setLicenseKey(null);
 				$this->context->db->user->updateNoFail($olvidUser);
 			} catch (InvalidConfigurationException|OlvidServerException $e) {
-				$this->logger->error('UserDeleteIdentity: cannot revoke api key', ['exception' => $e]);
+				$this->logger->error('UserDeleteIdentity: cannot revoke license key', ['exception' => $e]);
 			}
 		}
 

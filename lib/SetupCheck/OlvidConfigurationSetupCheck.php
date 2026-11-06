@@ -27,8 +27,8 @@ class OlvidConfigurationSetupCheck implements ISetupCheck {
 		if (!$this->context->nextcloud->appManager->getOlvidServerUrl()) {
 			return SetupResult::error($this->l10n->t('Olvid server url is not set. Configure it in Olvid section of Admin settings.'));
 		}
-		if (!$this->context->nextcloud->appManager->getOlvidServerApiKey()) {
-			return SetupResult::error($this->l10n->t('Olvid server Api Key is not set. Configure it in Olvid Admin settings section, or send us an email to get one: contact@olvid.io'));
+		if (!$this->context->nextcloud->appManager->getDirectoryLicenseKey()) {
+			return SetupResult::error($this->l10n->t('Directory license key is not set. Configure it in Olvid Admin settings section.'));
 		}
 
 		try {

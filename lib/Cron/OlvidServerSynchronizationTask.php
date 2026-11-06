@@ -9,8 +9,8 @@ use OCP\DB\Exception;
 use Psr\Log\LoggerInterface;
 
 /*
- * This task send all api keys and push topics known locally to the olvid server.
- * Olvid server will remove any unused element in its database. It will also return api keys and push topic he does know,
+ * This task send all license keys and push topics known locally to the olvid server.
+ * Olvid server will remove any unused element in its database. It will also return license keys and push topic he does know,
  * so we can refresh them.
  */
 class OlvidServerSynchronizationTask {
@@ -40,20 +40,20 @@ class OlvidServerSynchronizationTask {
 		}
 
 		$this->logger->info('OlvidServerSynchronizationTask: task start');
-		// sync with server and remove ghost api keys and push topics
+		// sync with server and remove ghost license keys and push topics
 		$syncResponse = self::syncWithServer();
 
-		// request api keys for olvid user with no api keys (might have been clean by previous sync task)
-		self::requestMissingApiKeys();
+		// request license keys for olvid user with no license (might have been clean by previous sync task)
+		self::requestMissingLicenseKeys();
 		// request missing push topic (global and for olvid groups) (might have been clean by previous sync task)
 		self::requestMissingPushTopics();
 
 		if ($syncResponse === null) {
 			$this->logger->info('OlvidServerSynchronizationTask: task end with an error');
 		} else {
-			$unknownApiKeysCount = array_key_exists('unknownApiKeys', $syncResponse) ? count($syncResponse['unknownApiKeys']) : 0;
+			$unknownLicenseKeysCount = array_key_exists('unknownApiKeys', $syncResponse) ? count($syncResponse['unknownApiKeys']) : 0;
 			$unknownPushTopicsCount = array_key_exists('unknownPushTopics', $syncResponse) ? count($syncResponse['unknownPushTopics']) : 0;
-			$this->logger->info(sprintf('OlvidServerSynchronizationTask: task end (cleaned api keys: %d, cleaned push topics: %d)', $unknownApiKeysCount, $unknownPushTopicsCount));
+			$this->logger->info(sprintf('OlvidServerSynchronizationTask: task end (cleaned license keys: %d, cleaned push topics: %d)', $unknownLicenseKeysCount, $unknownPushTopicsCount));
 		}
 	}
 
@@ -62,15 +62,15 @@ class OlvidServerSynchronizationTask {
 	 */
 	private function syncWithServer(): ?array {
 		/*
-		 * Build list of known api key and push topics to send to server for synchronization
+		 * Build list of known license key and push topics to send to server for synchronization
 		 */
-		// list api keys attributes to olvid users
+		// list license keys associated with an olvid user
 		$allOlvidUsers = $this->context->db->user->getAll();
-		$knownApiKeys = [];
+		$knownLicenseKeys = [];
 		foreach ($allOlvidUsers as $olvidUser) {
-			$apiKey = $olvidUser->getApiKey();
-			if ($apiKey !== null) {
-				$knownApiKeys[] = $apiKey;
+			$licenseKey = $olvidUser->getLicenseKey();
+			if ($licenseKey !== null) {
+				$knownLicenseKeys[] = $licenseKey;
 			}
 		}
 
@@ -95,7 +95,7 @@ class OlvidServerSynchronizationTask {
 		 * Execute server request
 		 */
 		try {
-			$response = $this->context->olvidServer->serverSynchronization($knownApiKeys, $knownPushTopics);
+			$response = $this->context->olvidServer->serverSynchronization($knownLicenseKeys, $knownPushTopics);
 		} catch (InvalidConfigurationException|OlvidServerException $e) {
 			$this->logger->error('OlvidServerSynchronizationTask: cannot perform server synchronization', ['exception' => $e]);
 			return null;
@@ -104,30 +104,30 @@ class OlvidServerSynchronizationTask {
 		/*
 		 * Parse response
 		 */
-		$unknownApiKeys = array_key_exists('unknownApiKeys', $response) ? $response['unknownApiKeys'] : [];
+		$unknownLicenseKeys = array_key_exists('unknownApiKeys', $response) ? $response['unknownApiKeys'] : [];
 		$unknownPushTopics = array_key_exists('unknownPushTopics', $response) ? $response['unknownPushTopics'] : [];
 		//		$licenseCount = $response['licenseCount'];
 
 		/*
-		 * Handle unknown api keys
+		 * Handle unknown license keys
 		 */
-		if ($unknownApiKeys) {
-			// build an apiKey to user map
-			$apiKeyToUserMap = [];
+		if ($unknownLicenseKeys) {
+			// build a license key to user map
+			$licenseKeyToUserMap = [];
 			foreach ($allOlvidUsers as $olvidUser) {
-				if ($olvidUser->getApiKey() !== null) {
-					$apiKeyToUserMap[$olvidUser->getApiKey()] = $olvidUser;
+				if ($olvidUser->getLicenseKey() !== null) {
+					$licenseKeyToUserMap[$olvidUser->getLicenseKey()] = $olvidUser;
 				}
 			}
 
-			// remove api key for users with an unknown api key
-			foreach ($unknownApiKeys as $unknownApiKey) {
-				if (array_key_exists($unknownApiKey, $apiKeyToUserMap) && $apiKeyToUserMap[$unknownApiKey] !== null) {
-					$apiKeyToUserMap[$unknownApiKey]->setApiKey(null);
+			// remove license key for users with an unknown license
+			foreach ($unknownLicenseKeys as $licenseKey) {
+				if (array_key_exists($licenseKey, $licenseKeyToUserMap) && $licenseKeyToUserMap[$licenseKey] !== null) {
+					$licenseKeyToUserMap[$licenseKey]->setLicenseKey(null);
 					try {
-						$this->context->db->user->update($apiKeyToUserMap[$unknownApiKey]);
+						$this->context->db->user->update($licenseKeyToUserMap[$licenseKey]);
 					} catch (Exception $e) {
-						$this->logger->error('OlvidServerSynchronizationTask: cannot update user api key in database', ['exception' => $e]);
+						$this->logger->error('OlvidServerSynchronizationTask: cannot update user license key in database', ['exception' => $e]);
 					}
 				}
 			}
@@ -168,19 +168,19 @@ class OlvidServerSynchronizationTask {
 	}
 
 	/**
-	 * Request api keys for olvid users with an identity and with no api key
+	 * Request license keys for olvid users with an identity and with no license key
 	 * @throws Exception
 	 */
-	private function requestMissingApiKeys(): void {
+	private function requestMissingLicenseKeys(): void {
 		$olvidUsersWithIdentity = $this->context->db->user->getAllWithIdentity();
 		foreach ($olvidUsersWithIdentity as $olvidUserWithIdentity) {
 			try {
-				if ($olvidUserWithIdentity->getApiKey() === null) {
-					$olvidUserWithIdentity->setApiKey($this->context->olvidServer->requestNewApiKey());
+				if ($olvidUserWithIdentity->getLicenseKey() === null) {
+					$olvidUserWithIdentity->setLicenseKey($this->context->olvidServer->requestNewLicenseKey());
 					$this->context->db->user->update($olvidUserWithIdentity);
 				}
 			} catch (InvalidConfigurationException|OlvidServerException $e) {
-				$this->logger->error('requestMissingPushTopics: cannot request user api key', ['exception' => $e]);
+				$this->logger->error('requestMissingPushTopics: cannot request user license key', ['exception' => $e]);
 			} catch (Exception $e) {
 				$this->logger->error('requestMissingPushTopics: cannot update user in database', ['exception' => $e]);
 			}

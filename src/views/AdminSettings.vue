@@ -13,19 +13,19 @@
 		</NcNoteCard>
 
 		<form class="admin-settings__form" @submit.prevent="save">
+			<NcPasswordField
+				v-model="directoryKey"
+				:label="t('olvid', 'Directory License Key')"
+				:placeholder="directoryKey ? t('olvid', '00000000-0000-0000-0000-000000000000') : ''"
+				:helperText="t('olvid', 'Required to use Nextcloud Application, write to us an email to get one: contact@olvid.io')"
+				:disabled="saving" />
+
 			<NcTextField
 				v-model="serverUrl"
 				type="url"
 				:label="t('olvid', 'Olvid Server url')"
 				placeholder="https://server.example.io"
 				:helperText="t('olvid', 'Edit only if you know what you are doing.')"
-				:disabled="saving" />
-
-			<NcPasswordField
-				v-model="directoryKey"
-				:label="t('olvid', 'Olvid Directory Key')"
-				:placeholder="directoryKey ? t('olvid', '00000000-0000-0000-0000-000000000000') : ''"
-				:helperText="t('olvid', 'Required to use Nextcloud Application, write to us an email to get one: contact@olvid.io')"
 				:disabled="saving" />
 
 			<p v-if="saveError" class="admin-settings__error">

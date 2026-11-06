@@ -80,21 +80,21 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 
 			// no identity already registered
 			if (!$base64PreviousIdentity) {
-				// user is not supposed to have an api key, revoke it if there is one
-				if ($olvidUser->getApiKey()) {
-					$this->context->olvidServer->revokeApiKeyNoFail($olvidUser->getApiKey());
-					$olvidUser->setApiKey(null);
+				// user is not supposed to have a license key, revoke it if there is one
+				if ($olvidUser->getLicenseKey()) {
+					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
+					$olvidUser->setLicenseKey(null);
 				}
 
-				// create and set new api key
-				// this might fail if an olvid server api have not been set
+				// create and set new license key
+				// this might fail if an olvid directory license have not been set
 				try {
-					$newApiKey = $this->context->olvidServer->requestNewApiKey();
-					$olvidUser->setApiKey($newApiKey);
+					$newLicenseKey = $this->context->olvidServer->requestNewLicenseKey();
+					$olvidUser->setLicenseKey($newLicenseKey);
 				} catch (InvalidConfigurationException) {
-					$this->logger->warning('PutKey: cannot create user api key: invalid configuration');
+					$this->logger->warning('PutKey: cannot create user license key: invalid configuration');
 				} catch (Exception $e) {
-					$this->logger->warning('PutKey: cannot create user api key: unexpected exception', ['exception' => $e]);
+					$this->logger->warning('PutKey: cannot create user license key: unexpected exception', ['exception' => $e]);
 				}
 
 				// set user identity, and registration timestamp
@@ -138,16 +138,16 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 			}
 			// trying to put the same identity
 			elseif ($base64PreviousIdentity === $base64Identity) {
-				// if user lack an api key, try to get and set one
-				if (!$olvidUser->getApiKey()) {
-					// this might fail if an olvid server api have not been set
+				// if user lack a license key, try to get and set one
+				if (!$olvidUser->getLicenseKey()) {
+					// this might fail if an olvid directory license have not been set
 					try {
-						$newApiKey = $this->context->olvidServer->requestNewApiKey();
-						$olvidUser->setApiKey($newApiKey);
+						$newLicenseKey = $this->context->olvidServer->requestNewLicenseKey();
+						$olvidUser->setLicenseKey($newLicenseKey);
 					} catch (InvalidConfigurationException) {
-						$this->logger->warning('PutKey: cannot create user api key: invalid configuration');
+						$this->logger->warning('PutKey: cannot create user license key: invalid configuration');
 					} catch (Exception $e) {
-						$this->logger->warning('PutKey: cannot create user api key: unexpected exception', ['exception' => $e]);
+						$this->logger->warning('PutKey: cannot create user license key: unexpected exception', ['exception' => $e]);
 					}
 				}
 
@@ -159,10 +159,10 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 			// new and previous identity are different,
 			// trying to override previous identity: we always allow self revocation, just erase previous identity
 			else {
-				// revoke current api key if there is one
-				if ($olvidUser->getApiKey()) {
-					$this->context->olvidServer->revokeApiKeyNoFail($olvidUser->getApiKey());
-					$olvidUser->setApiKey(null);
+				// revoke current license key if there is one
+				if ($olvidUser->getLicenseKey()) {
+					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
+					$olvidUser->setLicenseKey(null);
 				}
 
 				// clear old identity
@@ -173,15 +173,15 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				// sign out the user: set revoked_before to mark any token signed before now to be revoked
 				$olvidUser->setSessionRevokedBefore(TimeUtil::currentTimeMillis());
 
-				// create and set new api key
-				// this might fail if an olvid server api have not been set
+				// create and set new license key
+				// this might fail if an olvid directory license have not been set
 				try {
-					$newApiKey = $this->context->olvidServer->requestNewApiKey();
-					$olvidUser->setApiKey($newApiKey);
+					$newLicenseKey = $this->context->olvidServer->requestNewLicenseKey();
+					$olvidUser->setLicenseKey($newLicenseKey);
 				} catch (InvalidConfigurationException) {
-					$this->logger->warning('PutKey: cannot create user api key: invalid configuration');
+					$this->logger->warning('PutKey: cannot create user license key: invalid configuration');
 				} catch (Exception $e) {
-					$this->logger->warning('PutKey: cannot create user api key: unexpected exception', ['exception' => $e]);
+					$this->logger->warning('PutKey: cannot create user license key: unexpected exception', ['exception' => $e]);
 				}
 
 				// we can now set new identity and update registration timestamp

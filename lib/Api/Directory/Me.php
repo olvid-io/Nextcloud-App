@@ -50,20 +50,20 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$olvidUser->setSignedDetails($signedDetails);
 		$response[Constants::ME_RESPONSE_SIGNATURE] = $signedDetails;
 
-		// if identity was already uploaded create an api key if necessary
-		if ($olvidUser->hasIdentity() && $olvidUser->getApiKey() === null) {
-			// this might fail if an olvid server api have not been set
+		// if identity was already uploaded create a license key if necessary
+		if ($olvidUser->hasIdentity() && $olvidUser->getLicenseKey() === null) {
+			// this might fail if a directory license have not been set
 			try {
-				$apiKey = $this->context->olvidServer->requestNewApiKey();
-				$olvidUser->setApiKey($apiKey);
+				$licenseKey = $this->context->olvidServer->requestNewLicenseKey();
+				$olvidUser->setLicenseKey($licenseKey);
 			} catch (InvalidConfigurationException) {
-				$this->logger->error('Me: cannot create user api key: invalid configuration');
+				$this->logger->error('Me: cannot create user license key: invalid configuration');
 			} catch (Exception $e) {
-				$this->logger->error('Me: cannot create user api key: unexpected exception', ['exception' => $e]);
+				$this->logger->error('Me: cannot create user license key: unexpected exception', ['exception' => $e]);
 			}
 		}
 
-		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getApiKey();
+		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getLicenseKey();
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
 		if ($olvidUser->hasIdentity()) {

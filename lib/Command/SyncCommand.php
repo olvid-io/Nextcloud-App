@@ -29,7 +29,7 @@ class SyncCommand extends Command {
 			->setName('olvid:sync')
 			->setDescription('Synchronize Olvid app database, Olvid server state and signatures (runs all steps if no option is given)')
 			->addOption('database', null, InputOption::VALUE_NONE, 'Clean and synchronize the local Olvid database')
-			->addOption('server', null, InputOption::VALUE_NONE, 'Synchronize api keys and push topics with the Olvid server')
+			->addOption('server', null, InputOption::VALUE_NONE, 'Synchronize license keys and push topics with the Olvid server')
 			->addOption('signatures', null, InputOption::VALUE_NONE, 'Refresh all user and group signatures');
 	}
 

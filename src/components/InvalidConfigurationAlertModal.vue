@@ -5,7 +5,7 @@
 		:buttons="buttons">
 		<div style="color: var('--color-error'); font-weight: bold;">
 			<div v-if="isAdmin">
-				{{ t('olvid', 'You must configure an Olvid server API key in Administration settings before starting using the app.') }}
+				{{ t('olvid', 'You must configure a Directory License Key in Olvid section of Administration settings before starting using the app.') }}
 			</div>
 			<div v-else>
 				{{ t('olvid', 'Application configuration is not valid. Contact your Nextcloud administrator to fix it.') }}

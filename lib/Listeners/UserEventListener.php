@@ -49,16 +49,16 @@ class UserEventListener implements IEventListener {
 			return ;
 		}
 
-		// delete user api key if he has one (ignore exceptions)
-		if ($olvidUser->getApiKey() !== null) {
+		// delete user license key if he has one (ignore exceptions)
+		if ($olvidUser->getLicenseKey() !== null) {
 			try {
-				$this->context->olvidServer->revokeApiKey($olvidUser->getApiKey());
-				$olvidUser->setApiKey(null);
+				$this->context->olvidServer->revokeLicenseKey($olvidUser->getLicenseKey());
+				$olvidUser->setLicenseKey(null);
 				$this->context->db->user->updateNoFail($olvidUser);
 			} catch (InvalidConfigurationException) {
-				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke api key: invalid server configuration');
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke license key: invalid server configuration');
 			} catch (OlvidServerException $e) {
-				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke api key: unexpected exception', ['exception' => $e]);
+				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke license key: unexpected exception', ['exception' => $e]);
 			}
 		}
 

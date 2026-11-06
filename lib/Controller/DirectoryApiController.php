@@ -258,7 +258,7 @@ class DirectoryApiController extends OCSController {
 	// ── App authenticated API (Bearer JWT required) ───────────────────────────
 
 	/**
-	 * Returns the caller's directory profile, API key, push topics, and pending revocations
+	 * Returns the caller's directory profile, license key, push topics, and pending revocations
 	 * Used on identity creation (GET variant)
 	 *
 	 * @param string $deviceUid Optional device UID to register
@@ -278,7 +278,7 @@ class DirectoryApiController extends OCSController {
 	}
 
 	/**
-	 * Returns the caller's directory profile, API key, push topics, and pending revocations
+	 * Returns the caller's directory profile, license key, push topics, and pending revocations
 	 * Used on subsequent syncs (POST variant)
 	 *
 	 * @param string $deviceUid Optional device UID to register

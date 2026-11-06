@@ -17,13 +17,13 @@ class UninstallRepairStep implements IRepairStep {
 	}
 
 	public function run(IOutput $output): void {
-		// delete api keys from server
-		$output->info('Olvid: revoking user api keys');
+		// delete license keys from server
+		$output->info('Olvid: revoking user license keys');
 		$olvidUsers = $this->context->db->user->getAll();
 		foreach ($olvidUsers as $olvidUser) {
-			if ($olvidUser->getApiKey()) {
-				$this->context->olvidServer->revokeApiKeyNoFail($olvidUser->getApiKey());
-				$olvidUser->setApiKey(null);
+			if ($olvidUser->getLicenseKey()) {
+				$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
+				$olvidUser->setLicenseKey(null);
 				$this->context->db->user->update($olvidUser);
 			}
 		}

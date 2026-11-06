@@ -7,24 +7,24 @@ namespace OCA\Olvid\Utils\Context\OlvidServer;
 use Exception;
 
 abstract class OlvidServerException extends Exception {
-	// local error raised if server api key or url is not set
+	// local error raised if server url or directory license key are not set
 	public const ERROR_INVALID_REQUEST = 1;
 
 	public const ERROR_INTERNAL = 2;
 
-	public const ERROR_INVALID_API_KEY = 3;
+	public const ERROR_INVALID_DIRECTORY_KEY = 3;
 
 	public const ERROR_API_KEY_NOT_FOUND = 4;
 
 	public const ERROR_MISSING_BOT_PERMISSION = 5;
 }
 
-// client side: miss api key or server url in app configuration
+// client side: miss directory license key or server url in app configuration
 class InvalidConfigurationException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();
 		$this->code = 0;
-		$this->message = 'Invalid configuration: missing api key or server url';
+		$this->message = 'Invalid configuration: missing directory license key or server url';
 	}
 }
 
@@ -55,21 +55,21 @@ class InternalErrorException extends OlvidServerException {
 	}
 }
 
-// olvid server api key (keycloak api key) passed in query is not valid
-class InvalidApiKeyException extends OlvidServerException {
+// olvid server directory license key passed in query is not valid
+class InvalidDirectoryKeyException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();
-		$this->code = self::ERROR_INVALID_API_KEY;
-		$this->message = 'Olvid server api key not found or invalid';
+		$this->code = self::ERROR_INVALID_DIRECTORY_KEY;
+		$this->message = 'Olvid server directory license key not found or invalid';
 	}
 }
 
 // raised by revokeApiKey if key does not exist in db
-class ApiKeyNotFoundException extends OlvidServerException {
+class LicenseKeyNotFoundException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();
 		$this->code = self::ERROR_API_KEY_NOT_FOUND;
-		$this->message = 'revokeApiKey: api key not found';
+		$this->message = 'revokeApiKey: license key not found';
 	}
 }
 
@@ -78,6 +78,6 @@ class MissingBotPermissionException extends OlvidServerException {
 	public function __construct() {
 		parent::__construct();
 		$this->code = self::ERROR_MISSING_BOT_PERMISSION;
-		$this->message = 'Olvid server api key miss Olvid Bot permission';
+		$this->message = 'Olvid server license key miss Olvid Bot permission';
 	}
 }

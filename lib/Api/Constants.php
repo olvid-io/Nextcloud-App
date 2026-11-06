@@ -14,7 +14,7 @@ class Constants {
 	// for statistics only, duration since last connection to consider a user as inactive
 	public const INACTIVE_USER_DURATION_S = 1209600; // 2 weeks
 
-	// Minimum build numbers supporting this version of the keycloak plugin API
+	// Minimum build numbers supporting this version of the directory API
 	public const MIN_BUILD_ANDROID = 200;
 
 	public const MIN_BUILD_IOS = 650;

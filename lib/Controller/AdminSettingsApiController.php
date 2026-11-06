@@ -6,8 +6,8 @@ namespace OCA\Olvid\Controller;
 
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Utils\Context\OlvidContext;
-use OCA\Olvid\Utils\Context\OlvidServer\ApiKeyNotFoundException;
-use OCA\Olvid\Utils\Context\OlvidServer\InvalidApiKeyException;
+use OCA\Olvid\Utils\Context\OlvidServer\LicenseKeyNotFoundException;
+use OCA\Olvid\Utils\Context\OlvidServer\InvalidDirectoryKeyException;
 use OCA\Olvid\Utils\Context\OlvidServer\NetworkException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -64,7 +64,7 @@ class AdminSettingsApiController extends OCSController {
 	 * Updates the Olvid server configuration and checks it against the Olvid server
 	 *
 	 * @param string $serverUrl Olvid distribution server url
-	 * @param string $directoryKey api key
+	 * @param string $directoryKey key to authenticate against Olvid Server
 	 * @return DataResponse<Http::STATUS_OK, OlvidAdminConfiguration, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
 	 *
 	 * 200: Configuration saved, validity returned
@@ -80,7 +80,7 @@ class AdminSettingsApiController extends OCSController {
 		$this->context->nextcloud->appManager->setOlvidServerUrl($serverUrl);
 
 		if ($directoryKey !== null) {
-			$this->context->nextcloud->appManager->setOlvidServerApiKey(trim($directoryKey));
+			$this->context->nextcloud->appManager->setDirectoryLicenseKey(trim($directoryKey));
 		}
 
 		$configuration = $this->computeConfiguration();
@@ -111,7 +111,7 @@ class AdminSettingsApiController extends OCSController {
 
 		[$isConfigurationValid, $message] = $directoryKey !== null
 			? $this->checkCredentials($serverUrl, $directoryKey)
-			: [false, $this->l->t('No API key configured. Send us an email to get one: contact@olvid.io')];
+			: [false, $this->l->t('No directory license key configured. Send us an email to get one: contact@olvid.io')];
 
 		return new DataResponse([
 			'isConfigurationValid' => $isConfigurationValid,
@@ -124,10 +124,10 @@ class AdminSettingsApiController extends OCSController {
 	 */
 	private function computeConfiguration(): array {
 		$appManager = $this->context->nextcloud->appManager;
-		$directoryKey = $appManager->getOlvidServerApiKey();
+		$directoryKey = $appManager->getDirectoryLicenseKey();
 		[$isConfigurationValid, $message] = $directoryKey !== null
 			? $this->checkCredentials()
-			: [false, $this->l->t('No API key configured. Send us an email to get one: contact@olvid.io')];
+			: [false, $this->l->t('No directory license key configured. Send us an email to get one: contact@olvid.io')];
 
 		return [
 			'server' => [
@@ -145,11 +145,11 @@ class AdminSettingsApiController extends OCSController {
 	private function checkCredentials(?string $serverUrl = null, ?string $directoryKey = null): array {
 		try {
 			if ($this->context->olvidServer->requestCheckCredentials($serverUrl, $directoryKey)) {
-				return [true, $this->l->t('Olvid server is reachable and API key is valid.')];
+				return [true, $this->l->t('Olvid server is reachable and directory license is valid.')];
 			}
-			return [false, $this->l->t('API key was rejected by the Olvid server.')];
-		} catch (InvalidApiKeyException|ApiKeyNotFoundException) {
-			return [false, $this->l->t('API key was rejected by the Olvid server.')];
+			return [false, $this->l->t('Directory license key was rejected by the Olvid server.')];
+		} catch (InvalidDirectoryKeyException|LicenseKeyNotFoundException) {
+			return [false, $this->l->t('Directory license key was rejected by the Olvid server.')];
 		} catch (NetworkException) {
 			return [false, $this->l->t('Cannot reach the Olvid server, check the server url.')];
 		} catch (Throwable $e) {

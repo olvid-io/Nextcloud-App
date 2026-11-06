@@ -12,7 +12,7 @@ class OlvidContextAppManager {
 	// Olvid Server
 	public const APP_CONFIG_OLVID_SERVER_URL = 'olvid-server-url';
 
-	public const APP_CONFIG_OLVID_SERVER_API_KEY = 'olvid-server-api-key';
+	public const APP_CONFIG_DIRECTORY_LICENSE_KEY = 'olvid-server-api-key';
 
 	public const APP_CONFIG_OLVID_IS_SERVER_CONFIGURATION_VALID = 'olvid-server-is-configuration-valid';
 
@@ -52,12 +52,12 @@ class OlvidContextAppManager {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_OLVID_SERVER_URL, $value);
 	}
 
-	// api key
-	public function getOlvidServerApiKey(): ?string {
-		return $this->getStringOrNull(self::APP_CONFIG_OLVID_SERVER_API_KEY);
+	// directory license key
+	public function getDirectoryLicenseKey(): ?string {
+		return $this->getStringOrNull(self::APP_CONFIG_DIRECTORY_LICENSE_KEY);
 	}
-	public function setOlvidServerApiKey(string $value): void {
-		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_OLVID_SERVER_API_KEY, $value, false, true);
+	public function setDirectoryLicenseKey(string $value): void {
+		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_DIRECTORY_LICENSE_KEY, $value, false, true);
 	}
 
 	// is server configuration valid
