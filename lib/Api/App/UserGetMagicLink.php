@@ -40,6 +40,11 @@ class UserGetMagicLink {
 	 */
 	public function handle(IUser $nextcloudUser): DataResponse {
 		try {
+			// check directory configuration is valid
+			if (!$this->context->nextcloud->appManager->isOlvidServerConfigurationValid()) {
+				return new DataResponse(['error' => 'server configuration is invalid'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+
 			// get or create olvid user in database
 			$olvidUser = $this->context->db->user->getOrCreate($nextcloudUser->getUID(), $nextcloudUser->getDisplayName());
 

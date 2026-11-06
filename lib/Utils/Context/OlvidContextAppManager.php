@@ -14,6 +14,8 @@ class OlvidContextAppManager {
 
 	public const APP_CONFIG_OLVID_SERVER_API_KEY = 'olvid-server-api-key';
 
+	public const APP_CONFIG_OLVID_IS_SERVER_CONFIGURATION_VALID = 'olvid-server-is-configuration-valid';
+
 	public const APP_CONFIG_GLOBAL_PUSH_TOPIC = 'olvid-global-push-topic';
 
 	// json web key
@@ -56,6 +58,14 @@ class OlvidContextAppManager {
 	}
 	public function setOlvidServerApiKey(string $value): void {
 		$this->appConfig->setValueString(Application::APP_ID, self::APP_CONFIG_OLVID_SERVER_API_KEY, $value, false, true);
+	}
+
+	// is server configuration valid
+	public function isOlvidServerConfigurationValid(): bool {
+		return $this->appConfig->getValueBool(Application::APP_ID, self::APP_CONFIG_OLVID_IS_SERVER_CONFIGURATION_VALID);
+	}
+	public function setIsOlvidServerConfigurationValid(bool $value): void {
+		$this->appConfig->setValueBool(Application::APP_ID, self::APP_CONFIG_OLVID_IS_SERVER_CONFIGURATION_VALID, $value);
 	}
 
 	// global push topic

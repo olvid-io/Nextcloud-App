@@ -14,6 +14,7 @@ use OCA\Olvid\Utils\Context\OlvidServer\NetworkException;
 use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;
 use OCP\Http\Client\IClientService;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class OlvidContextServer {
 	private ?string $cachedServerUrl = null;
@@ -45,15 +46,15 @@ class OlvidContextServer {
 
 	/**
 	 * Check current directory configuration against olvid server.
-	 * Pass any value to serverUrl and/or apiKey to override configured value.
+	 * Pass any value to serverUrl and/or directoryKey to override configured value.
 	 *
 	 * @throws OlvidServerException
 	 * @throws InvalidConfigurationException
 	 */
-	public function requestCheckCredentials(?string $serverUrl = null, ?string $apiKey = null): bool {
+	public function requestCheckCredentials(?string $serverUrl = null, ?string $directoryKey = null): bool {
 		$query = new JsonOlvidServerRequest();
 		$query->q = JsonOlvidServerRequest::QUERY_REQUEST_CHECK_CREDENTIALS;
-		$serverResponse = $this->serverApiRequest($query, $serverUrl, $apiKey);
+		$serverResponse = $this->serverApiRequest($query, $serverUrl, $directoryKey);
 		$this->logger->info('OlvidServer:: requestCheckAuthentication');
 		if (!array_key_exists('ok', $serverResponse)) {
 			$this->logger->error('OlvidServer:: requestCheckAuthentication: success not set in response');
@@ -61,6 +62,25 @@ class OlvidContextServer {
 		}
 
 		return $serverResponse['ok'];
+	}
+
+	public function requestCheckCredentialsNoFail(?string $serverUrl = null, ?string $directoryKey = null): bool {
+		try {
+			if ($this->requestCheckCredentials($serverUrl, $directoryKey)) {
+				return true;
+			}
+			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: API key was rejected by the Olvid server.");
+			return false;
+		} catch (InvalidApiKeyException|ApiKeyNotFoundException) {
+			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: API key was rejected by the Olvid server.");
+			return false;
+		} catch (NetworkException) {
+			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: Cannot reach the Olvid server, check the server url.");
+			return false;
+		} catch (Throwable) {
+			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: Olvid server returned an unexpected error, check the server url.");
+			return false;
+		}
 	}
 
 	/**

@@ -27,8 +27,14 @@ class OlvidServerSynchronizationTask {
 		/*
 		 * first check olvid server is properly set up
 		 */
-		if (!$this->context->nextcloud->appManager->getOlvidServerUrl()
-			|| !$this->context->nextcloud->appManager->getOlvidServerApiKey()) {
+		if (!$this->context->nextcloud->appManager->getOlvidServerUrl()) {
+			$this->logger->error('OlvidServerSynchronizationTask: olvid server is not properly configured');
+			return ;
+		}
+		if ($this->context->olvidServer->requestCheckCredentialsNoFail()) {
+			$this->context->nextcloud->appManager->setIsOlvidServerConfigurationValid(true);
+		} else {
+			$this->context->nextcloud->appManager->setIsOlvidServerConfigurationValid(false);
 			$this->logger->error('OlvidServerSynchronizationTask: olvid server is not properly configured');
 			return ;
 		}

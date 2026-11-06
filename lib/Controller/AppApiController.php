@@ -607,6 +607,7 @@ class AppApiController extends OCSController {
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
+	// TODO returns OlvidGroup structure and not a custom one (change typing)
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/groups')]
 	public function getUserGroups(string $userId): DataResponse {
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
@@ -629,6 +630,7 @@ class AppApiController extends OCSController {
 				'enabled' => $olvidGroup?->getEnabled() ?? false,
 				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
 				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
+				// TODO Check to remove this field
 				'photoUid' => $bytesPhotoUid !== null ? base64_encode((string)$bytesPhotoUid) : null,
 			];
 		}
@@ -701,25 +703,22 @@ class AppApiController extends OCSController {
 		return new DataResponse(['users' => $result]);
 	}
 
-	// ── Misc endpoints (admin only) ───────────────────────────────
+	// ── Misc endpoints ───────────────────────────────
 	/**
 	 * Returns whether the Olvid app configuration is valid or not
 	 * If not UI will show an alert message to the user
+	 * All users can know the configuration state to allow enrollment or not
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{isConfigurationValid: boolean}, array{}>
 	 *
 	 * 200: Configuration validity returned
 	 * @noinspection PhpUnused
 	 */
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/app/isAppConfigurationValid')]
 	public function isAppConfigurationValid(): DataResponse {
-		$isConfigurationValid = true;
-		if (!$this->context->nextcloud->appManager->getOlvidServerUrl() || !$this->context->nextcloud->appManager->getOlvidServerApiKey()) {
-			$isConfigurationValid = false;
-		}
-
 		return new DataResponse([
-			'isConfigurationValid' => $isConfigurationValid,
+			'isConfigurationValid' => $this->context->nextcloud->appManager->isOlvidServerConfigurationValid(),
 		]);
 	}
 

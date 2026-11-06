@@ -1,5 +1,7 @@
 <template>
 	<NcContent appName="olvid">
+		<InvalidConfigurationAlertModal v-if="showConfigurationAlert" :isAdmin="isAdmin" />
+
 		<OlvidNavigation :isAdmin="isAdmin" />
 		<!-- v-slot is required so that ref="view" targets the rendered view, not RouterView itself -->
 		<router-view v-slot="{ Component }">
@@ -31,18 +33,20 @@ import { showError } from '@nextcloud/dialogs'
 import { generateOcsUrl } from '@nextcloud/router'
 import NcContent from '@nextcloud/vue/components/NcContent'
 import GroupDetailsSidebar from './components/GroupDetailsSidebar.vue'
+import InvalidConfigurationAlertModal from './components/InvalidConfigurationAlertModal.vue'
 import UserDetailsSidebar from './components/UserDetailsSidebar.vue'
 import OlvidNavigation from './OlvidNavigation.vue'
 
 export default {
 	name: 'App',
-	components: { NcContent, OlvidNavigation, GroupDetailsSidebar, UserDetailsSidebar },
+	components: { InvalidConfigurationAlertModal, NcContent, OlvidNavigation, GroupDetailsSidebar, UserDetailsSidebar },
 
 	data() {
 		return {
 			isAdmin: false,
 			selectedGroup: null,
 			selectedUser: null,
+			showConfigurationAlert: false,
 		}
 	},
 
@@ -61,6 +65,12 @@ export default {
 		try {
 			const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
 			this.isAdmin = res.data.isAdmin ?? false
+			// check in background if Olvid application configuration is valid or not
+			await axios.get(generateOcsUrl('/apps/olvid/app/isAppConfigurationValid')).then((res) => {
+				if (res.data.isConfigurationValid === false) {
+					this.showConfigurationAlert = true
+				}
+			})
 		} catch (e) {
 			console.error('Could not fetch user', e)
 			showError(this.t('olvid', 'Cannot load user'))

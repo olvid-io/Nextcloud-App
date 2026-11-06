@@ -1,7 +1,5 @@
 <template>
 	<NcAppContent>
-		<InvalidConfigurationAlertModal v-if="showConfigurationAlert" />
-
 		<div v-if="loading" class="profile-view profile-view--centered">
 			<NcLoadingIcon :size="44" />
 		</div>
@@ -207,7 +205,7 @@ import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
 
 export default {
 	name: 'ProfileView',
-	components: { InvalidConfigurationAlertModal, NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
+	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
 
 	emits: ['openGroupSidebar', 'updated'],
 
@@ -218,7 +216,6 @@ export default {
 			step: 'install',
 			form: { firstname: '', lastname: '', position: '', company: '' },
 			currentUser: null,
-			showConfigurationAlert: false,
 
 			// identity step
 			formError: null,
@@ -277,14 +274,6 @@ export default {
 				lastname: res.data.lastname ?? '',
 				position: res.data.position ?? '',
 				company: res.data.company ?? '',
-			}
-			// check in background if Olvid application configuration is valid or not, only if user is an admin and can fix it
-			if (res.data.isAdmin) {
-				await axios.get(generateOcsUrl('/apps/olvid/app/isAppConfigurationValid')).then((res) => {
-					if (res.data.isConfigurationValid === false) {
-						this.showConfigurationAlert = true
-					}
-				})
 			}
 			if (res.data.useOlvid) {
 				this.step = 'registered'

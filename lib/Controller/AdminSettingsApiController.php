@@ -83,7 +83,12 @@ class AdminSettingsApiController extends OCSController {
 			$this->context->nextcloud->appManager->setOlvidServerApiKey(trim($directoryKey));
 		}
 
-		return new DataResponse($this->computeConfiguration());
+		$configuration = $this->computeConfiguration();
+
+		// save if configuration is valid in app configuration
+		$this->context->nextcloud->appManager->setIsOlvidServerConfigurationValid($configuration["server"]["isConfigurationValid"]);
+
+		return new DataResponse($configuration);
 	}
 
 	/**

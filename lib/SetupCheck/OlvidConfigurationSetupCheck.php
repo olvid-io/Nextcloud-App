@@ -2,11 +2,11 @@
 
 namespace OCA\Olvid\SetupCheck;
 
-use Exception;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCP\IL10N;
 use OCP\SetupCheck\ISetupCheck;
 use OCP\SetupCheck\SetupResult;
+use Throwable;
 
 class OlvidConfigurationSetupCheck implements ISetupCheck {
 	public function __construct(
@@ -24,19 +24,18 @@ class OlvidConfigurationSetupCheck implements ISetupCheck {
 	}
 
 	public function run(): SetupResult {
+		if (!$this->context->nextcloud->appManager->getOlvidServerUrl()) {
+			return SetupResult::error($this->l10n->t('Olvid server url is not set. Configure it in Olvid section of Admin settings.'));
+		}
 		if (!$this->context->nextcloud->appManager->getOlvidServerApiKey()) {
-			return SetupResult::error($this->l10n->t('Olvid server Api Key is not configured. Set it up in Olvid Admin settings section, or send us an email to get one: contact@olvid.io'));
+			return SetupResult::error($this->l10n->t('Olvid server Api Key is not set. Configure it in Olvid Admin settings section, or send us an email to get one: contact@olvid.io'));
 		}
 
 		try {
-			$pushTopic = $this->context->olvidServer->requestNewPushTopic();
-			if ($pushTopic) {
-				$this->context->olvidServer->revokePushTopicNoFail($pushTopic);
+			if ($this->context->olvidServer->requestCheckCredentialsNoFail()) {
+				return SetupResult::success($this->l10n->t('Olvid app is properly configured.'));
 			}
-
-			return SetupResult::success($this->l10n->t('Olvid app is properly configured.'));
-		} catch (Exception) {
-			return SetupResult::error($this->l10n->t('Olvid server is unreachable or not properly configured, check parameters in Olvid Admin settings section.'));
-		}
+		} catch (Throwable) {}
+		return SetupResult::error($this->l10n->t('Olvid server is unreachable or not properly configured, check parameters in Olvid section of Admin settings.'));
 	}
 }

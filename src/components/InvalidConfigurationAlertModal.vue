@@ -2,11 +2,14 @@
 	<NcDialog
 		v-if="show"
 		:name="t('olvid', 'Invalid application configuration')"
-		:buttons="[
-			{callback: openOlvidSettings, label: t('olvid', 'Go to admin settings')},
-			{callback: close, label: t('olvid', 'Dismiss'), variant: 'error'}]">
+		:buttons="buttons">
 		<div style="color: var('--color-error'); font-weight: bold;">
+			<div v-if="isAdmin">
 				{{ t('olvid', 'You must configure an Olvid server API key in Administration settings before starting using the app.') }}
+			</div>
+			<div v-else>
+				{{ t('olvid', 'Application configuration is not valid. Contact your Nextcloud administrator to fix it.') }}
+			</div>
 		</div>
 	</NcDialog>
 </template>
@@ -18,9 +21,23 @@ import NcDialog from '@nextcloud/vue/components/NcDialog'
 export default {
 	name: 'InvalidConfigurationAlertModal',
 	components: { NcDialog },
+
+	props: {
+		isAdmin: {
+			type: Boolean,
+			required: true,
+		},
+	},
+
 	data() {
+		const buttons = []
+		// if user is admin add a button to open admin settings
+		if (this.isAdmin) {
+			buttons.push({ callback: this.openOlvidSettings, label: t('olvid', 'Go to admin settings') })
+		}
 		return {
 			show: true,
+			buttons,
 		}
 	},
 
