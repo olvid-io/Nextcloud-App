@@ -33,7 +33,7 @@
 					:id="`group-enabled-${group.id}`"
 					:modelValue="group.enabled"
 					type="switch"
-					:aria-label="t('olvid', 'Enable Olvid for {name} group', { name: group.id })"
+					:aria-label="t('olvid', 'Create an Olvid discussion for this group')"
 					@update:modelValue="enableOlvidDiscussion"
 					@click.stop>
 					{{ t('olvid', 'Olvid Discussion') }}

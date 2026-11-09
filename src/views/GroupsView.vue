@@ -44,7 +44,7 @@
 							:id="`group-enabled-${group.id}`"
 							:modelValue="group.enabled"
 							type="switch"
-							:aria-label="t('olvid', 'Enable Olvid for {name}', { name: group.displayName })"
+							:aria-label="t('olvid', 'Create an Olvid discussion for this group')"
 							@update:modelValue="enableOlvidDiscussionForGroup(group, $event)"
 							@click.stop>
 							{{ t('olvid', 'Olvid Discussion') }}

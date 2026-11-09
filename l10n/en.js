@@ -2,9 +2,11 @@
 OC.L10N.register(
     'olvid',
     {
+    "Magic Link": "Magic Link",
+    "Details": "Details",
+    "Save": "Save",
     "_{n} member_::_{n} members_": ["{n} member","{n} members"],
     "Olvid Discussion": "Olvid Discussion",
-    "Details": "Details",
     "Link your Olvid identity": "Link your Olvid identity",
     "If you do not have Olvid yet, download it first:": "If you do not have Olvid yet, download it first:",
     "Download Olvid": "Download Olvid",
@@ -22,12 +24,10 @@ OC.L10N.register(
     "Olvid Profile": "Olvid Profile",
     "Profile saved.": "Profile saved.",
     "Saving…": "Saving…",
-    "Save": "Save",
     "I no longer have access to my Olvid profile": "I no longer have access to my Olvid profile",
     "At least a first name or last name is required.": "At least a first name or last name is required.",
     "Could not generate magic link: {error}": "Could not generate magic link: {error}",
     "Could not save profile: {error}": "Could not save profile: {error}",
-    "Magic Link": "Magic Link",
     "Select an image": "Select an image",
     "Choose": "Choose",
     "Cancel": "Cancel",
@@ -38,10 +38,6 @@ OC.L10N.register(
     "Are you sure you want to delete {name}? This action cannot be undone.": "Are you sure you want to delete {name}? This action cannot be undone.",
     "Deleting…": "Deleting…",
     "Delete": "Delete",
-    "Saved.": "Saved.",
-    "Add": "Add",
-    "Remove": "Remove",
-    "No members yet.": "No members yet.",
     "Close": "Close",
     "📱 On your phone": "📱 On your phone",
     "Open the Olvid app, then scan this QR code to link your account:": "Open the Olvid app, then scan this QR code to link your account:",
@@ -58,6 +54,10 @@ OC.L10N.register(
     "This will disconnect your Olvid profile from this directory and allow you to register a new one.": "This will disconnect your Olvid profile from this directory and allow you to register a new one.",
     "My Olvid profile was lost or replaced": "My Olvid profile was lost or replaced",
     "Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.": "Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.",
-    "Could not unlink identity: {error}": "Could not unlink identity: {error}"
+    "Could not unlink identity: {error}": "Could not unlink identity: {error}",
+    "Saved.": "Saved.",
+    "Add": "Add",
+    "Remove": "Remove",
+    "No members yet.": "No members yet."
 },
 'nplurals=2; plural=(n != 1);')
