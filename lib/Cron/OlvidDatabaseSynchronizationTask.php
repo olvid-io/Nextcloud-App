@@ -97,7 +97,7 @@ class OlvidDatabaseSynchronizationTask {
 				}
 
 				// request a license key if necessary
-				if (!$olvidUser->getLicenseKey()) {
+				if (!$olvidUser->getApiKey()) {
 					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no license key: ' . $userId);
 					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
 					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
@@ -118,10 +118,10 @@ class OlvidDatabaseSynchronizationTask {
 				}
 
 				// revoke license key
-				if ($olvidUser->getLicenseKey()) {
+				if ($olvidUser->getApiKey()) {
 					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found a disabled user with a license key: ' . $userId);
-					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
-					$olvidUser->setLicenseKey(null);
+					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getApiKey());
+					$olvidUser->setApiKey(null);
 				}
 			}
 

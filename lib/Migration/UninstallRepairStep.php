@@ -21,9 +21,9 @@ class UninstallRepairStep implements IRepairStep {
 		$output->info('Olvid: revoking user license keys');
 		$olvidUsers = $this->context->db->user->getAll();
 		foreach ($olvidUsers as $olvidUser) {
-			if ($olvidUser->getLicenseKey()) {
-				$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
-				$olvidUser->setLicenseKey(null);
+			if ($olvidUser->getApiKey()) {
+				$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getApiKey());
+				$olvidUser->setApiKey(null);
 				$this->context->db->user->update($olvidUser);
 			}
 		}

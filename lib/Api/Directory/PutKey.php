@@ -81,16 +81,16 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 			// no identity already registered
 			if (!$base64PreviousIdentity) {
 				// user is not supposed to have a license key, revoke it if there is one
-				if ($olvidUser->getLicenseKey()) {
-					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
-					$olvidUser->setLicenseKey(null);
+				if ($olvidUser->getApiKey()) {
+					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getApiKey());
+					$olvidUser->setApiKey(null);
 				}
 
 				// create and set new license key
 				// this might fail if an olvid directory license have not been set
 				try {
 					$newLicenseKey = $this->context->olvidServer->requestNewLicenseKey();
-					$olvidUser->setLicenseKey($newLicenseKey);
+					$olvidUser->setApiKey($newLicenseKey);
 				} catch (InvalidConfigurationException) {
 					$this->logger->warning('PutKey: cannot create user license key: invalid configuration');
 				} catch (Exception $e) {
@@ -139,11 +139,11 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 			// trying to put the same identity
 			elseif ($base64PreviousIdentity === $base64Identity) {
 				// if user lack a license key, try to get and set one
-				if (!$olvidUser->getLicenseKey()) {
+				if (!$olvidUser->getApiKey()) {
 					// this might fail if an olvid directory license have not been set
 					try {
 						$newLicenseKey = $this->context->olvidServer->requestNewLicenseKey();
-						$olvidUser->setLicenseKey($newLicenseKey);
+						$olvidUser->setApiKey($newLicenseKey);
 					} catch (InvalidConfigurationException) {
 						$this->logger->warning('PutKey: cannot create user license key: invalid configuration');
 					} catch (Exception $e) {

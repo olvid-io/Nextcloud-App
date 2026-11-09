@@ -51,11 +51,11 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$response[Constants::ME_RESPONSE_SIGNATURE] = $signedDetails;
 
 		// if identity was already uploaded create a license key if necessary
-		if ($olvidUser->hasIdentity() && $olvidUser->getLicenseKey() === null) {
+		if ($olvidUser->hasIdentity() && $olvidUser->getApiKey() === null) {
 			// this might fail if a directory license have not been set
 			try {
 				$licenseKey = $this->context->olvidServer->requestNewLicenseKey();
-				$olvidUser->setLicenseKey($licenseKey);
+				$olvidUser->setApiKey($licenseKey);
 			} catch (InvalidConfigurationException) {
 				$this->logger->error('Me: cannot create user license key: invalid configuration');
 			} catch (Exception $e) {
@@ -63,7 +63,7 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 			}
 		}
 
-		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getLicenseKey();
+		$response[Constants::ME_RESPONSE_API_KEY] = $olvidUser->getApiKey();
 
 		// on first /me call create a nonce that will be used to ask server if user is still in server database if user had been logged out
 		if ($olvidUser->hasIdentity()) {

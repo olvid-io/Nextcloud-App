@@ -68,7 +68,7 @@ class OlvidServerSynchronizationTask {
 		$allOlvidUsers = $this->context->db->user->getAll();
 		$knownLicenseKeys = [];
 		foreach ($allOlvidUsers as $olvidUser) {
-			$licenseKey = $olvidUser->getLicenseKey();
+			$licenseKey = $olvidUser->getApiKey();
 			if ($licenseKey !== null) {
 				$knownLicenseKeys[] = $licenseKey;
 			}
@@ -115,15 +115,15 @@ class OlvidServerSynchronizationTask {
 			// build a license key to user map
 			$licenseKeyToUserMap = [];
 			foreach ($allOlvidUsers as $olvidUser) {
-				if ($olvidUser->getLicenseKey() !== null) {
-					$licenseKeyToUserMap[$olvidUser->getLicenseKey()] = $olvidUser;
+				if ($olvidUser->getApiKey() !== null) {
+					$licenseKeyToUserMap[$olvidUser->getApiKey()] = $olvidUser;
 				}
 			}
 
 			// remove license key for users with an unknown license
 			foreach ($unknownLicenseKeys as $licenseKey) {
 				if (array_key_exists($licenseKey, $licenseKeyToUserMap) && $licenseKeyToUserMap[$licenseKey] !== null) {
-					$licenseKeyToUserMap[$licenseKey]->setLicenseKey(null);
+					$licenseKeyToUserMap[$licenseKey]->setApiKey(null);
 					try {
 						$this->context->db->user->update($licenseKeyToUserMap[$licenseKey]);
 					} catch (Exception $e) {
@@ -175,8 +175,8 @@ class OlvidServerSynchronizationTask {
 		$olvidUsersWithIdentity = $this->context->db->user->getAllWithIdentity();
 		foreach ($olvidUsersWithIdentity as $olvidUserWithIdentity) {
 			try {
-				if ($olvidUserWithIdentity->getLicenseKey() === null) {
-					$olvidUserWithIdentity->setLicenseKey($this->context->olvidServer->requestNewLicenseKey());
+				if ($olvidUserWithIdentity->getApiKey() === null) {
+					$olvidUserWithIdentity->setApiKey($this->context->olvidServer->requestNewLicenseKey());
 					$this->context->db->user->update($olvidUserWithIdentity);
 				}
 			} catch (InvalidConfigurationException|OlvidServerException $e) {

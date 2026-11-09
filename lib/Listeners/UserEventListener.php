@@ -50,10 +50,10 @@ class UserEventListener implements IEventListener {
 		}
 
 		// delete user license key if he has one (ignore exceptions)
-		if ($olvidUser->getLicenseKey() !== null) {
+		if ($olvidUser->getApiKey() !== null) {
 			try {
-				$this->context->olvidServer->revokeLicenseKey($olvidUser->getLicenseKey());
-				$olvidUser->setLicenseKey(null);
+				$this->context->olvidServer->revokeLicenseKey($olvidUser->getApiKey());
+				$olvidUser->setApiKey(null);
 				$this->context->db->user->updateNoFail($olvidUser);
 			} catch (InvalidConfigurationException) {
 				$this->logger->error('UserEventListener: userDeletedHandler: cannot revoke license key: invalid server configuration');
