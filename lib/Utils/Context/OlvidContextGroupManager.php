@@ -31,6 +31,14 @@ class OlvidContextGroupManager {
 	}
 
 	/**
+	 * Checks if a userId is in a group
+	 * @since 8.0.0
+	 */
+	public function isInGroup(string $userId, string $group): bool {
+		return $this->groupManager->isInGroup($userId, $group);
+	}
+
+	/**
 	 * @return IGroup[]
 	 */
 	public function getUserGroups(IUser $user): array {

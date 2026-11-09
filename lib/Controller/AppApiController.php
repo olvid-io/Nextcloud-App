@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use Exception;
-use OCA\Olvid\Api\App\GroupAvatarGet;
 use OCA\Olvid\Api\App\GroupAvatarUpload;
 use OCA\Olvid\Api\App\GroupsUpdate;
 use OCA\Olvid\Api\App\UserDeleteIdentity;
@@ -47,7 +46,6 @@ class AppApiController extends OCSController {
 		private readonly UserDeleteIdentity $userDeleteIdentity,
 		private readonly GroupsUpdate $updateGroupsHandler,
 		private readonly UserUpdate $userUpdate,
-		private readonly GroupAvatarGet $avatarGet,
 		private readonly GroupAvatarUpload $avatarUpload,
 	) {
 		parent::__construct(Application::APP_ID, $request);
@@ -276,24 +274,33 @@ class AppApiController extends OCSController {
 	 * Returns the avatar image for a group. Requires a valid photoUid query parameter
 	 * The photoUid acts as a cache-buster; clients should update the URL when it changes
 	 *
-	 * @param string $groupId Group ID (URL path)
 	 * @param string $photoUid Base64-encoded photo UID (query parameter, used for cache validation)
 	 * @return DataDisplayResponse<Http::STATUS_OK|Http::STATUS_NOT_FOUND, array{}>
 	 *
 	 * 200: Avatar image returned
-	 * 404: Group or avatar not found, or photoUid mismatch
+	 * 404: Group or avatar not found
 	 * @throws Exception
 	 * @throws MultipleObjectsReturnedException
 	 * @noinspection PhpUnused
 	 */
 	# disable CSRF verification for static read only resources
 	# do not need to be admin to access a group image
-	# We expect a valid photoUid query parameter to be passed
+	# We only expect a valid photoUid query parameter to be passed
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
-	#[ApiRoute(verb: 'GET', url: '/app/groups/{groupId}/avatar')]
-	public function groupsAvatarGet(string $groupId, string $photoUid = ''): DataDisplayResponse {
-		return $this->avatarGet->handle($groupId, $photoUid);
+	#[ApiRoute(verb: 'GET', url: '/app/groups/avatar')]
+	public function groupsAvatarGet(string $photoUid): DataDisplayResponse {
+		try {
+			$olvidData = $this->context->db->data->getByUidOrNull(base64_decode($photoUid));
+			if ($olvidData === null) {
+				return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
+			}
+
+			return new DataDisplayResponse($olvidData->getBytesData(), Http::STATUS_OK, ["Cache-Control" => "private, no-cache"]);
+		} catch (Exception $e) {
+			$this->logger->error('groupsAvatarGet: unexpected exception' , ['exception' => $e]);
+			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
+		}
 	}
 
 	/**
@@ -309,7 +316,7 @@ class AppApiController extends OCSController {
 	 * 500: Avatar could not be saved
 	 * @noinspection PhpUnused
 	 */
-	#[ApiRoute(verb: 'PUT', url: '/app/groups/{groupId}/avatar')]
+	#[ApiRoute(verb: 'PUT', url: '/app/groups/avatar/{groupId}')]
 	public function groupsAvatarPut(string $groupId, ?string $photoData): DataResponse {
 		$nextcloudGroup = $this->context->nextcloud->groupManager->get($groupId);
 		return $this->avatarUpload->handle(
@@ -729,7 +736,7 @@ class AppApiController extends OCSController {
 			'id' => $nextcloudGroup->getGID(),
 			'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
 			'enabled' => $olvidGroup?->getEnabled() ?? false,
-			'hasPhoto' => (bool)$olvidGroup?->getBytesGroupUid(),
+			'photoUid' => $olvidGroup?->getBytesGroupPhotoUid() ? base64_encode($olvidGroup->getBytesGroupPhotoUid()) : null,
 			'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
 			'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
 			'members' => $members,

@@ -4,8 +4,14 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useUsersStore } from './users.js'
 
-function groupUrl(groupId, suffix = '') {
-	return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(groupId)}${suffix}`)
+function groupUrl(groupId) {
+	return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(groupId)}`)
+}
+function groupAvatarUploadUrl(groupUid) {
+	return generateOcsUrl(`/apps/olvid/app/groups/avatar/${groupUid}`)
+}
+function groupAvatarUrl(photoUid) {
+	return generateOcsUrl(`/apps/olvid/app/groups/avatar?photoUid=${encodeURIComponent(photoUid)}`)
 }
 
 /**
@@ -13,7 +19,7 @@ function groupUrl(groupId, suffix = '') {
  * `memberIds`, the member users themselves live in the users store.
  */
 export const useGroupsStore = defineStore('groups', () => {
-	/** All known groups, by id: { id, displayName, enabled, hasPhoto, discussionName, discussionDescription, memberIds? } */
+	/** All known groups, by id: { id, displayName, enabled, photoUid, discussionName, discussionDescription, memberIds? } */
 	const byId = ref({})
 	/** Ids returned by GET /app/groups, in server order. */
 	const ids = ref([])
@@ -21,7 +27,6 @@ export const useGroupsStore = defineStore('groups', () => {
 	 * Client-side avatar revision, by group id. Bumped on every avatar upload and appended
 	 * to the avatar URL so the browser fetches the new image. Never sent by the server.
 	 */
-	const avatarVersion = ref({})
 	const loading = ref(false)
 	const loaded = ref(false)
 
@@ -54,11 +59,10 @@ export const useGroupsStore = defineStore('groups', () => {
 	 * @return {string|null} avatar URL, or null when the group has no photo
 	 */
 	function avatarUrl(groupId) {
-		// hasPhoto missing (older payloads) → try the URL, NcAvatar falls back to initials on 404
-		if (byId.value[groupId]?.hasPhoto === false) {
+		if (byId.value[groupId]?.photoUid === false) {
 			return null
 		}
-		return `${groupUrl(groupId, '/avatar')}?v=${avatarVersion.value[groupId] ?? 0}`
+		return `${groupAvatarUrl(byId.value[groupId].photoUid)}`
 	}
 
 	function membersOf(groupId) {
@@ -112,9 +116,8 @@ export const useGroupsStore = defineStore('groups', () => {
 	 * @param {string|null} dataUrl JPEG data URL, or null to remove the photo
 	 */
 	async function uploadAvatar(groupId, dataUrl) {
-		await axios.put(groupUrl(groupId, '/avatar'), { photoData: dataUrl })
-		byId.value[groupId].hasPhoto = dataUrl !== null
-		avatarVersion.value[groupId] = (avatarVersion.value[groupId] ?? 0) + 1
+		const res = await axios.put(groupAvatarUploadUrl(groupId), { photoData: dataUrl })
+		byId.value[groupId].photoUid = res.data.photoUid
 	}
 
 	// Local-only membership update (the request was already made)
@@ -150,7 +153,6 @@ export const useGroupsStore = defineStore('groups', () => {
 	return {
 		byId,
 		ids,
-		avatarVersion,
 		loading,
 		loaded,
 		list,

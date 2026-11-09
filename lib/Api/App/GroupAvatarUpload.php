@@ -122,7 +122,7 @@ class GroupAvatarUpload {
 			return new DataResponse(['error' => 'database error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		// Return the new photo UID so the frontend can update the ?v= cache-buster
+		// Return the new photo UID
 		return new DataResponse(['photoUid' => $photoUid ? base64_encode($photoUid) : null]);
 	}
 }

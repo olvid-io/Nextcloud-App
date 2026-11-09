@@ -18,8 +18,6 @@ class ImageResponse extends Response {
 	) {
 		parent::__construct();
 		$this->addHeader('Content-Type', 'image/jpeg');
-		// URL includes a ?v=<photoUid> cache-buster, so the image can be cached aggressively.
-		$this->addHeader('Cache-Control', 'public, max-age=31536000, immutable');
 		$this->setStatus(Http::STATUS_OK);
 	}
 
