@@ -1,6 +1,5 @@
 <template>
 	<NcDialog
-		v-if="show"
 		:name="t('olvid', 'Invalid application configuration')"
 		:noClose="true"
 		:buttons="buttons">
@@ -15,56 +14,34 @@
 	</NcDialog>
 </template>
 
-<script>
+<script setup>
+import { t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { computed } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 
-export default {
-	name: 'InvalidConfigurationAlertModal',
-	components: { NcDialog },
-
-	props: {
-		isAdmin: {
-			type: Boolean,
-			required: true,
-		},
+const props = defineProps({
+	isAdmin: {
+		type: Boolean,
+		required: true,
 	},
+})
 
-	data() {
-		const buttons = []
-		// if user is admin add a button to open admin settings
-		if (this.isAdmin) {
-			buttons.push({ callback: this.openHomePage, label: t('olvid', 'Home') })
-			buttons.push({ callback: this.openOlvidSettings, label: t('olvid', 'Admin settings'), variant: 'primary' })
-		} else {
-			buttons.push({ callback: this.openHomePage, label: t('olvid', 'Home'), variant: 'primary' })
-		}
-		return {
-			show: true,
-			buttons,
-		}
-	},
-
-	methods: {
-		close() {
-			this.show = false
-		},
-
-		getOlvidSettingsUrl() {
-			return generateUrl('/settings/admin/olvid')
-		},
-
-		getHomePageUrl() {
-			return generateUrl('/')
-		},
-
-		openOlvidSettings() {
-			window.open(this.getOlvidSettingsUrl(), '_self')
-		},
-
-		openHomePage() {
-			window.open(this.getHomePageUrl(), '_self')
-		},
-	},
+function openOlvidSettings() {
+	window.open(generateUrl('/settings/admin/olvid'), '_self')
 }
+
+function openHomePage() {
+	window.open(generateUrl('/'), '_self')
+}
+
+// admins get an extra button to open admin settings
+const buttons = computed(() => props.isAdmin
+	? [
+			{ callback: openHomePage, label: t('olvid', 'Home') },
+			{ callback: openOlvidSettings, label: t('olvid', 'Admin settings'), variant: 'primary' },
+		]
+	: [
+			{ callback: openHomePage, label: t('olvid', 'Home'), variant: 'primary' },
+		])
 </script>

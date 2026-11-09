@@ -21,53 +21,36 @@
 	</NcAppContent>
 </template>
 
-<script>
-
+<script setup>
 import axios from '@nextcloud/axios'
 import { showError } from '@nextcloud/dialogs'
+import { t } from '@nextcloud/l10n'
 import { generateOcsUrl } from '@nextcloud/router'
+import { onMounted, ref } from 'vue'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 
-export default {
-	name: 'StatisticsView',
-	components: { NcAppContent, NcLoadingIcon },
+// read-only snapshot, refetched every time the view is shown (no shared state)
+const statistics = ref({
+	olvidUsersCount: 0,
+	nextcloudUsersCount: 0,
+	olvidInactiveUsers: 0,
+	olvidGroupsCount: 0,
+	nextcloudGroupsCount: 0,
+})
+const loading = ref(true)
 
-	emits: [],
-
-	data() {
-		return {
-			statistics: {
-				olvidUsersCount: Number,
-				nextcloudUsersCount: Number,
-				olvidInactiveUsers: Number,
-				olvidGroupsCount: Number,
-				nextcloudGroupsCount: Number,
-			},
-
-			loading: true,
-		}
-	},
-
-	async mounted() {
-		await this.fetchStatistics()
-	},
-
-	methods: {
-		async fetchStatistics() {
-			this.loading = true
-			try {
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/statistics'))
-				this.statistics = res.data ?? { olvidUsersCount: 0, nextcloudUsersCount: 0 }
-			} catch (e) {
-				console.error('Could not load statistics', e)
-				showError(this.t('olvid', 'Could not load statistics'))
-			} finally {
-				this.loading = false
-			}
-		},
-	},
-}
+onMounted(async () => {
+	try {
+		const res = await axios.get(generateOcsUrl('/apps/olvid/app/statistics'))
+		statistics.value = res.data
+	} catch (e) {
+		console.error('Could not load statistics', e)
+		showError(t('olvid', 'Could not load statistics'))
+	} finally {
+		loading.value = false
+	}
+})
 </script>
 
 <style scoped lang="scss">

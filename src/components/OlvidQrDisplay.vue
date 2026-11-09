@@ -46,77 +46,60 @@
 	</div>
 </template>
 
-<script>
+<script setup>
 import { showError } from '@nextcloud/dialogs'
+import { t } from '@nextcloud/l10n'
 import QRCode from 'qrcode'
+import { ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 
-export default {
-	name: 'OlvidQrDisplay',
-	components: { NcButton, NcLoadingIcon },
-
-	props: {
-		configurationUrl: {
-			type: String,
-			required: true,
-		},
+const props = defineProps({
+	configurationUrl: {
+		type: String,
+		required: true,
 	},
+})
 
-	data() {
-		return {
-			qrDataUrl: null,
-			copied: false,
-		}
-	},
+const qrDataUrl = ref(null)
+const copied = ref(false)
 
-	watch: {
-		async configurationUrl(url) {
-			await this.generateQr(url)
-		},
-	},
+watch(() => props.configurationUrl, generateQr, { immediate: true })
 
-	async mounted() {
-		await this.generateQr(this.configurationUrl)
-	},
+async function generateQr(url) {
+	if (!url) {
+		return
+	}
+	try {
+		qrDataUrl.value = await QRCode.toDataURL(url, {
+			width: 244,
+			margin: 2,
+			errorCorrectionLevel: 'M',
+			color: { dark: '#000000', light: '#ffffff' },
+		})
+	} catch (e) {
+		console.error('QR generation failed', e)
+		showError(t('olvid', 'QR generation failed'))
+	}
+}
 
-	methods: {
-		async generateQr(url) {
-			if (!url) {
-				return
-			}
-			try {
-				this.qrDataUrl = await QRCode.toDataURL(url, {
-					width: 244,
-					margin: 2,
-					errorCorrectionLevel: 'M',
-					color: { dark: '#000000', light: '#ffffff' },
-				})
-			} catch (e) {
-				console.error('QR generation failed', e)
-				showError(this.t('olvid', 'QR generation failed'))
-			}
-		},
+function openWithOlvid() {
+	if (props.configurationUrl) {
+		window.open(props.configurationUrl.replace(/^https:\/\//, 'olvid://'))
+	}
+}
 
-		openWithOlvid() {
-			if (this.configurationUrl) {
-				window.open(this.configurationUrl.replace(/^https:\/\//, 'olvid://'))
-			}
-		},
-
-		async copyLink() {
-			try {
-				await navigator.clipboard.writeText(this.configurationUrl)
-				this.copied = true
-				setTimeout(() => {
-					this.copied = false
-				}, 2500)
-			} catch (e) {
-				console.error('Could not copy to clipboard', e)
-				showError(this.t('olvid', 'Could not copy to clipboard'))
-			}
-		},
-	},
+async function copyLink() {
+	try {
+		await navigator.clipboard.writeText(props.configurationUrl)
+		copied.value = true
+		setTimeout(() => {
+			copied.value = false
+		}, 2500)
+	} catch (e) {
+		console.error('Could not copy to clipboard', e)
+		showError(t('olvid', 'Could not copy to clipboard'))
+	}
 }
 </script>
 

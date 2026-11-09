@@ -11,9 +11,9 @@ export default createRouter({
 		{ path: '/', redirect: '/profile' },
 		{ path: '/profile', name: 'profile', component: ProfileView },
 		{ path: '/groups', name: 'groups', component: GroupsView },
-		{ path: '/groups/:groupId', name: 'group-detail', component: GroupsView, props: true },
+		{ path: '/groups/:groupId', name: 'group-detail', component: GroupsView },
 		{ path: '/users', name: 'users', component: UsersView },
-		{ path: '/users/:userId', name: 'user-detail', component: UsersView, props: true },
-		{ path: '/statistics', name: 'statistics', component: StatisticsView, props: true },
+		{ path: '/users/:userId', name: 'user-detail', component: UsersView },
+		{ path: '/statistics', name: 'statistics', component: StatisticsView },
 	],
 })

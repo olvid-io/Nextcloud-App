@@ -18,68 +18,57 @@
 	</div>
 </template>
 
-<script>
+<script setup>
+import { t } from '@nextcloud/l10n'
 import { generateFilePath } from '@nextcloud/router'
+import { computed } from 'vue'
 import NcAvatar from '@nextcloud/vue/components/NcAvatar'
 
-export default {
-	name: 'OlvidAvatar',
-	components: { NcAvatar },
+// other attributes (url, user, displayName…) are forwarded to NcAvatar
+defineOptions({ inheritAttrs: false })
 
-	inheritAttrs: false,
-
-	props: {
-		useOlvid: {
-			type: Boolean,
-			required: true,
-		},
-
-		isNoUser: {
-			type: Boolean,
-			default: false,
-		},
-
-		isInactive: {
-			type: Boolean,
-			default: false,
-		},
-
-		size: {
-			type: Number,
-			default: 32,
-		},
+const props = defineProps({
+	useOlvid: {
+		type: Boolean,
+		required: true,
 	},
 
-	computed: {
-		badgeUrl() {
-			// const file = this.useOlvid && !this.isInactive ? 'olvid-enabled.svg' : 'olvid-disabled.svg'
-			const file = this.useOlvid && !this.isInactive ? 'olvid.svg' : 'olvid-disabled.svg'
-			return generateFilePath('olvid', 'img', file)
-		},
-
-		title() {
-			if (this.isNoUser) {
-			// groups
-				if (this.useOlvid) {
-					return this.t('olvid', 'Olvid discussion enabled')
-				} else {
-					return this.t('olvid', 'Olvid discussion disabled')
-				}
-			} else {
-				// user
-				if (this.useOlvid) {
-					if (this.isInactive) {
-						return this.t('olvid', 'Enrolled with Olvid, but inactive')
-					} else {
-						return this.t('olvid', 'Enrolled with Olvid')
-					}
-				} else {
-					return this.t('olvid', 'Not enrolled with Olvid')
-				}
-			}
-		},
+	isNoUser: {
+		type: Boolean,
+		default: false,
 	},
-}
+
+	isInactive: {
+		type: Boolean,
+		default: false,
+	},
+
+	size: {
+		type: Number,
+		default: 32,
+	},
+})
+
+const badgeUrl = computed(() => {
+	const file = props.useOlvid && !props.isInactive ? 'olvid.svg' : 'olvid-disabled.svg'
+	return generateFilePath('olvid', 'img', file)
+})
+
+const title = computed(() => {
+	if (props.isNoUser) {
+		// groups
+		return props.useOlvid
+			? t('olvid', 'Olvid discussion enabled')
+			: t('olvid', 'Olvid discussion disabled')
+	}
+	// user
+	if (!props.useOlvid) {
+		return t('olvid', 'Not enrolled with Olvid')
+	}
+	return props.isInactive
+		? t('olvid', 'Enrolled with Olvid, but inactive')
+		: t('olvid', 'Enrolled with Olvid')
+})
 </script>
 
 <style scoped lang="scss">

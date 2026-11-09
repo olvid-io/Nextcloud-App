@@ -75,79 +75,66 @@
 	</NcDialog>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
+<script setup>
 import { showError } from '@nextcloud/dialogs'
-import { generateOcsUrl } from '@nextcloud/router'
+import { t } from '@nextcloud/l10n'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { useGroupsStore } from '../stores/groups.js'
+import { useUsersStore } from '../stores/users.js'
 
-export default {
-	name: 'CreateUserModal',
-	components: { NcDialog, NcButton, NcTextField, NcPasswordField, NcSelect },
+const emit = defineEmits(['close'])
 
-	emits: ['close', 'created'],
+const users = useUsersStore()
+const groups = useGroupsStore()
+const router = useRouter()
 
-	data() {
-		return {
-			form: {
-				uid: '',
-				password: '',
-				firstname: '',
-				lastname: '',
-				position: '',
-				company: '',
-				groups: [],
-			},
+const form = reactive({
+	uid: '',
+	password: '',
+	firstname: '',
+	lastname: '',
+	position: '',
+	company: '',
+	groups: [],
+})
+const saving = ref(false)
+const error = ref(null)
 
-			allGroupIds: [],
-			saving: false,
-			error: null,
-		}
-	},
+const allGroupIds = computed(() => groups.list.map((g) => g.id))
 
-	async mounted() {
-		await this.fetchGroups()
-	},
+onMounted(async () => {
+	if (groups.loaded) {
+		return
+	}
+	try {
+		await groups.fetchAll()
+	} catch (e) {
+		console.error('Could not load groups', e)
+		showError(t('olvid', 'Could not load groups'))
+	}
+})
 
-	methods: {
-		async submit() {
-			if (!this.form.uid) {
-				return
-			}
-			this.saving = true
-			this.error = null
-			try {
-				const res = await axios.post(generateOcsUrl('/apps/olvid/app/users'), this.form)
-				this.$emit('created', res.data)
-				this.$router.push({ name: 'user-detail', params: { userId: res.data.id } })
-				this.$emit('close')
-			} catch (e) {
-				this.error = e.response?.data?.error ?? e.message
-			} finally {
-				this.saving = false
-			}
-		},
-
-		/*
-		** Groups
-		 */
-		async fetchGroups() {
-			this.loading = true
-			try {
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/groups'))
-				this.allGroupIds = res.data.groups.map((g) => g.id) ?? []
-			} catch (e) {
-				console.error('Could not load groups', e)
-				showError(this.t('olvid', 'Could not load groups'))
-			} finally {
-				this.loading = false
-			}
-		},
-	},
+async function submit() {
+	if (!form.uid) {
+		return
+	}
+	saving.value = true
+	error.value = null
+	try {
+		const user = await users.create({ ...form })
+		router.push({ name: 'user-detail', params: { userId: user.id } })
+		emit('close')
+	} catch (e) {
+		error.value = e.response?.data?.error ?? e.message
+	} finally {
+		saving.value = false
+	}
 }
 </script>
 

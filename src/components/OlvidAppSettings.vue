@@ -1,12 +1,11 @@
 <template>
 	<NcAppSettingsDialog
-		:open="open"
+		v-model:open="open"
 		:name="t('olvid', 'Olvid Settings')"
-		showNavigation
-		@update:open="$emit('update:open', $event)">
+		showNavigation>
 		<NcAppSettingsSection v-if="isAdmin" id="admin-settings" :name="t('olvid', 'Admin settings')">
 			<NcButton
-				:href="getOlvidSettingsUrl()"
+				:href="olvidSettingsUrl"
 				target="_blank">
 				{{ t('olvid', 'Open Olvid admin settings') }}
 			</NcButton>
@@ -14,35 +13,15 @@
 	</NcAppSettingsDialog>
 </template>
 
-<script>
+<script setup>
 import { generateUrl } from '@nextcloud/router'
+import { storeToRefs } from 'pinia'
 import NcAppSettingsDialog from '@nextcloud/vue/components/NcAppSettingsDialog'
 import NcAppSettingsSection from '@nextcloud/vue/components/NcAppSettingsSection'
 import NcButton from '@nextcloud/vue/components/NcButton'
+import { useMeStore } from '../stores/me.js'
 
-export default {
-	name: 'OlvidAppSettings',
-	components: { NcAppSettingsDialog, NcAppSettingsSection, NcButton },
-
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-
-		isAdmin: {
-			type: Boolean,
-			default: false,
-		},
-	},
-
-	emits: ['update:open'],
-
-	methods: {
-		getOlvidSettingsUrl() {
-			return generateUrl('/settings/admin/olvid')
-		},
-	},
-}
-
+const open = defineModel('open', { type: Boolean, default: false })
+const { isAdmin } = storeToRefs(useMeStore())
+const olvidSettingsUrl = generateUrl('/settings/admin/olvid')
 </script>

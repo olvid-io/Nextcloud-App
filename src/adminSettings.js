@@ -17,5 +17,7 @@ axios.interceptors.response.use((response) => {
 })
 
 const app = createApp(AdminSettings)
-app.mixin({ methods: { t, n } })
+// expose translation helpers to every template
+app.config.globalProperties.t = t
+app.config.globalProperties.n = n
 app.mount('#olvid-admin-settings')

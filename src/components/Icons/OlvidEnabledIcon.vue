@@ -17,26 +17,23 @@
 	</span>
 </template>
 
-<script>
-export default {
-	name: 'OlvidEnabledIcon',
-	props: {
-		title: {
-			type: String,
-			default: null,
-		},
-
-		fillColor: {
-			type: String,
-			default: '#275fee',
-		},
-
-		size: {
-			type: Number,
-			default: 24,
-		},
+<script setup>
+defineProps({
+	title: {
+		type: String,
+		default: null,
 	},
 
-	emits: ['click'],
-}
+	fillColor: {
+		type: String,
+		default: '#275fee',
+	},
+
+	size: {
+		type: Number,
+		default: 24,
+	},
+})
+
+defineEmits(['click'])
 </script>

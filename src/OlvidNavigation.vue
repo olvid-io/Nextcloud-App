@@ -57,12 +57,13 @@
 
 		<OlvidAppSettings
 			v-model:open="settingsOpened"
-			data-cy-olvid-navigation-settings
-			:isAdmin="isAdmin" />
+			data-cy-olvid-navigation-settings />
 	</NcAppNavigation>
 </template>
 
-<script>
+<script setup>
+import { storeToRefs } from 'pinia'
+import { ref } from 'vue'
 import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
 import NcAppNavigationCaption from '@nextcloud/vue/components/NcAppNavigationCaption'
 import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
@@ -72,23 +73,11 @@ import IconAccount from 'vue-material-design-icons/AccountOutline.vue'
 import IconChartBar from 'vue-material-design-icons/ChartBar.vue'
 import IconCog from 'vue-material-design-icons/CogOutline.vue'
 import OlvidAppSettings from './components/OlvidAppSettings.vue'
+import { useMeStore } from './stores/me.js'
 
-export default {
-	name: 'OlvidNavigation',
-	components: { NcAppNavigation, NcAppNavigationCaption, NcAppNavigationItem, IconAccount, IconAccountGroup, IconCog, IconAccountMultiple, IconChartBar, OlvidAppSettings },
-	props: {
-		isAdmin: {
-			type: Boolean,
-			default: false,
-		},
-	},
-
-	data() {
-		return {
-			settingsOpened: false,
-		}
-	},
-}
+// hides admin entries only, not a security boundary (endpoints are admin-only server-side)
+const { isAdmin } = storeToRefs(useMeStore())
+const settingsOpened = ref(false)
 </script>
 
 <style scoped lang="css">

@@ -1,5 +1,6 @@
 import axios from '@nextcloud/axios'
 import { n, t } from '@nextcloud/l10n'
+import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router.ts'
@@ -18,7 +19,9 @@ axios.interceptors.response.use((response) => {
 })
 
 const app = createApp(App)
-// expose translation helpers to every component (templates and `this.t()` in scripts)
-app.mixin({ methods: { t, n } })
+// expose translation helpers to every template
+app.config.globalProperties.t = t
+app.config.globalProperties.n = n
+app.use(createPinia())
 app.use(router)
 app.mount('#olvid')

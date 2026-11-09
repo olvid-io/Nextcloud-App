@@ -28,85 +28,66 @@
 	</NcDialog>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
+<script setup>
+import { t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
+import { useMeStore } from '../stores/me.js'
+import { useUsersStore } from '../stores/users.js'
 
-export default {
-	name: 'UnlinkIdentityModal',
-	components: { NcDialog, NcButton, NcCheckboxRadioSwitch },
-
-	props: {
-		user: {
-			type: Object,
-			required: true,
-		},
-
-		isSelf: {
-			type: Boolean,
-			default: false,
-		},
+const props = defineProps({
+	user: {
+		type: Object,
+		required: true,
 	},
 
-	emits: ['close', 'unlinked'],
+	isSelf: {
+		type: Boolean,
+		default: false,
+	},
+})
 
-	data() {
-		return {
-			revoke: true,
-			unlinking: false,
-			error: null,
+const emit = defineEmits(['close', 'unlinked'])
+
+const me = useMeStore()
+const users = useUsersStore()
+const revoke = ref(true)
+const unlinking = ref(false)
+const error = ref(null)
+
+const dialogTitle = computed(() => props.isSelf
+	? t('olvid', 'I no longer have access to my Olvid profile')
+	: t('olvid', 'Unlink Olvid identity — {name}', { name: props.user.displayName }))
+
+const descriptionText = computed(() => props.isSelf
+	? t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.')
+	: t('olvid', 'This will disconnect the Olvid profile linked to {name} from this directory and allow a new one to be registered.', { name: props.user.displayName }))
+
+const checkboxLabel = computed(() => props.isSelf
+	? t('olvid', 'My Olvid profile was lost or replaced')
+	: t('olvid', 'The Olvid profile of {name} was lost or replaced', { name: props.user.displayName }))
+
+const warningText = computed(() => props.isSelf
+	? t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.')
+	: t('olvid', 'Warning: this action is not reversible. The Olvid identity of {name} will be blocked for every other contact in this directory. Other contacts will no longer be able to reach {name} through this identity, and it can never be re-registered. A new Olvid profile will need to be created and re-enrolled.', { name: props.user.displayName }))
+
+async function unlink() {
+	unlinking.value = true
+	error.value = null
+	try {
+		if (props.isSelf) {
+			await me.unlink(revoke.value)
+		} else {
+			await users.unlinkIdentity(props.user.id, revoke.value)
 		}
-	},
-
-	computed: {
-		dialogTitle() {
-			return this.isSelf
-				? this.t('olvid', 'I no longer have access to my Olvid profile')
-				: this.t('olvid', 'Unlink Olvid identity — {name}', { name: this.user.displayName })
-		},
-
-		descriptionText() {
-			return this.isSelf
-				? this.t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.')
-				: this.t('olvid', 'This will disconnect the Olvid profile linked to {name} from this directory and allow a new one to be registered.', { name: this.user.displayName })
-		},
-
-		checkboxLabel() {
-			return this.isSelf
-				? this.t('olvid', 'My Olvid profile was lost or replaced')
-				: this.t('olvid', 'The Olvid profile of {name} was lost or replaced', { name: this.user.displayName })
-		},
-
-		warningText() {
-			return this.isSelf
-				? this.t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.')
-				: this.t('olvid', 'Warning: this action is not reversible. The Olvid identity of {name} will be blocked for every other contact in this directory. Other contacts will no longer be able to reach {name} through this identity, and it can never be re-registered. A new Olvid profile will need to be created and re-enrolled.', { name: this.user.displayName })
-		},
-	},
-
-	methods: {
-		async unlink() {
-			this.unlinking = true
-			this.error = null
-			try {
-				if (this.isSelf) {
-					const url = generateOcsUrl('/apps/olvid/app/me/identity')
-					await axios.delete(url, { data: { revoke: this.revoke } })
-				} else {
-					const url = generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/identity`)
-					await axios.delete(url, { data: { revoke: this.revoke } })
-				}
-				this.$emit('unlinked', { revoke: this.revoke })
-			} catch (e) {
-				this.error = this.t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
-			} finally {
-				this.unlinking = false
-			}
-		},
-	},
+		emit('unlinked', { revoke: revoke.value })
+	} catch (e) {
+		error.value = t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
+	} finally {
+		unlinking.value = false
+	}
 }
 </script>
 

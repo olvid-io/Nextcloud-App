@@ -28,7 +28,7 @@
 		<!-- Picker buttons -->
 		<div class="avatar-picker__actions">
 			<NcButton
-				@click="$refs.fileInput.click()">
+				@click="fileInput.click()">
 				<template #icon>
 					<IconTrayArrowUp :size="20" />
 				</template>
@@ -51,184 +51,173 @@
 	</div>
 </template>
 
-<script>
+<script setup>
 import { getCurrentUser } from '@nextcloud/auth'
 import axios from '@nextcloud/axios'
 import { FilePickerClosed, getFilePickerBuilder } from '@nextcloud/dialogs'
+import { t } from '@nextcloud/l10n'
 import { generateRemoteUrl } from '@nextcloud/router'
+import { ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import IconCancel from 'vue-material-design-icons/Cancel.vue'
 import IconFolder from 'vue-material-design-icons/Folder.vue'
 import IconTrayArrowUp from 'vue-material-design-icons/TrayArrowUp.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
 
+const props = defineProps({
+	/**
+	 * Full URL of the currently-saved avatar image, or null/undefined when
+	 * no avatar has been set yet.  The NcAvatar initials fallback is shown
+	 * when this is falsy and no pending selection exists.
+	 */
+	currentUrl: {
+		type: String,
+		default: null,
+	},
+
+	/** Name used for NcAvatar's initials fallback. */
+	displayName: {
+		type: String,
+		required: true,
+	},
+
+	/** Avatar display size in pixels (both width and height). */
+	size: {
+		type: Number,
+		default: 100,
+	},
+})
+
+const emit = defineEmits(['change'])
+
 // Maximum side length of the output square in pixels
 const MAX_PIXEL_SIZE = 1080
 
-export default {
-	name: 'AvatarPicker',
-	components: { IconTrayArrowUp, IconFolder, IconCancel, OlvidAvatar, NcButton },
+const fileInput = ref(null)
 
-	props: {
-		/**
-		 * Full URL of the currently-saved avatar image, or null/undefined when
-		 * no avatar has been set yet.  The NcAvatar initials fallback is shown
-		 * when this is falsy and no pending selection exists.
-		 */
-		currentUrl: {
-			type: String,
-			default: null,
-		},
+/**
+ * Base64 data URL of the image the user just selected, shown in the
+ * preview while the parent is uploading.  Cleared automatically when
+ * currentUrl changes (i.e. the upload succeeded and the store bumped the
+ * group's avatar version, which changes the URL prop).
+ */
+const pendingDataUrl = ref(null)
 
-		/** Name used for NcAvatar's initials fallback. */
-		displayName: {
-			type: String,
-			required: true,
-		},
+watch(() => props.currentUrl, () => {
+	pendingDataUrl.value = null
+})
 
-		/** Avatar display size in pixels (both width and height). */
-		size: {
-			type: Number,
-			default: 100,
-		},
-	},
+// ── Local file picker ──────────────────────────────────────────────────
 
-	emits: ['change'],
+function handleLocalFile(event) {
+	const file = event.target.files?.[0]
+	if (!file) {
+		return
+	}
 
-	data() {
-		return {
-			/**
-			 * Base64 data URL of the image the user just selected, shown in the
-			 * preview while the parent is uploading.  Cleared automatically when
-			 * currentUrl changes (i.e. the parent confirmed the upload and updated
-			 * the group's photoUid, which changes the URL prop).
-			 */
-			pendingDataUrl: null,
+	const reader = new FileReader()
+	reader.readAsArrayBuffer(file)
+	reader.onload = (e) => processBuffer(e.target.result)
+
+	// Reset the input value so selecting the same file a second time still
+	// fires a 'change' event.
+	fileInput.value.value = ''
+}
+
+// ── Nextcloud file picker ──────────────────────────────────────────────
+
+async function openNextcloudPicker() {
+	try {
+		// Open the Nextcloud FilePicker restricted to common image formats.
+		// addButton() is required: without it, pick() never resolves.
+		const filePath = await getFilePickerBuilder(t('olvid', 'Select an image'))
+			.setMultiSelect(false)
+			.setMimeTypeFilter(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+			.addButton({
+				label: t('olvid', 'Choose'),
+				variant: 'primary',
+				callback: () => {},
+			})
+			.build()
+			.pick()
+
+		// Fetch the selected file via WebDAV using the current user's DAV root
+		const user = getCurrentUser()
+		const url = generateRemoteUrl(`dav/files/${encodeURIComponent(user.uid)}${filePath}`)
+		const res = await axios.get(url, { responseType: 'arraybuffer' })
+		processBuffer(res.data)
+	} catch (e) {
+		// FilePickerClosed is not an error — the user just cancelled the dialog
+		if (e instanceof FilePickerClosed) {
+			return
 		}
-	},
+		console.error('[AvatarPicker] Nextcloud file picker error', e)
+	}
+}
 
-	watch: {
-		// When the parent commits the new avatar (photoUid changes → new currentUrl),
-		// drop the pending data URL so we switch to the server-hosted image.
-		currentUrl() {
-			this.pendingDataUrl = null
-		},
-	},
+// ── Shared image processing pipeline ──────────────────────────────────
 
-	methods: {
-		// ── Local file picker ──────────────────────────────────────────────────
+/**
+ * Convert an ArrayBuffer to a cropped + compressed base64 JPEG data URL
+ * and emit it so the parent can upload it.
+ *
+ * @param {ArrayBuffer} buffer raw image file content
+ */
+function processBuffer(buffer) {
+	// Wrap in a Blob so it can be used as an <img> src via createObjectURL
+	const blob = new Blob([buffer])
+	const blobUrl = URL.createObjectURL(blob)
 
-		handleLocalFile(event) {
-			const file = event.target.files?.[0]
-			if (!file) {
-				return
-			}
+	const img = new Image()
+	img.src = blobUrl
+	img.onload = () => {
+		URL.revokeObjectURL(blobUrl)
+		const dataUrl = cropAndCompress(img)
+		// Show locally while the parent uploads in the background
+		pendingDataUrl.value = dataUrl
+		emit('change', dataUrl)
+	}
+}
 
-			const reader = new FileReader()
-			reader.readAsArrayBuffer(file)
-			reader.onload = (e) => this.processBuffer(e.target.result)
+/**
+ * Center-square crop, scale to ≤ MAX_PIXEL_SIZE, and encode as JPEG 0.75.
+ *
+ * Matches the Keycloak plugin's resizeImage() exactly:
+ *   squareSize = min(width, height)
+ *   if squareSize > MAX → scale both dims proportionally
+ *   draw with a negative offset to center-crop the longer axis
+ *   output: image/jpeg at quality 0.75
+ *
+ * @param {HTMLImageElement} img loaded source image
+ */
+function cropAndCompress(img) {
+	const canvas = document.createElement('canvas')
+	let w = img.width
+	let h = img.height
 
-			// Reset the input value so selecting the same file a second time still
-			// fires a 'change' event.
-			this.$refs.fileInput.value = ''
-		},
+	// Determine the output square side (shorter dimension, capped at MAX_PIXEL_SIZE)
+	let squareSize = Math.min(w, h)
+	if (squareSize > MAX_PIXEL_SIZE) {
+		const scale = MAX_PIXEL_SIZE / squareSize
+		w *= scale
+		h *= scale
+		squareSize = MAX_PIXEL_SIZE
+	}
 
-		// ── Nextcloud file picker ──────────────────────────────────────────────
+	canvas.width = squareSize
+	canvas.height = squareSize
 
-		async openNextcloudPicker() {
-			try {
-				// Open the Nextcloud FilePicker restricted to common image formats.
-				// addButton() is required: without it, pick() never resolves.
-				const filePath = await getFilePickerBuilder(this.t('olvid', 'Select an image'))
-					.setMultiSelect(false)
-					.setMimeTypeFilter(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-					.addButton({
-						label: this.t('olvid', 'Choose'),
-						variant: 'primary',
-						callback: () => {},
-					})
-					.build()
-					.pick()
+	// Negative offset centers the image so the excess on each axis is
+	// cropped equally from both sides
+	const ctx = canvas.getContext('2d')
+	ctx.drawImage(img, -(w - squareSize) / 2, -(h - squareSize) / 2, w, h)
 
-				// Fetch the selected file via WebDAV using the current user's DAV root
-				const user = getCurrentUser()
-				const url = generateRemoteUrl(`dav/files/${encodeURIComponent(user.uid)}${filePath}`)
-				const res = await axios.get(url, { responseType: 'arraybuffer' })
-				this.processBuffer(res.data)
-			} catch (e) {
-				// FilePickerClosed is not an error — the user just cancelled the dialog
-				if (e instanceof FilePickerClosed) {
-					return
-				}
-				console.error('[AvatarPicker] Nextcloud file picker error', e)
-			}
-		},
+	return canvas.toDataURL('image/jpeg', 0.75)
+}
 
-		// ── Shared image processing pipeline ──────────────────────────────────
-
-		/**
-		 * Convert an ArrayBuffer to a cropped + compressed base64 JPEG data URL
-		 * and emit it so the parent can upload it.
-		 *
-		 * @param {ArrayBuffer} buffer raw image file content
-		 */
-		processBuffer(buffer) {
-			// Wrap in a Blob so it can be used as an <img> src via createObjectURL
-			const blob = new Blob([buffer])
-			const blobUrl = URL.createObjectURL(blob)
-
-			const img = new Image()
-			img.src = blobUrl
-			img.onload = () => {
-				URL.revokeObjectURL(blobUrl)
-				const dataUrl = this.cropAndCompress(img)
-				// Show locally while the parent uploads in the background
-				this.pendingDataUrl = dataUrl
-				this.$emit('change', dataUrl)
-			}
-		},
-
-		/**
-		 * Center-square crop, scale to ≤ MAX_PIXEL_SIZE, and encode as JPEG 0.75.
-		 *
-		 * Matches the Keycloak plugin's resizeImage() exactly:
-		 *   squareSize = min(width, height)
-		 *   if squareSize > MAX → scale both dims proportionally
-		 *   draw with a negative offset to center-crop the longer axis
-		 *   output: image/jpeg at quality 0.75
-		 *
-		 * @param {HTMLImageElement} img loaded source image
-		 */
-		cropAndCompress(img) {
-			const canvas = document.createElement('canvas')
-			let w = img.width
-			let h = img.height
-
-			// Determine the output square side (shorter dimension, capped at MAX_PIXEL_SIZE)
-			let squareSize = Math.min(w, h)
-			if (squareSize > MAX_PIXEL_SIZE) {
-				const scale = MAX_PIXEL_SIZE / squareSize
-				w *= scale
-				h *= scale
-				squareSize = MAX_PIXEL_SIZE
-			}
-
-			canvas.width = squareSize
-			canvas.height = squareSize
-
-			// Negative offset centers the image so the excess on each axis is
-			// cropped equally from both sides
-			const ctx = canvas.getContext('2d')
-			ctx.drawImage(img, -(w - squareSize) / 2, -(h - squareSize) / 2, w, h)
-
-			return canvas.toDataURL('image/jpeg', 0.75)
-		},
-
-		unsetImage() {
-			this.pendingDataUrl = null
-			this.$emit('change', null)
-		},
-	},
+function unsetImage() {
+	pendingDataUrl.value = null
+	emit('change', null)
 }
 </script>
 

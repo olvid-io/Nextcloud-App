@@ -43,9 +43,10 @@
 	</NcSettingsSection>
 </template>
 
-<script>
+<script setup>
 import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
+import { computed, onMounted, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
@@ -56,88 +57,71 @@ import NcTextField from '@nextcloud/vue/components/NcTextField'
 const CONFIGURATION_URL = '/apps/olvid/app/admin/configuration'
 const CONFIGURATION_SERVER_TEST_URL = '/apps/olvid/app/admin/configuration/server/test'
 
-export default {
-	name: 'AdminSettings',
-	components: { NcButton, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSettingsSection, NcTextField },
+const serverUrl = ref('')
+const directoryKey = ref('')
+const savedServerUrl = ref('')
+const savedDirectoryKey = ref('')
 
-	data() {
-		return {
-			serverUrl: '',
-			directoryKey: '',
-			savedServerUrl: '',
-			savedDirectoryKey: '',
+const status = ref(null)
+const checking = ref(false)
+const saving = ref(false)
+const saveError = ref(null)
 
-			status: null,
-			checking: false,
-			saving: false,
-			saveError: null,
-		}
-	},
+const hasChanges = computed(() => serverUrl.value !== savedServerUrl.value || directoryKey.value !== savedDirectoryKey.value)
 
-	computed: {
-		hasChanges() {
-			return this.serverUrl !== this.savedServerUrl || this.directoryKey !== this.savedDirectoryKey
-		},
-	},
+onMounted(fetchConfiguration)
 
-	async mounted() {
-		await this.fetchConfiguration()
-	},
+function applyConfiguration(configuration) {
+	serverUrl.value = configuration.server.serverUrl ?? ''
+	savedServerUrl.value = serverUrl.value
+	directoryKey.value = configuration.server.directoryKey ?? ''
+	savedDirectoryKey.value = directoryKey.value
+	status.value = { isConfigurationValid: configuration.server.isConfigurationValid, message: configuration.server.message }
+}
 
-	methods: {
-		applyConfiguration(configuration) {
-			this.serverUrl = configuration.server.serverUrl ?? ''
-			this.savedServerUrl = this.serverUrl
-			this.directoryKey = configuration.server.directoryKey ?? ''
-			this.savedDirectoryKey = this.directoryKey
-			this.status = { isConfigurationValid: configuration.server.isConfigurationValid, message: configuration.server.message }
-		},
+async function fetchConfiguration() {
+	checking.value = true
+	saveError.value = null
+	try {
+		const res = await axios.get(generateOcsUrl(CONFIGURATION_URL))
+		applyConfiguration(res.data)
+	} catch (e) {
+		status.value = { isConfigurationValid: false, message: e.response?.data?.error ?? e.message }
+	} finally {
+		checking.value = false
+	}
+}
 
-		async fetchConfiguration() {
-			this.checking = true
-			this.saveError = null
-			try {
-				const res = await axios.get(generateOcsUrl(CONFIGURATION_URL))
-				this.applyConfiguration(res.data)
-			} catch (e) {
-				this.status = { isConfigurationValid: false, message: e.response?.data?.error ?? e.message }
-			} finally {
-				this.checking = false
-			}
-		},
+async function testConfiguration() {
+	checking.value = true
+	saveError.value = null
+	try {
+		const res = await axios.post(generateOcsUrl(CONFIGURATION_SERVER_TEST_URL), { serverUrl: serverUrl.value, directoryKey: directoryKey.value })
+		status.value = res.data
+	} catch (e) {
+		status.value = { isConfigurationValid: false, message: e.response?.data?.error ?? e.message }
+	} finally {
+		checking.value = false
+	}
+}
 
-		async testConfiguration() {
-			this.checking = true
-			this.saveError = null
-			try {
-				const res = await axios.post(generateOcsUrl(CONFIGURATION_SERVER_TEST_URL), { serverUrl: this.serverUrl, directoryKey: this.directoryKey })
-				this.status = res.data
-			} catch (e) {
-				this.status = { isConfigurationValid: false, message: e.response?.data?.error ?? e.message }
-			} finally {
-				this.checking = false
-			}
-		},
-
-		async save() {
-			this.saving = true
-			this.checking = true
-			this.saveError = null
-			try {
-				const res = await axios.put(generateOcsUrl(CONFIGURATION_URL), {
-					serverUrl: this.serverUrl,
-					directoryKey: this.directoryKey,
-				})
-				this.directoryKey = ''
-				this.applyConfiguration(res.data)
-			} catch (e) {
-				this.saveError = e.response?.data?.error ?? e.message
-			} finally {
-				this.saving = false
-				this.checking = false
-			}
-		},
-	},
+async function save() {
+	saving.value = true
+	checking.value = true
+	saveError.value = null
+	try {
+		const res = await axios.put(generateOcsUrl(CONFIGURATION_URL), {
+			serverUrl: serverUrl.value,
+			directoryKey: directoryKey.value,
+		})
+		directoryKey.value = ''
+		applyConfiguration(res.data)
+	} catch (e) {
+		saveError.value = e.response?.data?.error ?? e.message
+	} finally {
+		saving.value = false
+		checking.value = false
+	}
 }
 </script>
 

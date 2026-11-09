@@ -17,21 +17,18 @@
 	</span>
 </template>
 
-<script>
-export default {
-	name: 'OlvidDisabledIcon',
-	props: {
-		title: {
-			type: String,
-			default: null,
-		},
-
-		size: {
-			type: Number,
-			default: 24,
-		},
+<script setup>
+defineProps({
+	title: {
+		type: String,
+		default: null,
 	},
 
-	emits: ['click'],
-}
+	size: {
+		type: Number,
+		default: 24,
+	},
+})
+
+defineEmits(['click'])
 </script>

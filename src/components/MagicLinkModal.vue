@@ -15,29 +15,24 @@
 	</NcDialog>
 </template>
 
-<script>
+<script setup>
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import OlvidQrDisplay from './OlvidQrDisplay.vue'
 
-export default {
-	name: 'MagicLinkModal',
-	components: { NcDialog, NcButton, OlvidQrDisplay },
-
-	props: {
-		user: {
-			type: Object,
-			required: true,
-		},
-
-		configurationUrl: {
-			type: String,
-			required: true,
-		},
+defineProps({
+	user: {
+		type: Object,
+		required: true,
 	},
 
-	emits: ['close'],
-}
+	configurationUrl: {
+		type: String,
+		required: true,
+	},
+})
+
+defineEmits(['close'])
 </script>
 
 <style scoped lang="scss">

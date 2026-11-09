@@ -32,54 +32,39 @@
 	</NcDialog>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
+<script setup>
+import { t } from '@nextcloud/l10n'
+import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
+import { useUsersStore } from '../stores/users.js'
 
-export default {
-	name: 'DeleteUserModal',
-	components: { NcDialog, NcButton, NcCheckboxRadioSwitch },
-
-	props: {
-		user: {
-			type: Object,
-			required: true,
-		},
+const props = defineProps({
+	user: {
+		type: Object,
+		required: true,
 	},
+})
 
-	emits: ['close', 'deleted'],
+const emit = defineEmits(['close', 'deleted'])
 
-	data() {
-		return {
-			revoke: false,
-			deleting: false,
-			error: null,
-		}
-	},
+const users = useUsersStore()
+const revoke = ref(false)
+const deleting = ref(false)
+const error = ref(null)
 
-	methods: {
-		async deleteUser() {
-			this.deleting = true
-			this.error = null
-			try {
-				if (this.user.useOlvid && this.revoke) {
-					await axios.delete(
-						generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/identity`),
-						{ data: { revoke: true } },
-					)
-				}
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}`))
-				this.$emit('deleted', this.user.id)
-			} catch (e) {
-				this.error = this.t('olvid', 'Could not delete user: {error}', { error: e.response?.data?.error ?? e.message })
-			} finally {
-				this.deleting = false
-			}
-		},
-	},
+async function deleteUser() {
+	deleting.value = true
+	error.value = null
+	try {
+		await users.remove(props.user.id, { revoke: props.user.useOlvid && revoke.value })
+		emit('deleted')
+	} catch (e) {
+		error.value = t('olvid', 'Could not delete user: {error}', { error: e.response?.data?.error ?? e.message })
+	} finally {
+		deleting.value = false
+	}
 }
 </script>
 

@@ -29,51 +29,38 @@
 	</NcDialog>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
-import { t } from '@nextcloud/l10n'
-import { generateOcsUrl } from '@nextcloud/router'
+<script setup>
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { useGroupsStore } from '../stores/groups.js'
 
-export default {
-	name: 'CreateGroupModal',
-	components: { NcDialog, NcButton, NcTextField },
+const emit = defineEmits(['close'])
 
-	emits: ['close', 'created'],
+const groups = useGroupsStore()
+const router = useRouter()
 
-	data() {
-		return {
-			form: {
-				id: '',
-			},
+const form = reactive({ id: '' })
+const saving = ref(false)
+const error = ref(null)
 
-			saving: false,
-			error: null,
-		}
-	},
-
-	methods: {
-		t,
-		async submit() {
-			if (!this.form.id) {
-				return
-			}
-			this.saving = true
-			this.error = null
-			try {
-				const res = await axios.post(generateOcsUrl('/apps/olvid/app/groups'), this.form)
-				this.$emit('created', res.data)
-				this.$router.push({ name: 'group-detail', params: { groupId: res.data.id } })
-				this.$emit('close')
-			} catch (e) {
-				this.error = e.response?.data?.error ?? e.message
-			} finally {
-				this.saving = false
-			}
-		},
-	},
+async function submit() {
+	if (!form.id) {
+		return
+	}
+	saving.value = true
+	error.value = null
+	try {
+		const group = await groups.create(form.id)
+		router.push({ name: 'group-detail', params: { groupId: group.id } })
+		emit('close')
+	} catch (e) {
+		error.value = e.response?.data?.error ?? e.message
+	} finally {
+		saving.value = false
+	}
 }
 </script>
 
