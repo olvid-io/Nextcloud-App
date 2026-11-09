@@ -30,27 +30,14 @@ namespace OCA\Olvid;
  * 		isAdmin: bool,
  * }
  *
- * TODO is this structure really necessary ? Rename to OlvidGroupMinimalist ?
  * @psalm-type OlvidGroup = array{
- *    id: string,
- *    displayName: string,
- *    enabled: bool,
- *    photoUid: string|null,
- *  }
- *
- * @psalm-type OlvidGroupFull = array{
  *   id: string,
  *   displayName: string,
  *   enabled: bool,
+ *   hasPhoto: bool,
  *   discussionName: string|null,
  *   discussionDescription: string|null,
- *   photoUid: string|null,
  *   members: list<OlvidUser>,
- * }
- *
- * @psalm-type OlvidGroupRef = array{
- *   id: string,
- *   displayName: string,
  * }
  *
  * ── Statistics API ───────────────────────────────────────────────────────────

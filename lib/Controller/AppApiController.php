@@ -24,6 +24,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
+use OCP\IGroup;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -32,9 +33,7 @@ use Psr\Log\LoggerInterface;
  * @psalm-import-type OlvidUser from ResponseDefinitions
  * @psalm-import-type OlvidUserFull from ResponseDefinitions
  * @psalm-import-type OlvidMe from ResponseDefinitions
- * @psalm-import-type OlvidGroupFull from ResponseDefinitions
  * @psalm-import-type OlvidGroup from ResponseDefinitions
- * @psalm-import-type OlvidGroupRef from ResponseDefinitions
  * @psalm-import-type OlvidStatistics from ResponseDefinitions
  */
 class AppApiController extends OCSController {
@@ -173,7 +172,7 @@ class AppApiController extends OCSController {
 	/**
 	 * Returns all Nextcloud groups with their Olvid discussion configuration and member list
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroupFull>}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<OlvidGroup>}, array{}>
 	 *
 	 * 200: Groups returned
 	 * @noinspection PhpUnused
@@ -185,29 +184,8 @@ class AppApiController extends OCSController {
 
 		$response = ['groups' => []];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
-			$gid = $nextcloudGroup->getGID();
-			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($gid);
-			$members = [];
-			foreach ($nextcloudGroup->getUsers() as $member) {
-				$members[] = [
-					'id' => $member->getUID(),
-					'displayName' => $member->getDisplayName() ?? $member->getUID(),
-					// TODO this can be optimized (build a user cache ? batch member requests ?)
-					'useOlvid' => $this->context->db->user->hasUserAnIdentity($member->getUID()),
-				];
-			}
-
-			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
-			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
-			$response['groups'][] = [
-				'id' => $gid,
-				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
-				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
-				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
-				'photoUid' => $bytesPhotoUid !== null ? base64_encode($bytesPhotoUid) : null,
-				'members' => $members,
-			];
+			$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
+			$response['groups'][] = $this->buildOlvidGroup($nextcloudGroup, $olvidGroup);
 		}
 
 		return new DataResponse($response);
@@ -217,7 +195,7 @@ class AppApiController extends OCSController {
 	 * Creates a new Nextcloud group
 	 *
 	 * @param string $id Group ID (must be unique and non-empty)
-	 * @return DataResponse<Http::STATUS_OK, OlvidGroupFull, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, OlvidGroup, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{error: string}, array{}>
 	 *
 	 * 200: Group created
 	 * 400: Missing or already existing group ID, or group could not be created
@@ -240,16 +218,7 @@ class AppApiController extends OCSController {
 		if ($nextcloudGroup === null) {
 			return new DataResponse(['error' => 'group not created'], Http::STATUS_BAD_REQUEST);
 		}
-
-		return new DataResponse([
-			'id' => $groupId,
-			'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
-			'enabled' => false,
-			'discussionName' => null,
-			'discussionDescription' => null,
-			'photoUid' => null,
-			'members' => [],
-		]);
+		return new DataResponse($this->buildOlvidGroup($nextcloudGroup, null));
 	}
 
 	/**
@@ -283,7 +252,7 @@ class AppApiController extends OCSController {
 	 * Delete a Nextcloud group
 	 *
 	 * @param string $groupId Group ID (URL path)
-	 * @return DataResponse<Http::STATUS_OK, OlvidGroupRef, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{}, array{}>
 	 *
 	 * 200: Group deleted
 	 * 404: Group not found
@@ -298,10 +267,7 @@ class AppApiController extends OCSController {
 		}
 
 		if ($nextcloudGroup->delete()) {
-			return new DataResponse([
-				'id' => $groupId,
-				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
-			], Http::STATUS_OK);
+			return new DataResponse([], Http::STATUS_OK);
 		}
 		return new DataResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}
@@ -600,14 +566,13 @@ class AppApiController extends OCSController {
 	 * Returns the groups a specific user belongs to
 	 *
 	 * @param string $userId User ID (URL path)
-	 * @return DataResponse<Http::STATUS_OK, array{groups: list<array{id: string, displayName: string, enabled: bool, discussionName: string|null, discussionDescription: string|null, photoUid: string|null}>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{groups: OlvidGroup}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{error: string}, array{}>
 	 *
 	 * 200: Groups returned
 	 * 404: User not found
 	 * @noinspection PhpUnused
 	 * @throws Exception
 	 */
-	// TODO returns OlvidGroup structure and not a custom one (change typing)
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/groups')]
 	public function getUserGroups(string $userId): DataResponse {
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
@@ -622,17 +587,7 @@ class AppApiController extends OCSController {
 		$result = [];
 		foreach ($nextcloudGroups as $nextcloudGroup) {
 			$olvidGroup = $olvidGroupMap[$nextcloudGroup->getGID()] ?? null;
-			// base64-encode the raw binary photoUid for safe JSON transport; null when no avatar is set
-			$bytesPhotoUid = $olvidGroup?->getbytesGroupPhotoUid();
-			$result[] = [
-				'id' => $nextcloudGroup->getGID(),
-				'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
-				'enabled' => $olvidGroup?->getEnabled() ?? false,
-				'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
-				'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
-				// TODO Check to remove this field
-				'photoUid' => $bytesPhotoUid !== null ? base64_encode((string)$bytesPhotoUid) : null,
-			];
+			$result[] = $this->buildOlvidGroup($nextcloudGroup, $olvidGroup);
 		}
 
 		return new DataResponse(['groups' => $result]);
@@ -754,5 +709,30 @@ class AppApiController extends OCSController {
 			'olvidGroupsCount' => $olvidGroupsCount,
 			'nextcloudGroupsCount' => $nextcloudGroupsCount,
 		]);
+	}
+
+
+	/*
+	 * Tools
+	 */
+	private function buildOlvidGroup(IGroup $nextcloudGroup, ?OlvidGroup $olvidGroup): array {
+		$members = [];
+		foreach ($nextcloudGroup->getUsers() as $member) {
+			$members[] = [
+				'id' => $member->getUID(),
+				'displayName' => $member->getDisplayName() ?? $member->getUID(),
+				// TODO this can be optimized (build a user cache ? batch member requests ?)
+				'useOlvid' => $this->context->db->user->hasUserAnIdentity($member->getUID()),
+			];
+		}
+		return [
+			'id' => $nextcloudGroup->getGID(),
+			'displayName' => $nextcloudGroup->getDisplayName() ?? $nextcloudGroup->getGID(),
+			'enabled' => $olvidGroup?->getEnabled() ?? false,
+			'hasPhoto' => (bool)$olvidGroup?->getBytesGroupUid(),
+			'discussionName' => $olvidGroup?->getDiscussionName() ?? null,
+			'discussionDescription' => $olvidGroup?->getDiscussionDescription() ?? null,
+			'members' => $members,
+		];
 	}
 }
