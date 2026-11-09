@@ -20,15 +20,64 @@
             }
         },
         "schemas": {
-            "GroupFull": {
+            "AdminConfiguration": {
+                "type": "object",
+                "required": [
+                    "server"
+                ],
+                "properties": {
+                    "server": {
+                        "$ref": "#/components/schemas/AdminServerConfiguration"
+                    }
+                }
+            },
+            "AdminServerConfiguration": {
+                "type": "object",
+                "required": [
+                    "serverUrl",
+                    "directoryKey",
+                    "isConfigurationValid",
+                    "message"
+                ],
+                "properties": {
+                    "serverUrl": {
+                        "type": "string"
+                    },
+                    "directoryKey": {
+                        "type": "string"
+                    },
+                    "isConfigurationValid": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AdminServerConfigurationTest": {
+                "type": "object",
+                "required": [
+                    "isConfigurationValid",
+                    "message"
+                ],
+                "properties": {
+                    "isConfigurationValid": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Group": {
                 "type": "object",
                 "required": [
                     "id",
                     "displayName",
                     "enabled",
-                    "customName",
-                    "description",
                     "photoUid",
+                    "discussionName",
+                    "discussionDescription",
                     "members"
                 ],
                 "properties": {
@@ -41,15 +90,15 @@
                     "enabled": {
                         "type": "boolean"
                     },
-                    "customName": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "description": {
-                        "type": "string",
-                        "nullable": true
-                    },
                     "photoUid": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "discussionName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "discussionDescription": {
                         "type": "string",
                         "nullable": true
                     },
@@ -58,21 +107,6 @@
                         "items": {
                             "$ref": "#/components/schemas/User"
                         }
-                    }
-                }
-            },
-            "GroupRef": {
-                "type": "object",
-                "required": [
-                    "id",
-                    "displayName"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "displayName": {
-                        "type": "string"
                     }
                 }
             },
@@ -97,6 +131,38 @@
                     },
                     "itemsperpage": {
                         "type": "string"
+                    }
+                }
+            },
+            "Statistics": {
+                "type": "object",
+                "required": [
+                    "olvidUsersCount",
+                    "nextcloudUsersCount",
+                    "olvidInactiveUsers",
+                    "olvidGroupsCount",
+                    "nextcloudGroupsCount"
+                ],
+                "properties": {
+                    "olvidUsersCount": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "nextcloudUsersCount": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "olvidInactiveUsers": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "olvidGroupsCount": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "nextcloudGroupsCount": {
+                        "type": "integer",
+                        "format": "int64"
                     }
                 }
             },
@@ -125,6 +191,7 @@
                     "id",
                     "displayName",
                     "useOlvid",
+                    "isInactive",
                     "firstname",
                     "lastname",
                     "position",
@@ -140,23 +207,502 @@
                     "useOlvid": {
                         "type": "boolean"
                     },
+                    "isInactive": {
+                        "type": "boolean"
+                    },
                     "firstname": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     },
                     "lastname": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     },
                     "position": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     },
                     "company": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             }
         }
     },
     "paths": {
+        "/ocs/v2.php/apps/olvid/app/admin/configuration": {
+            "get": {
+                "operationId": "admin_settings_api-configuration-get",
+                "summary": "Returns the Olvid server configuration and whether it is valid",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "admin_settings_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "configuration returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/AdminConfiguration"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin_settings_api-configuration-put",
+                "summary": "Updates the Olvid server configuration and checks it against the Olvid server",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "admin_settings_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "serverUrl": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "Olvid distribution server url"
+                                    },
+                                    "directoryKey": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "key to authenticate against Olvid Server"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration saved, validity returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/AdminConfiguration"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid server url",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/olvid/app/admin/configuration/server/test": {
+            "post": {
+                "operationId": "admin_settings_api-configuration-server-test",
+                "summary": "Test an Olvid server configuration and checks it against the Olvid server",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "admin_settings_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "serverUrl": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "Olvid distribution server url"
+                                    },
+                                    "directoryKey": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "the key to use for the test"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration was tested",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/AdminServerConfigurationTest"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid server url",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/ocs/v2.php/apps/olvid/app/groups": {
             "get": {
                 "operationId": "app_api-groups-get",
@@ -187,7 +733,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Groups returned",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -215,7 +761,7 @@
                                                         "groups": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/components/schemas/GroupFull"
+                                                                "$ref": "#/components/schemas/Group"
                                                             }
                                                         }
                                                     }
@@ -223,6 +769,16 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -333,7 +889,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Group created",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -353,7 +909,45 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "$ref": "#/components/schemas/GroupFull"
+                                                    "$ref": "#/components/schemas/Group"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or already existing group ID, or group could not be created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -449,12 +1043,12 @@
                                         "nullable": true,
                                         "description": "Enable or disable the Olvid discussion for this group"
                                     },
-                                    "customName": {
+                                    "discussionName": {
                                         "type": "string",
                                         "nullable": true,
-                                        "description": "Override the discussion display name (null clears the override)"
+                                        "description": "Override the Olvid discussion name (ignored if null or empty)"
                                     },
-                                    "description": {
+                                    "discussionDescription": {
                                         "type": "string",
                                         "nullable": true,
                                         "description": "Discussion description"
@@ -487,7 +1081,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Group settings updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -507,7 +1101,7 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "$ref": "#/components/schemas/GroupFull"
+                                                    "type": "object"
                                                 }
                                             }
                                         }
@@ -517,7 +1111,45 @@
                         }
                     },
                     "404": {
-                        "description": "",
+                        "description": "Group not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Group settings could not be updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -611,12 +1243,10 @@
                         }
                     }
                 }
-            }
-        },
-        "/ocs/v2.php/apps/olvid/app/groups/{groupId}/avatar": {
-            "put": {
-                "operationId": "app_api-groups-avatar-put",
-                "summary": "Uploads or replaces the avatar image for a group",
+            },
+            "delete": {
+                "operationId": "app_api-groups-delete",
+                "summary": "Delete a Nextcloud group",
                 "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
@@ -629,25 +1259,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "photoData"
-                                ],
-                                "properties": {
-                                    "photoData": {
-                                        "type": "string",
-                                        "description": "Base64-encoded image data (PNG or JPEG, JSON body)"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "groupId",
@@ -671,7 +1282,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Group deleted",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -691,53 +1302,7 @@
                                                     "$ref": "#/components/schemas/OCSMeta"
                                                 },
                                                 "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "photoUid"
-                                                    ],
-                                                    "properties": {
-                                                        "photoUid": {
-                                                            "type": "string"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "error"
-                                                    ],
-                                                    "properties": {
-                                                        "error": {
-                                                            "type": "string"
-                                                        }
-                                                    }
+                                                    "type": "object"
                                                 }
                                             }
                                         }
@@ -747,7 +1312,7 @@
                         }
                     },
                     "404": {
-                        "description": "",
+                        "description": "Group not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -785,7 +1350,266 @@
                         }
                     },
                     "500": {
-                        "description": "",
+                        "description": "Group could not be deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/olvid/app/groups/avatar/{groupId}": {
+            "put": {
+                "operationId": "app_api-groups-avatar-put",
+                "summary": "Uploads or replaces the avatar image for a group",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "app_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "photoData": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "Base64-encoded image data (PNG or JPEG, JSON body) or null to unset current"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "description": "Group ID (URL path)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Avatar updated or removed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "photoUid"
+                                                    ],
+                                                    "properties": {
+                                                        "photoUid": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid image data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Group not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Avatar could not be saved",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -929,7 +1753,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "User added to group",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -959,7 +1783,7 @@
                         }
                     },
                     "404": {
-                        "description": "",
+                        "description": "Group or user not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1101,7 +1925,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "User removed from group",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1131,7 +1955,7 @@
                         }
                     },
                     "400": {
-                        "description": "",
+                        "description": "Cannot remove yourself from the admin group",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1169,7 +1993,7 @@
                         }
                     },
                     "404": {
-                        "description": "",
+                        "description": "Group or user not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1196,144 +2020,6 @@
                                                     "properties": {
                                                         "error": {
                                                             "type": "string"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Current user is not logged in",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Logged in account must be an admin",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/ocs/v2.php/apps/olvid/app/users/search": {
-            "get": {
-                "operationId": "app_api-users-search",
-                "summary": "Searches for users by display name or uid. Returns up to 20 results",
-                "description": "PhpUnused\nThis endpoint requires admin access",
-                "tags": [
-                    "app_api"
-                ],
-                "security": [
-                    {
-                        "bearer_auth": []
-                    },
-                    {
-                        "basic_auth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "query",
-                        "in": "query",
-                        "description": "Search string (query parameter)",
-                        "schema": {
-                            "type": "string",
-                            "default": ""
-                        }
-                    },
-                    {
-                        "name": "OCS-APIRequest",
-                        "in": "header",
-                        "description": "Required to be true for the API request to pass",
-                        "required": true,
-                        "schema": {
-                            "type": "boolean",
-                            "default": true
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "users"
-                                                    ],
-                                                    "properties": {
-                                                        "users": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "$ref": "#/components/schemas/User"
-                                                            }
                                                         }
                                                     }
                                                 }
@@ -1433,7 +2119,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Users returned",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1469,6 +2155,16 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -1560,28 +2256,38 @@
                                     },
                                     "password": {
                                         "type": "string",
+                                        "nullable": true,
                                         "default": "",
-                                        "description": "Initial password (required)"
+                                        "description": "Initial password (optional)"
                                     },
                                     "firstname": {
                                         "type": "string",
                                         "default": "",
-                                        "description": "First name"
+                                        "description": "First name (optional)"
                                     },
                                     "lastname": {
                                         "type": "string",
                                         "default": "",
-                                        "description": "Last name"
+                                        "description": "Last name (optional)"
                                     },
                                     "position": {
                                         "type": "string",
                                         "default": "",
-                                        "description": "Job position"
+                                        "description": "Job position (optional)"
                                     },
                                     "company": {
                                         "type": "string",
                                         "default": "",
-                                        "description": "Company name"
+                                        "description": "Company name (optional)"
+                                    },
+                                    "groups": {
+                                        "type": "array",
+                                        "nullable": true,
+                                        "default": [],
+                                        "description": "Groups to add user to (optional)",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 }
                             }
@@ -1602,7 +2308,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "User created",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1632,7 +2338,7 @@
                         }
                     },
                     "400": {
-                        "description": "",
+                        "description": "Missing uid, user already exists, or unknown group",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1703,6 +2409,11 @@
                                             }
                                         }
                                     }
+                                }
+                            },
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -1837,7 +2548,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "User profile updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1866,8 +2577,8 @@
                             }
                         }
                     },
-                    "404": {
-                        "description": "",
+                    "400": {
+                        "description": "Neither firstname nor lastname is set",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1900,6 +2611,54 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -1964,7 +2723,7 @@
             },
             "delete": {
                 "operationId": "app_api-delete-user",
-                "summary": "Deletes a Nextcloud user. Optionally revokes their Olvid identity first Cannot be used to delete the currently authenticated user",
+                "summary": "Deletes a Nextcloud user. Cannot be used to delete the currently authenticated user",
                 "description": "PhpUnused\nThis endpoint requires admin access",
                 "tags": [
                     "app_api"
@@ -1988,19 +2747,6 @@
                         }
                     },
                     {
-                        "name": "revoke",
-                        "in": "query",
-                        "description": "Permanently revoke the user's Olvid identity before deletion (irreversible)",
-                        "schema": {
-                            "type": "integer",
-                            "default": 0,
-                            "enum": [
-                                0,
-                                1
-                            ]
-                        }
-                    },
-                    {
                         "name": "OCS-APIRequest",
                         "in": "header",
                         "description": "Required to be true for the API request to pass",
@@ -2013,7 +2759,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "User deleted",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2043,7 +2789,7 @@
                         }
                     },
                     "400": {
-                        "description": "",
+                        "description": "Cannot delete the currently authenticated user",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2081,7 +2827,7 @@
                         }
                     },
                     "404": {
-                        "description": "",
+                        "description": "User not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2114,16 +2860,6 @@
                                             }
                                         }
                                     }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
                                 }
                             }
                         }
@@ -2226,7 +2962,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Groups returned",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2252,10 +2988,7 @@
                                                     ],
                                                     "properties": {
                                                         "groups": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "$ref": "#/components/schemas/GroupRef"
-                                                            }
+                                                            "$ref": "#/components/schemas/Group"
                                                         }
                                                     }
                                                 }
@@ -2267,180 +3000,7 @@
                         }
                     },
                     "404": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "error"
-                                                    ],
-                                                    "properties": {
-                                                        "error": {
-                                                            "type": "string"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Current user is not logged in",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Logged in account must be an admin",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/ocs/v2.php/apps/olvid/app/users/{userId}/magicLink": {
-            "get": {
-                "operationId": "app_api-users-get-magic-link",
-                "summary": "Generates a magic link (configuration URL) to enroll a specific user's Olvid identity",
-                "description": "PhpUnused\nThis endpoint requires admin access",
-                "tags": [
-                    "app_api"
-                ],
-                "security": [
-                    {
-                        "bearer_auth": []
-                    },
-                    {
-                        "basic_auth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "userId",
-                        "in": "path",
-                        "description": "User ID (URL path)",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "OCS-APIRequest",
-                        "in": "header",
-                        "description": "Required to be true for the API request to pass",
-                        "required": true,
-                        "schema": {
-                            "type": "boolean",
-                            "default": true
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "configurationUrl"
-                                                    ],
-                                                    "properties": {
-                                                        "configurationUrl": {
-                                                            "type": "string"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "",
+                        "description": "User not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2545,7 +3105,770 @@
                     }
                 }
             }
+        },
+        "/ocs/v2.php/apps/olvid/app/users/{userId}/magicLink": {
+            "get": {
+                "operationId": "app_api-users-get-magic-link",
+                "summary": "Generates a magic link (configuration URL) to enroll a specific user's Olvid identity",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "app_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User ID (URL path)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Magic link generated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "configurationUrl"
+                                                    ],
+                                                    "properties": {
+                                                        "configurationUrl": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/olvid/app/users/{userId}/identity": {
+            "delete": {
+                "operationId": "app_api-users-identity-delete",
+                "summary": "Unlinks the Olvid identity of a specific user When $revoke is true the identity is also permanently blocked for all contacts",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "app_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User ID (URL path)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "revoke",
+                        "in": "query",
+                        "description": "Permanently revoke the identity (irreversible)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 0,
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Identity unlinked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found or no Olvid identity linked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/olvid/app/users/search": {
+            "get": {
+                "operationId": "app_api-users-search",
+                "summary": "Searches for users by display name or uid. Returns up to 20 results",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "app_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Search string (query parameter)",
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Matching users returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "users"
+                                                    ],
+                                                    "properties": {
+                                                        "users": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/User"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/olvid/app/statistics": {
+            "get": {
+                "operationId": "app_api-get-statistics",
+                "summary": "Returns Olvid usage statistics (users, groups, inactive users)",
+                "description": "PhpUnused\nThis endpoint requires admin access",
+                "tags": [
+                    "app_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistics returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/Statistics"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ocs/v2.php/apps/olvid": {
+            "get": {
+                "operationId": "directory_api-index",
+                "summary": "This is a fake route used to compute the nextcloud server url to pass in magic links",
+                "description": "This endpoint requires admin access",
+                "tags": [
+                    "directory_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Current user is not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Logged in account must be an admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
-    "tags": []
+    "tags": [
+        {
+            "name": "admin_settings_api",
+            "description": "Admin-only endpoints backing the Olvid admin settings page (lib/Settings/Admin.php)."
+        }
+    ]
 }

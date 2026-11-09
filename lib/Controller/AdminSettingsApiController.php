@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Olvid\Controller;
 
 use OCA\Olvid\AppInfo\Application;
+use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidContext;
 use OCA\Olvid\Utils\Context\OlvidServer\LicenseKeyNotFoundException;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidDirectoryKeyException;
@@ -21,21 +22,8 @@ use Throwable;
 /**
  * Admin-only endpoints backing the Olvid admin settings page (lib/Settings/Admin.php).
  *
- * @psalm-type OlvidAdminServerConfigurationTest = array{
- *   isConfigurationValid: bool,
- *   message: string,
- * }
+ * @psalm-import-type OlvidAdminConfiguration from ResponseDefinitions
  *
- * @psalm-type OlvidAdminServerConfiguration = array{
- *   serverUrl: string,
- *   directoryKey: string,
- *   isConfigurationValid: bool,
- *   message: string,
- * }
- *
- * @psalm-type OlvidAdminConfiguration = array{
- *   server: OlvidAdminServerConfiguration
- * }
  */
 class AdminSettingsApiController extends OCSController {
 	public function __construct(

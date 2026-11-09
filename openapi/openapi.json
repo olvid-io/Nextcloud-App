@@ -432,8 +432,10 @@
                         }
                     },
                     "resultsUnactivatedUsers": {
-                        "type": "integer",
-                        "format": "int64"
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
                     },
                     "count": {
                         "type": "integer",
@@ -451,7 +453,10 @@
                     "id",
                     "displayName",
                     "enabled",
-                    "photoUid"
+                    "photoUid",
+                    "discussionName",
+                    "discussionDescription",
+                    "members"
                 ],
                 "properties": {
                     "id": {
@@ -466,39 +471,40 @@
                     "photoUid": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "discussionName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "discussionDescription": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        }
                     }
                 }
             },
             "Me": {
-                "type": "object",
-                "required": [
-                    "firstname",
-                    "lastname",
-                    "position",
-                    "company",
-                    "useOlvid",
-                    "isAdmin"
-                ],
-                "properties": {
-                    "firstname": {
-                        "type": "string"
+                "anyOf": [
+                    {
+                        "$ref": "#/components/schemas/UserFull"
                     },
-                    "lastname": {
-                        "type": "string"
-                    },
-                    "position": {
-                        "type": "string"
-                    },
-                    "company": {
-                        "type": "string"
-                    },
-                    "useOlvid": {
-                        "type": "boolean"
-                    },
-                    "isAdmin": {
-                        "type": "boolean"
+                    {
+                        "type": "object",
+                        "required": [
+                            "isAdmin"
+                        ],
+                        "properties": {
+                            "isAdmin": {
+                                "type": "boolean"
+                            }
+                        }
                     }
-                }
+                ]
             },
             "OCSMeta": {
                 "type": "object",
@@ -521,6 +527,68 @@
                     },
                     "itemsperpage": {
                         "type": "string"
+                    }
+                }
+            },
+            "User": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "displayName",
+                    "useOlvid"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "useOlvid": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "UserFull": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "displayName",
+                    "useOlvid",
+                    "isInactive",
+                    "firstname",
+                    "lastname",
+                    "position",
+                    "company"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "useOlvid": {
+                        "type": "boolean"
+                    },
+                    "isInactive": {
+                        "type": "boolean"
+                    },
+                    "firstname": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "lastname": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "position": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "company": {
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             }
@@ -557,7 +625,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Current user profile returned",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -582,6 +650,16 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -677,7 +755,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Profile updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -702,6 +780,54 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Neither firstname nor lastname is set",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -767,7 +893,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Magic link generated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -807,6 +933,39 @@
                     "500": {
                         "description": "",
                         "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                             "text/plain": {
                                 "schema": {
                                     "type": "string"
@@ -888,7 +1047,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Identity unlinked",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -909,6 +1068,44 @@
                                                 },
                                                 "data": {
                                                     "type": "object"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Olvid identity linked to the current user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "error"
+                                                    ],
+                                                    "properties": {
+                                                        "error": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -988,7 +1185,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Groups returned",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1028,6 +1225,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Current user is not logged in",
                         "content": {
@@ -1059,7 +1266,7 @@
                 }
             }
         },
-        "/ocs/v2.php/apps/olvid/app/groups/{groupId}/avatar": {
+        "/ocs/v2.php/apps/olvid/app/groups/avatar": {
             "get": {
                 "operationId": "app_api-groups-avatar-get",
                 "summary": "Returns the avatar image for a group. Requires a valid photoUid query parameter The photoUid acts as a cache-buster; clients should update the URL when it changes",
@@ -1077,21 +1284,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "groupId",
-                        "in": "path",
-                        "description": "Group ID (URL path)",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "name": "photoUid",
                         "in": "query",
                         "description": "Base64-encoded photo UID (query parameter, used for cache validation)",
+                        "required": true,
                         "schema": {
-                            "type": "string",
-                            "default": ""
+                            "type": "string"
                         }
                     },
                     {
@@ -1106,8 +1304,19 @@
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "Avatar image returned",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
                     "404": {
-                        "description": "",
+                        "description": "Group or avatar not found",
                         "content": {
                             "*/*": {
                                 "schema": {
@@ -1158,10 +1367,10 @@
                 }
             }
         },
-        "/ocs/v2.php/apps/olvid/app/users/{userId}/identity": {
-            "delete": {
-                "operationId": "app_api-users-identity-delete",
-                "summary": "Unlinks the Olvid identity of a specific user When $revoke is true the identity is also permanently blocked for all contacts",
+        "/ocs/v2.php/apps/olvid/app/isAppConfigurationValid": {
+            "get": {
+                "operationId": "app_api-is-app-configuration-valid",
+                "summary": "Returns whether the Olvid app configuration is valid or not If not UI will show an alert message to the user All users can know the configuration state to allow enrollment or not",
                 "description": "PhpUnused",
                 "tags": [
                     "app_api"
@@ -1176,28 +1385,6 @@
                 ],
                 "parameters": [
                     {
-                        "name": "userId",
-                        "in": "path",
-                        "description": "User ID (URL path)",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "revoke",
-                        "in": "query",
-                        "description": "Permanently revoke the identity (irreversible)",
-                        "schema": {
-                            "type": "integer",
-                            "default": 0,
-                            "enum": [
-                                0,
-                                1
-                            ]
-                        }
-                    },
-                    {
                         "name": "OCS-APIRequest",
                         "in": "header",
                         "description": "Required to be true for the API request to pass",
@@ -1210,37 +1397,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "",
+                        "description": "Configuration validity returned",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1262,27 +1419,17 @@
                                                 "data": {
                                                     "type": "object",
                                                     "required": [
-                                                        "error"
+                                                        "isConfigurationValid"
                                                     ],
                                                     "properties": {
-                                                        "error": {
-                                                            "type": "string"
+                                                        "isConfigurationValid": {
+                                                            "type": "boolean"
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
                                 }
                             }
                         }
@@ -1321,6 +1468,7 @@
         "/ocs/v2.php/apps/olvid/olvid-rest/ping": {
             "get": {
                 "operationId": "directory_api-ping",
+                "summary": "Health check endpoint",
                 "tags": [
                     "directory_api"
                 ],
@@ -1347,7 +1495,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Server is up",
                         "content": {
                             "text/plain": {
                                 "schema": {
@@ -1390,31 +1538,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OpenID configuration returned",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "$ref": "#/components/schemas/DirectoryOpenIdConfiguration"
-                                                }
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/DirectoryOpenIdConfiguration"
                                 }
                             }
                         }
@@ -1453,31 +1581,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Discovery information returned",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "$ref": "#/components/schemas/DirectoryOlvidDiscovery"
-                                                }
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/DirectoryOlvidDiscovery"
                                 }
                             }
                         }
@@ -1516,31 +1624,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "JWKS returned",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "$ref": "#/components/schemas/DirectoryJwks"
-                                                }
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/DirectoryJwks"
                                 }
                             }
                         }
@@ -1552,7 +1640,7 @@
             "post": {
                 "operationId": "directory_api-get-magic-session",
                 "summary": "Exchanges a per-user magic token for a short-lived bearer session token (1 hour)",
-                "description": "PhpUnused",
+                "description": "PhpUnused\nPhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -1565,28 +1653,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "username": {
-                                        "type": "string",
-                                        "default": "",
-                                        "description": "Nextcloud user ID"
-                                    },
-                                    "token": {
-                                        "type": "string",
-                                        "default": "",
-                                        "description": "Single-use magic token generated by the Magic Link flow"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "OCS-APIRequest",
@@ -1601,38 +1667,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Session token returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryGetMagicSessionResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryGetMagicSessionResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -1643,8 +1689,8 @@
         "/ocs/v2.php/apps/olvid/olvid-rest/me": {
             "get": {
                 "operationId": "directory_api-me-get",
-                "summary": "Returns the caller's directory profile, API key, push topics, and pending revocations Used on identity creation (GET variant)",
-                "description": "PhpUnused",
+                "summary": "Returns the caller's directory profile, license key, push topics, and pending revocations Used on identity creation (GET variant)",
+                "description": "PhpUnused\nPhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -1659,25 +1705,6 @@
                 ],
                 "parameters": [
                     {
-                        "name": "deviceUid",
-                        "in": "query",
-                        "description": "Optional device UID to register",
-                        "schema": {
-                            "type": "string",
-                            "default": ""
-                        }
-                    },
-                    {
-                        "name": "timestamp",
-                        "in": "query",
-                        "description": "Millisecond timestamp; only revocations newer than this are returned",
-                        "schema": {
-                            "type": "integer",
-                            "format": "int64",
-                            "default": 0
-                        }
-                    },
-                    {
                         "name": "OCS-APIRequest",
                         "in": "header",
                         "description": "Required to be true for the API request to pass",
@@ -1690,38 +1717,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Profile returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryMeResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryMeResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -1730,8 +1737,8 @@
             },
             "post": {
                 "operationId": "directory_api-me-post",
-                "summary": "Returns the caller's directory profile, API key, push topics, and pending revocations Used on subsequent syncs (POST variant)",
-                "description": "PhpUnused",
+                "summary": "Returns the caller's directory profile, license key, push topics, and pending revocations Used on subsequent syncs (POST variant)",
+                "description": "PhpUnused\nPhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -1744,29 +1751,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "deviceUid": {
-                                        "type": "string",
-                                        "default": "",
-                                        "description": "Optional device UID to register"
-                                    },
-                                    "timestamp": {
-                                        "type": "integer",
-                                        "format": "int64",
-                                        "default": 0,
-                                        "description": "Millisecond timestamp; only revocations newer than this are returned"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "OCS-APIRequest",
@@ -1781,38 +1765,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Profile returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryMeResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryMeResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -1824,7 +1788,7 @@
             "post": {
                 "operationId": "directory_api-put-key",
                 "summary": "Registers or replaces the caller's Olvid identity (base64-encoded) in the directory",
-                "description": "PhpUnused",
+                "description": "PhpUnused\nPhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -1837,23 +1801,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "identity": {
-                                        "type": "string",
-                                        "default": "",
-                                        "description": "Base64-encoded Olvid identity bytes"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "OCS-APIRequest",
@@ -1868,38 +1815,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Identity registered, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiSuccess"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiSuccess"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -1937,38 +1864,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Identity details returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryGetKeyResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryGetKeyResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -1980,6 +1887,7 @@
             "post": {
                 "operationId": "directory_api-search",
                 "summary": "Searches the directory by display name or identity fields",
+                "description": "PhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -1992,23 +1900,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "filter": {
-                                        "type": "string",
-                                        "default": "",
-                                        "description": "Search string; empty returns all users up to the server limit"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "OCS-APIRequest",
@@ -2023,38 +1914,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Search results returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectorySearchResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectorySearchResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -2066,6 +1937,7 @@
             "post": {
                 "operationId": "directory_api-list",
                 "summary": "Returns all enrolled users, optionally filtered to those registered after a timestamp",
+                "description": "PhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -2078,24 +1950,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "timestamp": {
-                                        "type": "integer",
-                                        "format": "int64",
-                                        "default": 0,
-                                        "description": "Millisecond timestamp; 0 returns all users"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "OCS-APIRequest",
@@ -2110,38 +1964,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Users returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryListUsersResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryListUsersResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -2153,6 +1987,7 @@
             "post": {
                 "operationId": "directory_api-groups",
                 "summary": "Returns signed group blobs, deletions, and kicks updated since the given timestamp",
+                "description": "PhpDocSignatureInspection",
                 "tags": [
                     "directory_api"
                 ],
@@ -2165,25 +2000,6 @@
                         "basic_auth": []
                     }
                 ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "timestamp": {
-                                        "type": "integer",
-                                        "format": "int64",
-                                        "nullable": true,
-                                        "default": null,
-                                        "description": "Millisecond timestamp; null defaults to last 60 days"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "OCS-APIRequest",
@@ -2198,38 +2014,18 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Group updates returned, or an Olvid API error payload",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryGroupsResponse"
-                                                        },
-                                                        {
-                                                            "$ref": "#/components/schemas/DirectoryApiError"
-                                                        }
-                                                    ]
-                                                }
-                                            }
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryGroupsResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DirectoryApiError"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -2238,5 +2034,10 @@
             }
         }
     },
-    "tags": []
+    "tags": [
+        {
+            "name": "admin_settings_api",
+            "description": "Admin-only endpoints backing the Olvid admin settings page (lib/Settings/Admin.php)."
+        }
+    ]
 }

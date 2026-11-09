@@ -136,6 +136,24 @@ namespace OCA\Olvid;
  *   signed_group_kicks: list<string>,
  *   current_timestamp: int,
  * }
+ *
+ * ── Admin AdminSettings API ────────────────────────────────────────────────────────────
+ * @psalm-type OlvidAdminServerConfigurationTest = array{
+ *    isConfigurationValid: bool,
+ *    message: string,
+ *  }
+ *
+ * @psalm-type OlvidAdminServerConfiguration = array{
+ *    serverUrl: string,
+ *    directoryKey: string,
+ *    isConfigurationValid: bool,
+ *    message: string,
+ *  }
+ *
+ * @psalm-type OlvidAdminConfiguration = array{
+ *    server: OlvidAdminServerConfiguration
+ *  }
+ *
  */
 class ResponseDefinitions {
 }

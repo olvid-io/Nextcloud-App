@@ -32,7 +32,7 @@
 		"cs:fix": "php-cs-fixer fix",
 		"psalm:check": "psalm --no-cache",
 		"test:unit": "phpunit tests -c tests/phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
-		"openapi": "generate-spec",
+		"openapi": "mkdir -p openapi && cd openapi && generate-spec ..",
 		"rector": "rector && composer cs:fix"
 	},
 	"require": {
