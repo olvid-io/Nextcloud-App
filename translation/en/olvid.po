@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 18:23+0100\n"
+"POT-Creation-Date: 2026-11-09 10:04+0100\n"
 "PO-Revision-Date: 2026-06-30 15:25+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -31,12 +31,12 @@ msgid ""
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:148
-msgid "Olvid server is reachable and directory license is valid."
+msgid "Olvid server is reachable and license is valid."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:150
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:152
-msgid "Directory license key was rejected by the Olvid server."
+msgid "License key was rejected by the Olvid server."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:154
@@ -261,7 +261,7 @@ msgid "Saving…"
 msgstr "Saving…"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:133
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:37
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:36
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:59
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/UserDetailsSidebar.vue:49
 msgid "Save"
@@ -363,12 +363,13 @@ msgstr "Could not generate magic link: {error}"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:3
 #, fuzzy
-msgid "Olvid server"
-msgstr "Olvid Server"
+msgid "Directory License"
+msgstr "Olvid Server Api Key"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:4
 msgid ""
-"Configure the Olvid distribution server used by this Nextcloud instance."
+"An Olvid Directory license is mandatory to use Nextcloud application.\n"
+"Write to us an email to get one: contact@olvid.io."
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:8
@@ -385,22 +386,16 @@ msgstr "Olvid Server Api Key"
 msgid "00000000-0000-0000-0000-000000000000"
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:20
-msgid ""
-"Required to use Nextcloud Application, write to us an email to get one: "
-"contact@olvid.io"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:26
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:25
 #, fuzzy
 msgid "Olvid Server url"
 msgstr "Olvid Server"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:28
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:27
 msgid "Edit only if you know what you are doing."
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:40
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:39
 #, fuzzy
 msgid "Test configuration"
 msgstr "Olvid configuration"
@@ -578,20 +573,26 @@ msgstr "No members yet."
 msgid "Invalid application configuration"
 msgstr "Olvid configuration"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:8
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:9
 msgid ""
-"You must configure a Directory License Key in Olvid section of "
-"Administration settings before starting using the app."
+"You must configure a License in Olvid section of Administration settings "
+"before starting using the app."
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:11
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:12
 msgid ""
 "Application configuration is not valid. Contact your Nextcloud administrator "
 "to fix it."
 msgstr ""
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:36
-msgid "Go to admin settings"
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:37
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:40
+msgid "Home"
+msgstr ""
+
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:38
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:7
+msgid "Admin settings"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/MagicLinkModal.vue:3
@@ -606,10 +607,6 @@ msgstr "Close"
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:4
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/OlvidNavigation.vue:48
 msgid "Olvid Settings"
-msgstr ""
-
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:7
-msgid "Admin settings"
 msgstr ""
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:11
@@ -804,6 +801,14 @@ msgstr "My Groups"
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/OlvidNavigation.vue:36
 msgid "Statistics"
 msgstr ""
+
+#, fuzzy
+#~ msgid "Set your Olvid Directory License."
+#~ msgstr "Olvid Server Api Key"
+
+#, fuzzy
+#~ msgid "Olvid server"
+#~ msgstr "Olvid Server"
 
 #~ msgid "Configure Olvid application."
 #~ msgstr "Configure Olvid application."

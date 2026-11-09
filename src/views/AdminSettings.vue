@@ -1,7 +1,7 @@
 <template>
 	<NcSettingsSection
-		:name="t('olvid', 'Olvid server')"
-		:description="t('olvid', 'Configure the Olvid distribution server used by this Nextcloud instance.')">
+		:name="t('olvid', 'Directory License')"
+		:description="t('olvid', 'An Olvid Directory license is mandatory to use Nextcloud application.\nWrite to us an email to get one: contact@olvid.io.')">
 		<NcNoteCard v-if="checking" type="info">
 			<div class="admin-settings__checking">
 				<NcLoadingIcon :size="20" />
@@ -17,7 +17,6 @@
 				v-model="directoryKey"
 				:label="t('olvid', 'Directory License Key')"
 				:placeholder="directoryKey ? t('olvid', '00000000-0000-0000-0000-000000000000') : ''"
-				:helperText="t('olvid', 'Required to use Nextcloud Application, write to us an email to get one: contact@olvid.io')"
 				:disabled="saving" />
 
 			<NcTextField
@@ -163,5 +162,9 @@ export default {
 
 .admin-settings__error {
 	color: var(--color-error-text);
+}
+
+:deep(.settings-section__desc) {
+	white-space: pre-line;
 }
 </style>

@@ -145,11 +145,11 @@ class AdminSettingsApiController extends OCSController {
 	private function checkCredentials(?string $serverUrl = null, ?string $directoryKey = null): array {
 		try {
 			if ($this->context->olvidServer->requestCheckCredentials($serverUrl, $directoryKey)) {
-				return [true, $this->l->t('Olvid server is reachable and directory license is valid.')];
+				return [true, $this->l->t('Olvid server is reachable and license is valid.')];
 			}
-			return [false, $this->l->t('Directory license key was rejected by the Olvid server.')];
+			return [false, $this->l->t('License key was rejected by the Olvid server.')];
 		} catch (InvalidDirectoryKeyException|LicenseKeyNotFoundException) {
-			return [false, $this->l->t('Directory license key was rejected by the Olvid server.')];
+			return [false, $this->l->t('License key was rejected by the Olvid server.')];
 		} catch (NetworkException) {
 			return [false, $this->l->t('Cannot reach the Olvid server, check the server url.')];
 		} catch (Throwable $e) {

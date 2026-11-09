@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: olvid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 18:23+0100\n"
+"POT-Creation-Date: 2026-11-09 10:04+0100\n"
 "PO-Revision-Date: 2026-06-30 15:24+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -32,13 +32,13 @@ msgstr ""
 "courriel pour en obtenir une : contact@olvid.io"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:148
-msgid "Olvid server is reachable and directory license is valid."
-msgstr "Le serveur Olvid est accessible et la licence d'annuaire est valide."
+msgid "Olvid server is reachable and license is valid."
+msgstr "Le serveur Olvid est accessible et la licence est valide."
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:150
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:152
-msgid "Directory license key was rejected by the Olvid server."
-msgstr "La clé de licence d'annuaire a été rejetée par le serveur Olvid."
+msgid "License key was rejected by the Olvid server."
+msgstr "La clé de licence a été rejetée par le serveur Olvid."
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/lib/Controller/AdminSettingsApiController.php:154
 msgid "Cannot reach the Olvid server, check the server url."
@@ -265,7 +265,7 @@ msgid "Saving…"
 msgstr "Enregistrement…"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/ProfileView.vue:133
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:37
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:36
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/GroupDetailsSidebar.vue:59
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/UserDetailsSidebar.vue:49
 msgid "Save"
@@ -358,15 +358,14 @@ msgid "Could not generate magic link"
 msgstr "Impossible de générer le lien magique."
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:3
-msgid "Olvid server"
-msgstr "Serveur Olvid"
+msgid "Directory License"
+msgstr "Licence Annuaire"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:4
 msgid ""
-"Configure the Olvid distribution server used by this Nextcloud instance."
-msgstr ""
-"Configurez le serveur de distribution Olvid utilisé par cette instance "
-"Nextcloud."
+"An Olvid Directory license is mandatory to use Nextcloud application.\n"
+"Write to us an email to get one: contact@olvid.io."
+msgstr "Une licence Olvid Directory est obligatoire pour utiliser l’application Nextcloud.\nEnvoyez-nous un e-mail pour en obtenir une : contact@olvid.io."
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:8
 msgid "Checking configuration…"
@@ -380,23 +379,15 @@ msgstr "Clé de licence d'annuaire"
 msgid "00000000-0000-0000-0000-000000000000"
 msgstr "00000000-0000-0000-0000-000000000000"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:20
-msgid ""
-"Required to use Nextcloud Application, write to us an email to get one: "
-"contact@olvid.io"
-msgstr ""
-"Obligatoire pour utiliser l’application Nextcloud, envoyez-nous un e-mail "
-"pour en obtenir une : contact@olvid.io"
-
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:26
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:25
 msgid "Olvid Server url"
 msgstr "URL du serveur Olvid"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:28
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:27
 msgid "Edit only if you know what you are doing."
 msgstr "Modifiez uniquement si vous savez ce que vous faites."
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:40
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/views/AdminSettings.vue:39
 msgid "Test configuration"
 msgstr "Tester la configuration"
 
@@ -571,13 +562,15 @@ msgstr "Aucun membre pour le moment."
 msgid "Invalid application configuration"
 msgstr "Configuration Olvid invalide"
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:8
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:9
 msgid ""
-"You must configure a Directory License Key in Olvid section of "
-"Administration settings before starting using the app."
-msgstr "Vous devez configurer une clé de licence d'anuaire dans la section Olvid des paramètres d’administration avant de commencer à utiliser l’application."
+"You must configure a License in Olvid section of Administration settings "
+"before starting using the app."
+msgstr ""
+"Vous devez configurer une licence dans la section Olvid des paramètres "
+"d’administration avant de commencer à utiliser l’application."
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:11
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:12
 msgid ""
 "Application configuration is not valid. Contact your Nextcloud administrator "
 "to fix it."
@@ -585,9 +578,15 @@ msgstr ""
 "La configuration de l’application n’est pas valide. Contactez votre "
 "administrateur Nextcloud pour corriger le problème."
 
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:36
-msgid "Go to admin settings"
-msgstr "Paramètres administrateur"
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:37
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:40
+msgid "Home"
+msgstr "Accueil"
+
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/InvalidConfigurationAlertModal.vue:38
+#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:7
+msgid "Admin settings"
+msgstr "Paramètres d’administration"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/MagicLinkModal.vue:3
 msgid "Magic Link — {name}"
@@ -601,10 +600,6 @@ msgstr "Fermer"
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/OlvidNavigation.vue:48
 msgid "Olvid Settings"
 msgstr "Paramètres Olvid"
-
-#: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:7
-msgid "Admin settings"
-msgstr "Paramètres d’administration"
 
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/components/OlvidAppSettings.vue:11
 msgid "Open Olvid admin settings"
@@ -789,6 +784,24 @@ msgstr "Groupes"
 #: /home/visago/Desktop/olvid/nextcloud-olvid/src/OlvidNavigation.vue:36
 msgid "Statistics"
 msgstr "Statistiques"
+
+#~ msgid "License"
+#~ msgstr "Licence"
+
+#~ msgid "Set your Olvid Directory License."
+#~ msgstr "Entrez votre licence Olvid Directory."
+
+#~ msgid "Olvid server"
+#~ msgstr "Serveur Olvid"
+
+#~ msgid ""
+#~ "Configure the Olvid distribution server used by this Nextcloud instance."
+#~ msgstr ""
+#~ "Configurez le serveur de distribution Olvid utilisé par cette instance "
+#~ "Nextcloud."
+
+#~ msgid "Go to admin settings"
+#~ msgstr "Paramètres administrateur"
 
 #~ msgid "Configure Olvid application."
 #~ msgstr "Configurer l’application Olvid."
