@@ -157,70 +157,10 @@ class PutKey extends AbstractAuthenticatedDeviceApiHandler {
 				$olvidUser = $this->context->db->user->update($olvidUser);
 			}
 			// new and previous identity are different,
-			// trying to override previous identity: we always allow self revocation, just erase previous identity
 			else {
-				// revoke current license key if there is one
-				if ($olvidUser->getLicenseKey()) {
-					$this->context->olvidServer->revokeLicenseKeyNoFail($olvidUser->getLicenseKey());
-					$olvidUser->setLicenseKey(null);
-				}
-
-				// clear old identity
-				$olvidUser->setBytesIdentity(null);
-				// re-generate the nonce so that any identity enrolled with this user is automatically unbound from keycloak
-				$olvidUser->setNonce(RandomUtil::uuid_create());
-
-				// sign out the user: set revoked_before to mark any token signed before now to be revoked
-				$olvidUser->setSessionRevokedBefore(TimeUtil::currentTimeMillis());
-
-				// create and set new license key
-				// this might fail if an olvid directory license have not been set
-				try {
-					$newLicenseKey = $this->context->olvidServer->requestNewLicenseKey();
-					$olvidUser->setLicenseKey($newLicenseKey);
-				} catch (InvalidConfigurationException) {
-					$this->logger->warning('PutKey: cannot create user license key: invalid configuration');
-				} catch (Exception $e) {
-					$this->logger->warning('PutKey: cannot create user license key: unexpected exception', ['exception' => $e]);
-				}
-
-				// we can now set new identity and update registration timestamp
-				$olvidUser->setBytesIdentity($bytesIdentity);
-				$olvidUser->setRegistrationTimestamp(TimeUtil::currentTimeMillis());
-
-				// sign user details and store them
-				$jsonUserDetails = $olvidUser->computeJsonUserDetails();
-				$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
-
-				// save olvid user in database
-				$olvidUser = $this->context->db->user->update($olvidUser);
-
-				// recompute all groups blob for this user enabled groups
-				$nextcloudGroups = $this->context->nextcloud->groupManager->getUserGroups($nextcloudUser);
-				foreach ($nextcloudGroups as $nextcloudGroup) {
-					// check group exists and is enabled
-					$olvidGroup = $this->context->db->group->getByGroupIdOrNull($nextcloudGroup->getGID());
-					if ($olvidGroup === null) {
-						continue;
-					}
-					if (!$olvidGroup->getEnabled()) {
-						continue;
-					}
-
-					try {
-						// re-compute group blob and save in db
-						$jsonGroupBlob = $olvidGroup->computeBlob($this->context->nextcloud->groupManager->getNextcloudGroupMemberIds($nextcloudGroup), $this->context);
-						$olvidGroup->setSignedGroupBlob($this->context->signatory->sign($jsonGroupBlob->jsonSerialize()));
-						$olvidGroup->setLastModificationTimestamp(TimeUtil::currentTimeMillis());
-						$this->context->db->group->update($olvidGroup);
-					} catch (Exception $e) {
-						$this->logger->error('putKey: cannot update group blob: ' . $nextcloudGroup->getGID(), ['exception' => $e]);
-						continue;
-					}
-
-					// notify group members
-					$this->context->olvidServer->sendGroupNotificationNoFail($olvidGroup->getPushTopic());
-				}
+				// trying to override previous identity: not supposed to happen in Nextcloud, always return an error
+				// and let user / admin revoke identity in application
+				return $this->identityAlreadyUploaded();
 			}
 
 			// delete any magic token for this user

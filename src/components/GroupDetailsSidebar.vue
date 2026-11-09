@@ -1,8 +1,9 @@
 <template>
 	<NcAppSidebar
+		v-if="group"
 		:name="group.displayName"
 		:subname="group.id !== group.displayName ? group.id : ''"
-		@close="$emit('close')">
+		@close="close">
 		<!-- Details tab -->
 		<NcAppSidebarTab id="details" :name="t('olvid', 'Details')" :order="0">
 			<template #icon>
@@ -13,7 +14,7 @@
 				<!-- Group avatar picker: uploads immediately on selection -->
 				<div class="group-sidebar__avatar">
 					<AvatarPicker
-						:currentUrl="currentAvatarUrl"
+						:currentUrl="groups.avatarUrl(group.id)"
 						:displayName="group.displayName"
 						:size="192"
 						@change="handleAvatarChange" />
@@ -33,7 +34,7 @@
 					:modelValue="group.enabled"
 					type="switch"
 					:aria-label="t('olvid', 'Enable Olvid for {name} group', { name: group.id })"
-					@update:modelValue="enableOlvidDiscussionForGroup(group, $event)"
+					@update:modelValue="enableOlvidDiscussion"
 					@click.stop>
 					{{ t('olvid', 'Olvid Discussion') }}
 				</NcCheckboxRadioSwitch>
@@ -123,10 +124,11 @@
 	</NcAppSidebar>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
+<script setup>
 import { showError } from '@nextcloud/dialogs'
-import { generateOcsUrl } from '@nextcloud/router'
+import { t } from '@nextcloud/l10n'
+import { computed, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import NcAppSidebar from '@nextcloud/vue/components/NcAppSidebar'
 import NcAppSidebarTab from '@nextcloud/vue/components/NcAppSidebarTab'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -137,159 +139,140 @@ import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
 import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
 import AvatarPicker from './AvatarPicker.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
+import { useGroupsStore } from '../stores/groups.js'
+import { useUsersStore } from '../stores/users.js'
 
-export default {
-	name: 'GroupDetailsSidebar',
-	components: { IconCardAccountDetails, IconAccountGroup, AvatarPicker, OlvidAvatar, NcCheckboxRadioSwitch, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem },
-
-	props: {
-		group: {
-			type: Object,
-			required: true,
-		},
+const props = defineProps({
+	groupId: {
+		type: String,
+		required: true,
 	},
+})
 
-	emits: ['close', 'updated'],
+const groups = useGroupsStore()
+const users = useUsersStore()
+const router = useRouter()
 
-	data() {
-		return {
-			form: {
-				discussionName: this.group.discussionName ?? '',
-				discussionDescription: this.group.discussionDescription ?? '',
-			},
+const group = computed(() => groups.byId[props.groupId])
+const members = computed(() => groups.membersOf(props.groupId))
 
-			members: [...(this.group.members ?? [])],
-			saving: false,
-			saveError: null,
-			saveSuccess: false,
-			searchQuery: '',
-			searchResults: [],
-			searchTimer: null,
-			// Avatar upload state (separate from the main Save flow)
-			avatarUploading: false,
-			avatarError: null,
-		}
-	},
+// Local draft of the editable fields, committed on Save
+const form = reactive({ discussionName: '', discussionDescription: '' })
+const saving = ref(false)
+const saveError = ref(null)
+const saveSuccess = ref(false)
 
-	computed: {
-		/**
-		 * The ?photoUid= query parameter contains the photoUid so the browser fetches a
-		 * fresh image whenever the avatar changes (cache-busting).
-		 */
-		currentAvatarUrl() {
-			if (!this.group.photoUid) {
-				return null
-			}
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar?photoUid=${encodeURIComponent(this.group.photoUid)}`)
-		},
-	},
+// Avatar upload state (separate from the main Save flow)
+const avatarUploading = ref(false)
+const avatarError = ref(null)
 
-	watch: {
-		group(newGroup) {
-			this.form.discussionName = newGroup.discussionName ?? ''
-			this.form.discussionDescription = newGroup.discussionDescription ?? ''
-			this.members = [...(newGroup.members ?? [])]
-		},
+const searchQuery = ref('')
+const searchResultIds = ref([])
+let searchTimer = null
+const searchResults = computed(() => {
+	const memberIds = new Set(group.value?.memberIds ?? [])
+	return searchResultIds.value.filter((id) => !memberIds.has(id)).map((id) => users.byId[id]).filter(Boolean)
+})
 
-		searchQuery(val) {
-			clearTimeout(this.searchTimer)
-			if (!val.trim()) {
-				this.searchResults = []
-				return
-			}
-			this.searchTimer = setTimeout(() => this.searchUsers(), 300)
-		},
-	},
+// Refill the draft when another group is shown or when the stored values change
+// (e.g. groups list arriving after a direct load of /groups/:groupId)
+watch(() => [props.groupId, group.value?.discussionName, group.value?.discussionDescription], () => {
+	form.discussionName = group.value?.discussionName ?? ''
+	form.discussionDescription = group.value?.discussionDescription ?? ''
+}, { immediate: true })
 
-	methods: {
-		/**
-		 * Called by AvatarPicker when the user selects a new image.
-		 * Uploads immediately — no need to click the Save button for the avatar.
-		 *
-		 * @param {string} dataUrl dataUrl
-		 */
-		async handleAvatarChange(dataUrl) {
-			this.avatarUploading = true
-			this.avatarError = null
-			try {
-				const res = await axios.put(
-					generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/avatar`),
-					{ photoData: dataUrl },
-				)
-				// Propagate the new photoUid so the parent updates the group object
-				// (which changes currentAvatarUrl and clears AvatarPicker's pending preview)
-				this.$emit('updated', { id: this.group.id, photoUid: res.data.photoUid })
-			} catch (e) {
-				this.avatarError = e.response?.data?.error ?? e.message
-			} finally {
-				this.avatarUploading = false
-			}
-		},
+watch(() => props.groupId, () => {
+	saveError.value = null
+	saveSuccess.value = false
+	avatarError.value = null
+	searchQuery.value = ''
+})
 
-		async save() {
-			this.saving = true
-			this.saveError = null
-			this.saveSuccess = false
-			try {
-				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}`), {
-					discussionName: this.form.discussionName,
-					discussionDescription: this.form.discussionDescription,
-				})
-				this.saveSuccess = true
-				this.$emit('updated', { id: this.group.id, ...this.form })
-			} catch (e) {
-				this.saveError = e.response?.data?.error ?? e.message
-			} finally {
-				this.saving = false
-			}
-		},
+// Unknown group id once the list is loaded: back to the list
+watch(() => groups.loaded && !group.value, (notFound) => {
+	if (notFound) {
+		router.replace({ name: 'groups' })
+	}
+}, { immediate: true })
 
-		async enableOlvidDiscussionForGroup(group, enabled) {
-			try {
-				group.enabled = enabled
-				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}`), { enabled })
-			} catch (e) {
-				group.enabled = !enabled
-				console.error('Could not enable/disable group', e)
-				showError(this.t('olvid', 'Could not update group'))
-			}
-		},
+watch(searchQuery, (val) => {
+	clearTimeout(searchTimer)
+	if (!val.trim()) {
+		searchResultIds.value = []
+		return
+	}
+	searchTimer = setTimeout(searchUsers, 300)
+})
 
-		async searchUsers() {
-			try {
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/users/search'), {
-					params: { query: this.searchQuery },
-				})
-				const memberIds = new Set(this.members.map((m) => m.id))
-				this.searchResults = (res.data.users ?? []).filter((u) => !memberIds.has(u.id))
-			} catch {
-				this.searchResults = []
-			}
-		},
+function close() {
+	router.push({ name: 'groups' })
+}
 
-		async addMember(user) {
-			try {
-				await axios.post(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/members/${encodeURIComponent(user.id)}`))
-				this.members.push(user)
-				this.searchResults = this.searchResults.filter((u) => u.id !== user.id)
-				this.$emit('updated', { id: this.group.id, members: [...this.members] })
-			} catch (e) {
-				console.error('addMember failed', e)
-				showError(this.t('olvid', 'Could not update group'))
-			}
-		},
+/**
+ * Called by AvatarPicker when the user selects a new image (or removes it).
+ * Uploads immediately — no need to click the Save button for the avatar.
+ *
+ * @param {string|null} dataUrl JPEG data URL, null to remove the photo
+ */
+async function handleAvatarChange(dataUrl) {
+	avatarUploading.value = true
+	avatarError.value = null
+	try {
+		await groups.uploadAvatar(props.groupId, dataUrl)
+	} catch (e) {
+		avatarError.value = e.response?.data?.error ?? e.message
+	} finally {
+		avatarUploading.value = false
+	}
+}
 
-		async removeMember(member) {
-			try {
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(this.group.id)}/members/${encodeURIComponent(member.id)}`))
-				this.members = this.members.filter((m) => m.id !== member.id)
-				this.$emit('updated', { id: this.group.id, members: [...this.members] })
-			} catch (e) {
-				console.error('removeMember failed', e)
-				showError(this.t('olvid', 'Could not update group'))
-			}
-		},
-	},
+async function save() {
+	saving.value = true
+	saveError.value = null
+	saveSuccess.value = false
+	try {
+		await groups.update(props.groupId, { ...form })
+		saveSuccess.value = true
+	} catch (e) {
+		saveError.value = e.response?.data?.error ?? e.message
+	} finally {
+		saving.value = false
+	}
+}
+
+async function enableOlvidDiscussion(enabled) {
+	try {
+		await groups.update(props.groupId, { enabled })
+	} catch (e) {
+		console.error('Could not enable/disable group', e)
+		showError(t('olvid', 'Could not update group'))
+	}
+}
+
+async function searchUsers() {
+	try {
+		searchResultIds.value = await users.search(searchQuery.value)
+	} catch {
+		searchResultIds.value = []
+	}
+}
+
+async function addMember(user) {
+	try {
+		await groups.addMember(props.groupId, user.id)
+	} catch (e) {
+		console.error('addMember failed', e)
+		showError(t('olvid', 'Could not update group'))
+	}
+}
+
+async function removeMember(member) {
+	try {
+		await groups.removeMember(props.groupId, member.id)
+	} catch (e) {
+		console.error('removeMember failed', e)
+		showError(t('olvid', 'Could not update group'))
+	}
 }
 </script>
 

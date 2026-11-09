@@ -11,31 +11,32 @@
 		</div>
 
 		<div class="groups-view">
-			<NcLoadingIcon v-if="loading" :size="44" />
+			<!-- only show the spinner on first load, later fetches refresh the list in place -->
+			<NcLoadingIcon v-if="!groups.loaded" :size="44" />
 
 			<NcEmptyContent
-				v-else-if="!groups.length"
+				v-else-if="!groups.list.length"
 				:name="t('olvid', 'No groups')"
 				:description="t('olvid', 'No Nextcloud groups found.')" />
 
 			<ul v-else class="groups-view__list">
 				<NcListItem
-					v-for="group in groups"
+					v-for="group in groups.list"
 					:key="group.id"
 					:name="group.displayName"
 					:active="$route.params.groupId === group.id"
 					:forceDisplayActions="true"
-					@click="$emit('openGroupSidebar', group)">
+					@click="openGroup(group)">
 					<template #icon>
 						<OlvidAvatar
 							:displayName="group.displayName"
 							:isNoUser="true"
 							:useOlvid="group.enabled"
-							:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
+							:url="groups.avatarUrl(group.id)" />
 					</template>
 
 					<template #subname>
-						{{ n('olvid', '{n} member', '{n} members', group.members.length, { n: group.members.length }) }}
+						{{ n('olvid', '{n} member', '{n} members', group.memberIds.length, { n: group.memberIds.length }) }}
 					</template>
 
 					<template #indicator>
@@ -54,7 +55,7 @@
 						<NcButton
 							size="small"
 							variant="primary"
-							@click.stop="$emit('openGroupSidebar', group)">
+							@click.stop="openGroup(group)">
 							<template #icon>
 								<IconPencil :size="20" />
 							</template>
@@ -68,15 +69,15 @@
 		<!-- Create group modal -->
 		<CreateGroupModal
 			v-if="showCreateModal"
-			@close="showCreateModal = false"
-			@created="onGroupCreated" />
+			@close="showCreateModal = false" />
 	</NcAppContent>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
+<script setup>
 import { showError } from '@nextcloud/dialogs'
-import { generateOcsUrl } from '@nextcloud/router'
+import { t } from '@nextcloud/l10n'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
@@ -87,86 +88,32 @@ import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
 import IconPlus from 'vue-material-design-icons/Plus.vue'
 import CreateGroupModal from '../components/CreateGroupModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
+import { useGroupsStore } from '../stores/groups.js'
 
-export default {
-	name: 'GroupsView',
-	components: { IconPencil, IconPlus, OlvidAvatar, CreateGroupModal, NcListItem, NcButton, NcAppContent, NcCheckboxRadioSwitch, NcEmptyContent, NcLoadingIcon },
+const groups = useGroupsStore()
+const router = useRouter()
+const showCreateModal = ref(false)
 
-	emits: ['openGroupSidebar'],
+onMounted(async () => {
+	try {
+		await groups.fetchAll()
+	} catch (e) {
+		console.error('Could not load groups', e)
+		showError(t('olvid', 'Could not load groups'))
+	}
+})
 
-	data() {
-		return {
-			groups: [],
-			loading: true,
-			showCreateModal: false,
-		}
-	},
+function openGroup(group) {
+	router.push({ name: 'group-detail', params: { groupId: group.id } })
+}
 
-	watch: {
-		'$route.params.groupId': function(id) {
-			if (!id) {
-				return
-			}
-			this.openGroupFromRoute()
-		},
-	},
-
-	async mounted() {
-		await this.fetchGroups()
-		this.openGroupFromRoute()
-	},
-
-	methods: {
-		async fetchGroups() {
-			this.loading = true
-			try {
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/groups'))
-				this.groups = res.data.groups ?? []
-			} catch (e) {
-				console.error('Could not load groups', e)
-				showError(this.t('olvid', 'Could not load groups'))
-			} finally {
-				this.loading = false
-			}
-		},
-
-		openGroupFromRoute() {
-			const id = this.$route.params.groupId
-			if (!id) {
-				return
-			}
-			const group = this.groups.find((g) => g.id === id)
-			if (group) {
-				this.$emit('openGroupSidebar', group)
-			}
-		},
-
-		async enableOlvidDiscussionForGroup(group, enabled) {
-			group.enabled = enabled
-			try {
-				await axios.put(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}`), { enabled })
-			} catch (e) {
-				group.enabled = !enabled
-				console.error('Could not enable/disable group', e)
-				showError(this.t('olvid', 'Could not update group'))
-			}
-		},
-
-		applyGroupPatch(patch) {
-			const idx = this.groups.findIndex((g) => g.id === patch.id)
-			if (idx !== -1) {
-				this.groups.splice(idx, 1, { ...this.groups[idx], ...patch })
-			}
-		},
-
-		onGroupCreated(group) {
-			this.groups.push(group)
-		},
-
-		buildGroupAvatarUrl(group) {
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`)
-		},
-	},
+async function enableOlvidDiscussionForGroup(group, enabled) {
+	try {
+		await groups.update(group.id, { enabled })
+	} catch (e) {
+		console.error('Could not enable/disable group', e)
+		showError(t('olvid', 'Could not update group'))
+	}
 }
 </script>
 

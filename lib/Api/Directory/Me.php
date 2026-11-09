@@ -81,7 +81,9 @@ class Me extends AbstractAuthenticatedDeviceApiHandler {
 		$this->context->db->user->update($olvidUser);
 
 		$response[Constants::ME_RESPONSE_SERVER] = $this->context->nextcloud->appManager->getOlvidServerUrl();
-		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = true;
+		// Nextcloud app UX force you to revoke an identity before creating a new magic link, so you cannot
+		$response[Constants::ME_RESPONSE_REVOCATION_ALLOWED] = false;
+		// transfer restriction are not implemented
 		$response[Constants::ME_RESPONSE_TRANSFER_RESTRICTED] = false;
 
 		// TODO deprecated, delete it when possible

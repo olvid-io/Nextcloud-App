@@ -142,7 +142,7 @@
 
 						<UnlinkIdentityModal
 							v-if="unlinkModalOpen"
-							:user="currentUser"
+							:user="me.user"
 							isSelf
 							@close="unlinkModalOpen = false"
 							@unlinked="onIdentityUnlinked" />
@@ -153,27 +153,27 @@
 						<NcLoadingIcon v-if="groupsLoading" :size="32" />
 
 						<NcEmptyContent
-							v-else-if="!ownGroups.length"
+							v-else-if="!me.groups.length"
 							:name="t('olvid', 'No groups')"
 							:description="t('olvid', 'You are not a member of any group.')" />
 
-						<div v-if="ownGroups.length">
+						<div v-if="me.groups.length">
 							<h4>{{ t('olvid', 'Your Groups') }}</h4>
 							<p class="profile-view__desc">
 								{{ t('olvid', 'The Nextcloud groups you are member of.') }}
 							</p>
 							<ul class="profile-view__groups-list">
 								<NcListItem
-									v-for="group in ownGroups"
+									v-for="group in me.groups"
 									:key="group.id"
 									:name="group.displayName"
-									@click="isAdmin && $emit('openGroupSidebar', group)">
+									@click="openGroup(group)">
 									<template #icon>
 										<OlvidAvatar
 											:displayName="group.displayName"
 											:isNoUser="true"
 											:useOlvid="group.enabled"
-											:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
+											:url="groups.avatarUrl(group.id)" />
 									</template>
 									<template #subname>
 										{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
@@ -188,206 +188,182 @@
 	</NcAppContent>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
+<script setup>
 import { showError } from '@nextcloud/dialogs'
-import { generateFilePath, generateOcsUrl } from '@nextcloud/router'
+import { t } from '@nextcloud/l10n'
+import { generateFilePath } from '@nextcloud/router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import InvalidConfigurationAlertModal from '../components/InvalidConfigurationAlertModal.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
+import { useGroupsStore } from '../stores/groups.js'
+import { useMeStore } from '../stores/me.js'
 
-export default {
-	name: 'ProfileView',
-	components: { NcAppContent, NcButton, NcEmptyContent, NcListItem, NcLoadingIcon, NcTextField, OlvidAvatar, OlvidQrDisplay, UnlinkIdentityModal },
+const me = useMeStore()
+const groups = useGroupsStore()
+const router = useRouter()
 
-	emits: ['openGroupSidebar', 'updated'],
+const appLogoUrl = generateFilePath('olvid', 'img', 'olvid.svg')
 
-	data() {
-		return {
-			loading: true,
-			// step: 'install' | 'identity' | 'link' | 'enrolled' | 'registered'
-			step: 'install',
-			form: { firstname: '', lastname: '', position: '', company: '' },
-			currentUser: null,
+const loading = ref(true)
+// step: 'install' | 'identity' | 'link' | 'enrolled' | 'registered'
+const step = ref('install')
+// Local draft of the Olvid profile fields (wizard + profile form)
+const form = reactive({ firstname: '', lastname: '', position: '', company: '' })
 
-			// identity step
-			formError: null,
-			magicLink: null,
-			magicLinkLoading: false,
-			magicLinkError: null,
+// identity step
+const formError = ref(null)
+const magicLink = ref(null)
+const magicLinkLoading = ref(false)
+const magicLinkError = ref(null)
 
-			// link step (polling)
-			pollInterval: null,
+// link step (polling)
+let pollInterval = null
 
-			// registered step — profile save
-			saving: false,
-			saveError: null,
-			saveSuccess: false,
+// registered step — profile save
+const saving = ref(false)
+const saveError = ref(null)
+const saveSuccess = ref(false)
 
-			// registered step — unlink/revoke identity
-			unlinkModalOpen: false,
+// registered step — unlink/revoke identity
+const unlinkModalOpen = ref(false)
 
-			// registered step — groups
-			ownGroups: [], // all the managed (non-open) groups user is member of (as OlvidGroupFull)
-			groupsLoading: false,
-			isAdmin: false,
+// registered step — groups (all the managed groups user is member of, from the me store)
+const groupsLoading = ref(false)
+
+const olvidDisplayNameFromForm = computed(() => {
+	const name = `${form.firstname} ${form.lastname}`.trim()
+	const role = [form.position, form.company].filter(Boolean).join(' @ ')
+	return role ? `${name} (${role})` : name
+})
+
+watch(step, (newStep) => {
+	if (newStep === 'link') {
+		startPolling()
+	} else {
+		stopPolling()
+	}
+})
+
+onMounted(async () => {
+	try {
+		const user = await me.load()
+		fillForm(user)
+		if (user.useOlvid) {
+			step.value = 'registered'
+			await fetchGroups()
 		}
-	},
+	} catch (e) {
+		console.error('Could not fetch Olvid status', e)
+		showError(t('olvid', 'Could not fetch user'))
+	} finally {
+		loading.value = false
+	}
+})
 
-	computed: {
-		appLogoUrl() {
-			return generateFilePath('olvid', 'img', 'olvid.svg')
-		},
+onBeforeUnmount(stopPolling)
 
-		olvidDisplayNameFromForm() {
-			const name = `${this.form.firstname} ${this.form.lastname}`.trim()
-			const role = [this.form.position, this.form.company].filter(Boolean).join(' @ ')
-			return role ? `${name} (${role})` : name
-		},
+function fillForm(user) {
+	form.firstname = user.firstname ?? ''
+	form.lastname = user.lastname ?? ''
+	form.position = user.position ?? ''
+	form.company = user.company ?? ''
+}
 
-	},
+// ── enrollment flow ────────────────────────────────────────────────────
+async function generateMagicLink() {
+	if (!form.firstname.trim() && !form.lastname.trim()) {
+		formError.value = t('olvid', 'At least a first name or last name is required.')
+		return
+	}
+	formError.value = null
+	magicLinkLoading.value = true
+	magicLinkError.value = null
+	try {
+		await me.save({ ...form })
+		magicLink.value = await me.getMagicLink()
+		step.value = 'link'
+	} catch (e) {
+		magicLinkError.value = t('olvid', 'Could not generate magic link: {error}', { error: e.response?.data?.error ?? e.message })
+	} finally {
+		magicLinkLoading.value = false
+	}
+}
 
-	watch: {
-		step(newStep) {
-			if (newStep === 'link') {
-				this.startPolling()
-			} else {
-				this.stopPolling()
-			}
-		},
-	},
-
-	async mounted() {
+function startPolling() {
+	stopPolling()
+	pollInterval = setInterval(async () => {
 		try {
-			const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
-			this.currentUser = res.data
-			this.isAdmin = res.data.isAdmin ?? false
-			this.form = {
-				firstname: res.data.firstname ?? '',
-				lastname: res.data.lastname ?? '',
-				position: res.data.position ?? '',
-				company: res.data.company ?? '',
-			}
-			if (res.data.useOlvid) {
-				this.step = 'registered'
-				await this.fetchGroups()
+			const user = await me.fetch()
+			if (user.useOlvid) {
+				stopPolling()
+				fillForm(user)
+				step.value = 'enrolled'
 			}
 		} catch (e) {
-			console.error('Could not fetch Olvid status', e)
-			showError(this.t('olvid', 'Could not fetch user'))
-		} finally {
-			this.loading = false
+			console.error('Polling error', e)
 		}
-	},
+	}, 5000)
+}
 
-	beforeUnmount() {
-		this.stopPolling()
-	},
+function stopPolling() {
+	if (pollInterval) {
+		clearInterval(pollInterval)
+		pollInterval = null
+	}
+}
 
-	methods: {
-		// ── enrollment flow ────────────────────────────────────────────────────
-		async generateMagicLink() {
-			if (!this.form.firstname.trim() && !this.form.lastname.trim()) {
-				this.formError = this.t('olvid', 'At least a first name or last name is required.')
-				return
-			}
-			this.formError = null
-			this.magicLinkLoading = true
-			this.magicLinkError = null
-			try {
-				await axios.put(generateOcsUrl('/apps/olvid/app/me'), this.form)
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/me/getMagicLink'))
-				this.magicLink = res.data.configurationUrl
-				this.step = 'link'
-			} catch (e) {
-				this.magicLinkError = this.t('olvid', 'Could not generate magic link: {error}', { error: e.response?.data?.error ?? e.message })
-			} finally {
-				this.magicLinkLoading = false
-			}
-		},
+async function enterRegistered() {
+	step.value = 'registered'
+	await fetchGroups()
+}
 
-		startPolling() {
-			this.stopPolling()
-			this.pollInterval = setInterval(async () => {
-				try {
-					const res = await axios.get(generateOcsUrl('/apps/olvid/app/me'))
-					if (res.data.useOlvid) {
-						this.stopPolling()
-						this.currentUser = res.data
-						this.form = {
-							firstname: res.data.firstname ?? '',
-							lastname: res.data.lastname ?? '',
-							position: res.data.position ?? '',
-							company: res.data.company ?? '',
-						}
-						this.step = 'enrolled'
-					}
-				} catch (e) {
-					console.error('Polling error', e)
-				}
-			}, 5000)
-		},
+// ── registered — profile save ──────────────────────────────────────────
+async function saveProfile() {
+	saving.value = true
+	saveError.value = null
+	saveSuccess.value = false
+	try {
+		await me.save({ ...form })
+		saveSuccess.value = true
+	} catch (e) {
+		saveError.value = t('olvid', 'Could not save profile: {error}', { error: e.response?.data?.error ?? e.message })
+	} finally {
+		saving.value = false
+	}
+}
 
-		stopPolling() {
-			if (this.pollInterval) {
-				clearInterval(this.pollInterval)
-				this.pollInterval = null
-			}
-		},
+// ── registered — unlink ────────────────────────────────────────────────
+function onIdentityUnlinked() {
+	unlinkModalOpen.value = false
+	magicLink.value = null
+	step.value = 'install'
+}
 
-		async enterRegistered() {
-			this.step = 'registered'
-			await this.fetchGroups()
-		},
+// ── registered — groups ────────────────────────────────────────────────
+async function fetchGroups() {
+	groupsLoading.value = true
+	try {
+		await me.fetchGroups()
+	} catch (e) {
+		console.error('Could not load groups', e)
+		showError(t('olvid', 'Could not load groups'))
+	} finally {
+		groupsLoading.value = false
+	}
+}
 
-		// ── registered — profile save ──────────────────────────────────────────
-		async saveProfile() {
-			this.saving = true
-			this.saveError = null
-			this.saveSuccess = false
-			try {
-				await axios.put(generateOcsUrl('/apps/olvid/app/me'), this.form)
-				this.saveSuccess = true
-			} catch (e) {
-				this.saveError = this.t('olvid', 'Could not save profile: {error}', { error: e.response?.data?.error ?? e.message })
-			} finally {
-				this.saving = false
-			}
-		},
-
-		// ── registered — unlink ────────────────────────────────────────────────
-		onIdentityUnlinked() {
-			this.unlinkModalOpen = false
-			this.currentUser = { ...this.currentUser, useOlvid: false }
-			this.magicLink = null
-			this.step = 'install'
-		},
-
-		// ── registered — groups ────────────────────────────────────────────────
-		async fetchGroups() {
-			this.groupsLoading = true
-			try {
-				const groupsPromise = axios.get(generateOcsUrl('/apps/olvid/app/me/groups'))
-				this.ownGroups = (await groupsPromise).data.groups ?? []
-			} catch (e) {
-				console.error('Could not load groups', e)
-				showError(this.t('olvid', 'Could not load groups'))
-			} finally {
-				this.groupsLoading = false
-			}
-		},
-
-		buildGroupAvatarUrl(group) {
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`)
-		},
-	},
+function openGroup(group) {
+	if (me.isAdmin) {
+		router.push({ name: 'group-detail', params: { groupId: group.id } })
+	}
 }
 </script>
 

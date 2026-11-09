@@ -1,8 +1,9 @@
 <template>
 	<NcAppSidebar
+		v-if="user"
 		:name="user.displayName"
 		:subname="user.id !== user.displayName ? user.id : ''"
-		@close="$emit('close')">
+		@close="close">
 		<!-- Profile tab -->
 		<NcAppSidebarTab id="profile" :name="t('olvid', 'Olvid Profile')" :order="0">
 			<template #icon>
@@ -53,7 +54,7 @@
 					<NcButton v-if="!user.useOlvid"
 						class="user-sidebar__button"
 						:disabled="loadingMagicLink === user.id"
-						@click.stop="openMagicLink(user)">
+						@click.stop="openMagicLink">
 						{{ t('olvid', 'Magic Link') }}
 					</NcButton>
 				</div>
@@ -74,7 +75,7 @@
 		</NcAppSidebarTab>
 
 		<!-- Groups tab -->
-		<NcAppSidebarTab id="groups" :name="t('olvid', 'Groups ({n})', { n: groups.length })" :order="1">
+		<NcAppSidebarTab id="groups" :name="t('olvid', 'Groups ({n})', { n: userGroups.length })" :order="1">
 			<template #icon>
 				<IconAccountGroup :size="20" />
 			</template>
@@ -93,7 +94,11 @@
 							:name="group.displayName"
 							compact>
 							<template #icon>
-								<OlvidAvatar :displayName="group.displayName" :isNoUser="true" :useOlvid="group.enabled" />
+								<OlvidAvatar
+									:displayName="group.displayName"
+									:isNoUser="true"
+									:useOlvid="group.enabled"
+									:url="groups.avatarUrl(group.id)" />
 							</template>
 							<template v-if="group.id !== group.displayName" #subname>
 								{{ group.id }}
@@ -108,10 +113,10 @@
 				</div>
 
 				<!-- Current groups -->
-				<NcLoadingIcon v-if="loadingGroups" :size="32" />
+				<NcLoadingIcon v-if="!groups.loaded" :size="32" />
 				<ul v-else class="user-sidebar__group-list">
 					<NcListItem
-						v-for="group in groups"
+						v-for="group in userGroups"
 						:key="group.id"
 						:name="group.displayName">
 						<template #icon>
@@ -119,7 +124,7 @@
 								:displayName="group.displayName"
 								:isNoUser="true"
 								:useOlvid="group.enabled"
-								:url="group.photoUid ? buildGroupAvatarUrl(group) : undefined" />
+								:url="groups.avatarUrl(group.id)" />
 						</template>
 						<template v-if="group.id !== group.displayName" #subname>
 							{{ group.id }}
@@ -130,7 +135,7 @@
 							</NcButton>
 						</template>
 					</NcListItem>
-					<li v-if="!groups.length" class="user-sidebar__empty">
+					<li v-if="!userGroups.length" class="user-sidebar__empty">
 						{{ user.displayName }} {{ t('olvid', 'is not in any group.') }}
 					</li>
 				</ul>
@@ -149,7 +154,7 @@
 			v-if="showUnlinkConfirm"
 			:user="user"
 			@close="showUnlinkConfirm = false"
-			@unlinked="onIdentityUnlinked" />
+			@unlinked="showUnlinkConfirm = false" />
 
 		<!-- Delete confirmation modal -->
 		<DeleteUserModal
@@ -160,10 +165,11 @@
 	</NcAppSidebar>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
+<script setup>
 import { showError } from '@nextcloud/dialogs'
-import { generateOcsUrl } from '@nextcloud/router'
+import { t } from '@nextcloud/l10n'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import NcAppSidebar from '@nextcloud/vue/components/NcAppSidebar'
 import NcAppSidebarTab from '@nextcloud/vue/components/NcAppSidebarTab'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -176,175 +182,146 @@ import DeleteUserModal from './DeleteUserModal.vue'
 import MagicLinkModal from './MagicLinkModal.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
 import UnlinkIdentityModal from './UnlinkIdentityModal.vue'
+import { useGroupsStore } from '../stores/groups.js'
+import { useUsersStore } from '../stores/users.js'
 
-export default {
-	name: 'UserDetailsSidebar',
-	components: { IconCardAccountDetails, IconAccountGroup, MagicLinkModal, UnlinkIdentityModal, DeleteUserModal, NcAppSidebar, NcAppSidebarTab, NcTextField, NcButton, NcListItem, NcLoadingIcon, OlvidAvatar },
-
-	props: {
-		user: {
-			type: Object,
-			required: true,
-		},
+const props = defineProps({
+	userId: {
+		type: String,
+		required: true,
 	},
+})
 
-	emits: ['close', 'updated', 'deleted'],
+const users = useUsersStore()
+const groups = useGroupsStore()
+const router = useRouter()
 
-	data() {
-		return {
-			form: {
-				firstname: this.user.firstname ?? '',
-				lastname: this.user.lastname ?? '',
-				position: this.user.position ?? '',
-				company: this.user.company ?? '',
-			},
+const user = computed(() => users.byId[props.userId])
+// derived from the groups store member lists (all groups are loaded on mount)
+const userGroups = computed(() => groups.groupsOfUser(props.userId))
 
-			saving: false,
-			saveError: null,
-			saveSuccess: false,
-			groups: [],
-			loadingGroups: true,
-			groupSearchQuery: '',
-			groupSearchResults: [],
-			groupSearchTimer: null,
-			allGroups: [],
-			showDeleteConfirm: false,
-			magicLinkTarget: null,
-			magicLinkUrl: null,
-			loadingMagicLink: null,
-			showUnlinkConfirm: false,
-		}
-	},
+// Local draft of the Olvid profile fields, committed on Save
+const form = reactive({ firstname: '', lastname: '', position: '', company: '' })
+const saving = ref(false)
+const saveError = ref(null)
+const saveSuccess = ref(false)
 
-	computed: {
-		olvidDisplayNameFromForm() {
-			const name = `${this.form.firstname} ${this.form.lastname}`.trim()
-			const role = [this.form.position, this.form.company].filter(Boolean).join(' @ ')
-			return role ? `${name} (${role})` : name
-		},
-	},
+const groupSearchQuery = ref('')
+const groupSearchResults = ref([])
+let groupSearchTimer = null
 
-	watch: {
-		user(newUser) {
-			this.form.firstname = newUser.firstname ?? ''
-			this.form.lastname = newUser.lastname ?? ''
-			this.form.position = newUser.position ?? ''
-			this.form.company = newUser.company ?? ''
-			this.loadGroups()
-		},
+const showDeleteConfirm = ref(false)
+const showUnlinkConfirm = ref(false)
+const magicLinkTarget = ref(null)
+const magicLinkUrl = ref(null)
+const loadingMagicLink = ref(null)
 
-		groupSearchQuery(val) {
-			clearTimeout(this.groupSearchTimer)
-			if (!val.trim()) {
-				this.groupSearchResults = []
-				return
-			}
-			this.groupSearchTimer = setTimeout(() => this.searchGroups(), 300)
-		},
-	},
+const olvidDisplayNameFromForm = computed(() => {
+	const name = `${form.firstname} ${form.lastname}`.trim()
+	const role = [form.position, form.company].filter(Boolean).join(' @ ')
+	return role ? `${name} (${role})` : name
+})
 
-	async mounted() {
-		await Promise.all([this.loadGroups(), this.loadAllGroups()])
-	},
+// Refill the draft when another user is shown or when the stored values change
+// (e.g. users list arriving after a direct load of /users/:userId)
+watch(() => [props.userId, user.value?.firstname, user.value?.lastname, user.value?.position, user.value?.company], () => {
+	form.firstname = user.value?.firstname ?? ''
+	form.lastname = user.value?.lastname ?? ''
+	form.position = user.value?.position ?? ''
+	form.company = user.value?.company ?? ''
+}, { immediate: true })
 
-	methods: {
-		async save() {
-			this.saving = true
-			this.saveError = null
-			this.saveSuccess = false
-			try {
-				await axios.put(
-					generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}`),
-					this.form,
-				)
-				this.saveSuccess = true
-				this.$emit('updated', { id: this.user.id, ...this.form })
-			} catch (e) {
-				this.saveError = e.response?.data?.error ?? e.message
-			} finally {
-				this.saving = false
-			}
-		},
+watch(() => props.userId, () => {
+	saveError.value = null
+	saveSuccess.value = false
+	groupSearchQuery.value = ''
+})
 
-		async loadGroups() {
-			this.loadingGroups = true
-			try {
-				const res = await axios.get(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(this.user.id)}/groups`))
-				this.groups = res.data.groups ?? []
-			} catch (e) {
-				console.error('Could not load user groups', e)
-				showError(this.t('olvid', 'Could not load groups'))
-			} finally {
-				this.loadingGroups = false
-			}
-		},
+// Unknown user id once the list is loaded: back to the list
+watch(() => users.loaded && !user.value, (notFound) => {
+	if (notFound) {
+		router.replace({ name: 'users' })
+	}
+}, { immediate: true })
 
-		async loadAllGroups() {
-			try {
-				const res = await axios.get(generateOcsUrl('/apps/olvid/app/groups'))
-				this.allGroups = res.data.groups ?? []
-			} catch (e) {
-				console.error('Could not load groups list', e)
-				showError(this.t('olvid', 'Could not load groups'))
-			}
-		},
+watch(groupSearchQuery, (val) => {
+	clearTimeout(groupSearchTimer)
+	if (!val.trim()) {
+		groupSearchResults.value = []
+		return
+	}
+	groupSearchTimer = setTimeout(searchGroups, 300)
+})
 
-		searchGroups() {
-			const q = this.groupSearchQuery.toLowerCase()
-			const currentIds = new Set(this.groups.map((g) => g.id))
-			this.groupSearchResults = this.allGroups.filter((g) => !currentIds.has(g.id)
-				&& (g.displayName.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)))
-		},
+onMounted(async () => {
+	try {
+		await groups.fetchAll()
+	} catch (e) {
+		console.error('Could not load groups list', e)
+		showError(t('olvid', 'Could not load groups'))
+	}
+})
 
-		buildGroupAvatarUrl(group) {
-			return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/avatar?photoUid=${encodeURIComponent(group.photoUid)}`)
-		},
+function close() {
+	router.push({ name: 'users' })
+}
 
-		async addToGroup(group) {
-			try {
-				await axios.post(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/members/${encodeURIComponent(this.user.id)}`))
-				this.groups.push(group)
-				this.groupSearchResults = this.groupSearchResults.filter((g) => g.id !== group.id)
-			} catch (e) {
-				console.error('addToGroup failed', e)
-				showError(this.t('olvid', 'Could not update group'))
-			}
-		},
+async function save() {
+	saving.value = true
+	saveError.value = null
+	saveSuccess.value = false
+	try {
+		await users.update(props.userId, { ...form })
+		saveSuccess.value = true
+	} catch (e) {
+		saveError.value = e.response?.data?.error ?? e.message
+	} finally {
+		saving.value = false
+	}
+}
 
-		async removeFromGroup(group) {
-			try {
-				await axios.delete(generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(group.id)}/members/${encodeURIComponent(this.user.id)}`))
-				this.groups = this.groups.filter((g) => g.id !== group.id)
-			} catch (e) {
-				console.error('removeFromGroup failed', e)
-				showError(this.t('olvid', 'Could not update group'))
-			}
-		},
+function searchGroups() {
+	const q = groupSearchQuery.value.toLowerCase()
+	const currentIds = new Set(userGroups.value.map((g) => g.id))
+	groupSearchResults.value = groups.list.filter((g) => !currentIds.has(g.id)
+		&& (g.displayName.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)))
+}
 
-		onUserDeleted(userId) {
-			this.showDeleteConfirm = false
-			this.$emit('deleted', userId)
-		},
+async function addToGroup(group) {
+	try {
+		await groups.addMember(group.id, props.userId)
+		groupSearchResults.value = groupSearchResults.value.filter((g) => g.id !== group.id)
+	} catch (e) {
+		console.error('addToGroup failed', e)
+		showError(t('olvid', 'Could not update group'))
+	}
+}
 
-		async openMagicLink(user) {
-			this.loadingMagicLink = user.id
-			try {
-				const res = await axios.get(generateOcsUrl(`/apps/olvid/app/users/${encodeURIComponent(user.id)}/magicLink`))
-				this.magicLinkUrl = res.data.configurationUrl
-				this.magicLinkTarget = user
-			} catch (e) {
-				console.error('Could not generate magic link', e)
-				showError(this.t('olvid', 'Could not generate magic link'))
-			} finally {
-				this.loadingMagicLink = null
-			}
-		},
+async function removeFromGroup(group) {
+	try {
+		await groups.removeMember(group.id, props.userId)
+	} catch (e) {
+		console.error('removeFromGroup failed', e)
+		showError(t('olvid', 'Could not update group'))
+	}
+}
 
-		onIdentityUnlinked() {
-			this.showUnlinkConfirm = false
-			this.$emit('updated', { id: this.user.id, useOlvid: false })
-		},
-	},
+function onUserDeleted() {
+	showDeleteConfirm.value = false
+	close()
+}
+
+async function openMagicLink() {
+	loadingMagicLink.value = props.userId
+	try {
+		magicLinkUrl.value = await users.getMagicLink(props.userId)
+		magicLinkTarget.value = user.value
+	} catch (e) {
+		console.error('Could not generate magic link', e)
+		showError(t('olvid', 'Could not generate magic link'))
+	} finally {
+		loadingMagicLink.value = null
+	}
 }
 </script>
 
