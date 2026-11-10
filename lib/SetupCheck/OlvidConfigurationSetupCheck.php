@@ -35,7 +35,8 @@ class OlvidConfigurationSetupCheck implements ISetupCheck {
 			if ($this->context->olvidServer->requestCheckCredentialsNoFail()) {
 				return SetupResult::success($this->l10n->t('Olvid app is properly configured.'));
 			}
-		} catch (Throwable) {}
+		} catch (Throwable) {
+		}
 		return SetupResult::error($this->l10n->t('Olvid server is unreachable or not properly configured, check parameters in Olvid section of Admin settings.'));
 	}
 }

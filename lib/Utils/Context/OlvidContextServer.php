@@ -3,12 +3,12 @@
 namespace OCA\Olvid\Utils\Context;
 
 use Exception;
-use OCA\Olvid\Utils\Context\OlvidServer\LicenseKeyNotFoundException;
 use OCA\Olvid\Utils\Context\OlvidServer\InternalErrorException;
-use OCA\Olvid\Utils\Context\OlvidServer\InvalidDirectoryKeyException;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
+use OCA\Olvid\Utils\Context\OlvidServer\InvalidDirectoryKeyException;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidRequestException;
 use OCA\Olvid\Utils\Context\OlvidServer\JsonOlvidServerRequest;
+use OCA\Olvid\Utils\Context\OlvidServer\LicenseKeyNotFoundException;
 use OCA\Olvid\Utils\Context\OlvidServer\MissingBotPermissionException;
 use OCA\Olvid\Utils\Context\OlvidServer\NetworkException;
 use OCA\Olvid\Utils\Context\OlvidServer\OlvidServerException;
@@ -69,16 +69,16 @@ class OlvidContextServer {
 			if ($this->requestCheckCredentials($serverUrl, $directoryKey)) {
 				return true;
 			}
-			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: directory license key was rejected by the Olvid server.");
+			$this->logger->error('OlvidServer::requestCheckCredentialsNoFail: directory license key was rejected by the Olvid server.');
 			return false;
 		} catch (InvalidDirectoryKeyException|LicenseKeyNotFoundException) {
-			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: directory license key was rejected by the Olvid server.");
+			$this->logger->error('OlvidServer::requestCheckCredentialsNoFail: directory license key was rejected by the Olvid server.');
 			return false;
 		} catch (NetworkException) {
-			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: Cannot reach the Olvid server, check the server url.");
+			$this->logger->error('OlvidServer::requestCheckCredentialsNoFail: Cannot reach the Olvid server, check the server url.');
 			return false;
 		} catch (Throwable) {
-			$this->logger->error("OlvidServer::requestCheckCredentialsNoFail: Olvid server returned an unexpected error, check the server url.");
+			$this->logger->error('OlvidServer::requestCheckCredentialsNoFail: Olvid server returned an unexpected error, check the server url.');
 			return false;
 		}
 	}

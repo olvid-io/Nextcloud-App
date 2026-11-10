@@ -7,8 +7,8 @@ namespace OCA\Olvid\Controller;
 use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidContext;
-use OCA\Olvid\Utils\Context\OlvidServer\LicenseKeyNotFoundException;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidDirectoryKeyException;
+use OCA\Olvid\Utils\Context\OlvidServer\LicenseKeyNotFoundException;
 use OCA\Olvid\Utils\Context\OlvidServer\NetworkException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
@@ -74,7 +74,7 @@ class AdminSettingsApiController extends OCSController {
 		$configuration = $this->computeConfiguration();
 
 		// save if configuration is valid in app configuration
-		$this->context->nextcloud->appManager->setIsOlvidServerConfigurationValid($configuration["server"]["isConfigurationValid"]);
+		$this->context->nextcloud->appManager->setIsOlvidServerConfigurationValid($configuration['server']['isConfigurationValid']);
 
 		return new DataResponse($configuration);
 	}

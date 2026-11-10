@@ -10,7 +10,6 @@ use OCA\Olvid\AppInfo\Application;
 use OCA\Olvid\Models\JsonRevocationData;
 use OCA\Olvid\ResponseDefinitions;
 use OCA\Olvid\Utils\Context\OlvidServer\InvalidConfigurationException;
-use OCA\Olvid\Utils\RandomUtil;
 use OCA\Olvid\Utils\TimeUtil;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;

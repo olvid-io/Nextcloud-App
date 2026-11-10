@@ -296,9 +296,9 @@ class AppApiController extends OCSController {
 				return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
 			}
 
-			return new DataDisplayResponse($olvidData->getBytesData(), Http::STATUS_OK, ["Cache-Control" => "private, no-cache"]);
+			return new DataDisplayResponse($olvidData->getBytesData(), Http::STATUS_OK, ['Cache-Control' => 'private, no-cache']);
 		} catch (Exception $e) {
-			$this->logger->error('groupsAvatarGet: unexpected exception' , ['exception' => $e]);
+			$this->logger->error('groupsAvatarGet: unexpected exception', ['exception' => $e]);
 			return new DataDisplayResponse('', Http::STATUS_NOT_FOUND);
 		}
 	}

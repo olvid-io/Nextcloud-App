@@ -28,8 +28,8 @@
 			"@composer bin all install --ansi"
 		],
 		"lint": "find . -name \\*.php -not -path './composer/*' -not -path './vendor-bin/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
-		"cs:check": "php-cs-fixer fix --dry-run --diff",
-		"cs:fix": "php-cs-fixer fix",
+ 		"cs:check": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix",
 		"psalm:check": "psalm --no-cache",
 		"test:unit": "phpunit tests -c tests/phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
 		"openapi": "mkdir -p openapi && cd openapi && generate-spec ..",
