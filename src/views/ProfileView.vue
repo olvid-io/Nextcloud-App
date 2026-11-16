@@ -12,34 +12,27 @@
 						class="profile-view__logo"
 						alt="Olvid"
 						aria-hidden="true">
-					<h2>{{ t('olvid', 'Link your Olvid identity') }}</h2>
+					<h2>{{ t('olvid', 'Link your Olvid profile') }}</h2>
 					<p class="profile-view__desc">
-						{{ t('olvid', 'Olvid is a privacy friendly and secure messaging application. Link your Olvid profile to your Nextcloud account to appear in the directory and be part of Olvid discussions.') }}
+						{{ t('olvid', 'Olvid is a privacy friendly and secure messaging application.') }}
 					</p>
 					<p class="profile-view__desc">
-						{{ t('olvid', 'If you do not have Olvid yet, download it first:') }}
+						{{ t('olvid', 'Link your Olvid profile to your Nextcloud account to chat with other users and be part of Olvid discussions.') }}
 					</p>
-					<a href="https://olvid.io/download/fr/"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="profile-view__download-link">
-						<NcButton>{{ t('olvid', 'Download Olvid') }}</NcButton>
-					</a>
 					<div class="profile-view__divider" />
-					<NcButton variant="primary" @click="step = 'identity'">
-						{{ t('olvid', 'I already have Olvid →') }}
+					<NcButton variant="primary" @click="step = 'profile'">
+						{{ t('olvid', 'Start') }}
 					</NcButton>
 				</div>
 			</template>
 
-			<!-- ══ Step: identity ══════════════════════════════════════════════ -->
-			<template v-else-if="step === 'identity'">
+			<!-- ══ Step: profile ══════════════════════════════════════════════ -->
+			<template v-else-if="step === 'profile'">
 				<div class="profile-view__step">
-					<h2>{{ t('olvid', 'Your Olvid identity') }}</h2>
+					<h2>{{ t('olvid', 'Your Olvid profile') }}</h2>
 					<p class="profile-view__desc">
-						{{ t('olvid', 'Choose how you will appear to other Olvid users. At least a first name or last name is required.') }}
+						{{ t('olvid', 'Please enter a name which will be displayed to your Olvid contacts.') }}
 					</p>
-
 					<div class="profile-view__form">
 						<NcTextField v-model="form.firstname" :label="t('olvid', 'First name')" />
 						<NcTextField v-model="form.lastname" :label="t('olvid', 'Last name')" />
@@ -56,10 +49,10 @@
 
 					<div class="profile-view__actions">
 						<NcButton @click="step = 'install'">
-							{{ t('olvid', '← Back') }}
+							{{ t('olvid', 'Back') }}
 						</NcButton>
-						<NcButton variant="primary" :disabled="magicLinkLoading" @click="generateMagicLink">
-							{{ magicLinkLoading ? t('olvid', 'Generating…') : t('olvid', 'Generate Magic Link') }}
+						<NcButton variant="primary" :disabled="magicLinkLoading || (!form.firstname.trim() && !form.lastname.trim())" @click="openMagicLink">
+							{{ t('olvid', 'Validate') }}
 						</NcButton>
 					</div>
 				</div>
@@ -100,7 +93,7 @@
 
 			<!-- ══ Step: registered ════════════════════════════════════════════ -->
 			<template v-else-if="step === 'registered'">
-				<!-- Section: identity details ──────────────────────────────── -->
+				<!-- Section: olvid profile ──────────────────────────────── -->
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
 						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
@@ -218,7 +211,7 @@ const step = ref('install')
 // Local draft of the Olvid profile fields (wizard + profile form)
 const form = reactive({ firstname: '', lastname: '', position: '', company: '' })
 
-// identity step
+// profile step
 const formError = ref(null)
 const magicLink = ref(null)
 const magicLinkLoading = ref(false)
