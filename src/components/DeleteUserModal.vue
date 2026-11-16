@@ -26,7 +26,7 @@
 				{{ t('olvid', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="error" :disabled="deleting" @click="deleteUser">
-				{{ deleting ? t('olvid', 'Deleting…') : t('olvid', 'Delete') }}
+				{{ deleting ? t('olvid', 'Deleting...') : t('olvid', 'Delete') }}
 			</NcButton>
 		</template>
 	</NcDialog>

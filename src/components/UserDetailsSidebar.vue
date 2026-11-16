@@ -86,7 +86,7 @@
 					<NcTextField
 						v-model="groupSearchQuery"
 						:label="t('olvid', 'Add to group')"
-						:placeholder="t('olvid', 'Search groups…')" />
+						:placeholder="t('olvid', 'Search groups...')" />
 					<ul v-if="groupSearchResults.length" class="user-sidebar__results">
 						<NcListItem
 							v-for="group in groupSearchResults"

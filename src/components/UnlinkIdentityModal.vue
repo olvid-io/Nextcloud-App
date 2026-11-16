@@ -22,7 +22,7 @@
 				{{ t('olvid', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="error" :disabled="unlinking" @click="unlink">
-				{{ unlinking ? t('olvid', 'Unlinking…') : (revoke ? t('olvid', 'Unlink and block') : t('olvid', 'Unlink')) }}
+				{{ unlinking ? t('olvid', 'Unlinking...') : (revoke ? t('olvid', 'Unlink and block') : t('olvid', 'Unlink')) }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -59,7 +59,7 @@ const error = ref(null)
 
 const dialogTitle = computed(() => props.isSelf
 	? t('olvid', 'I no longer have access to my Olvid profile')
-	: t('olvid', 'Unlink Olvid identity — {name}', { name: props.user.displayName }))
+	: t('olvid', 'Unlink Olvid identity - {name}', { name: props.user.displayName }))
 
 const descriptionText = computed(() => props.isSelf
 	? t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.')

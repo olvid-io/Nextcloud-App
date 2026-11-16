@@ -5,7 +5,7 @@
 		<NcNoteCard v-if="checking" type="info">
 			<div class="admin-settings__checking">
 				<NcLoadingIcon :size="20" />
-				{{ t('olvid', 'Checking configuration…') }}
+				{{ t('olvid', 'Checking configuration...') }}
 			</div>
 		</NcNoteCard>
 		<NcNoteCard v-else-if="status" :type="status.isConfigurationValid ? 'success' : 'error'">

@@ -24,7 +24,7 @@ import { generateFilePath } from '@nextcloud/router'
 import { computed } from 'vue'
 import NcAvatar from '@nextcloud/vue/components/NcAvatar'
 
-// other attributes (url, user, displayName…) are forwarded to NcAvatar
+// other attributes (url, user, displayName...) are forwarded to NcAvatar
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
