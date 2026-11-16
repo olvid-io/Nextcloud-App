@@ -604,22 +604,22 @@ class AppApiController extends OCSController {
 	 * Generates a magic link (configuration URL) to enroll a specific user's Olvid identity
 	 *
 	 * @param string $userId User ID (URL path)
+	 * @param int|null $duration an optional duration for the magic link in seconds (query parameter)
 	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_NOT_FOUND|Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 *
 	 * 200: Magic link generated
 	 * 404: User not found
 	 * 500: Magic link could not be generated
 	 * @throws Exception
-	 * @noinspection PhpUnused
 	 */
 	#[ApiRoute(verb: 'GET', url: '/app/users/{userId}/magicLink')]
-	public function usersGetMagicLink(string $userId): DataResponse {
+	public function usersGetMagicLink(string $userId, ?int $duration = null): DataResponse {
 		$nextcloudUser = $this->context->nextcloud->userManager->get($userId);
 		if ($nextcloudUser === null) {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		return $this->userGetMagicLink->handle($nextcloudUser);
+ 		return $this->userGetMagicLink->handle($nextcloudUser, $duration);
 	}
 
 	/**

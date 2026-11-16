@@ -319,9 +319,9 @@ async function openMagicLink() {
 }
 
 async function ensureMagicLink() {
-	// links expire after 5 min server-side, refresh slightly before
-	if (!magicLink.value || Date.now() - magicLinkFetchedAt > 270_000) {
-		magicLink.value = await me.getMagicLink()
+	// links expire after 30 min, refresh slightly before
+	if (!magicLink.value || Date.now() - magicLinkFetchedAt > 25 * 60 * 1000) {
+		magicLink.value = await me.getMagicLink(30 * 60)
 		magicLinkFetchedAt = Date.now()
 	}
 }

@@ -52,8 +52,8 @@ export const useMeStore = defineStore('me', () => {
 		useUsersStore().upsert({ id: id.value, ...form })
 	}
 
-	async function getMagicLink() {
-		const res = await axios.get(generateOcsUrl('/apps/olvid/app/me/getMagicLink'))
+	async function getMagicLink(durationInS) {
+		const res = await axios.get(generateOcsUrl('/apps/olvid/app/me/getMagicLink'), {params: {duration: durationInS }})
 		return res.data.configurationUrl
 	}
 

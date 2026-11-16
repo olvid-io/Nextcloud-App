@@ -115,7 +115,7 @@ function openUser(user) {
 async function openMagicLink(user) {
 	loadingMagicLink.value = user.id
 	try {
-		magicLinkUrl.value = await users.getMagicLink(user.id)
+		magicLinkUrl.value = await users.getMagicLink(user.id, 3600 * 24)
 		magicLinkTarget.value = user
 	} catch (e) {
 		console.error('Could not generate magic link', e)

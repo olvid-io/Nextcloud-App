@@ -10,7 +10,7 @@ class Constants {
 	 */
 	public const IDENTITY_SESSION_DURATION_S = 3600 * 24; // 1 day
 	public const MAGIC_SESSION_DURATION_S = 3600; // 1 hour
-	public const MAGIC_LINK_DURATION_S = 300; // 5 min
+	public const MAGIC_LINK_DEFAULT_DURATION_S = 300; // 5 min
 	// for statistics only, duration since last connection to consider a user as inactive
 	public const INACTIVE_USER_DURATION_S = 1209600; // 2 weeks
 

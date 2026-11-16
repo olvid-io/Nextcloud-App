@@ -38,7 +38,7 @@ class UserGetMagicLink {
 	 * @return DataResponse<Http::STATUS_OK, array{configurationUrl: string}, array{}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{error: string}, array{}>
 	 * @throws Exception
 	 */
-	public function handle(IUser $nextcloudUser): DataResponse {
+	public function handle(IUser $nextcloudUser, ?int $durationInS = null): DataResponse {
 		try {
 			// check directory configuration is valid
 			if (!$this->context->nextcloud->appManager->isOlvidServerConfigurationValid()) {
@@ -56,7 +56,7 @@ class UserGetMagicLink {
 			// create token and store in db
 			$token = RandomUtil::uuid_create();
 			$olvidUser->setMagicToken($token);
-			$olvidUser->setMagicTokenExpiration(TimeUtil::currentTimeMillis() + Constants::MAGIC_LINK_DURATION_S * 1000);
+			$olvidUser->setMagicTokenExpiration(TimeUtil::currentTimeMillis() + ($durationInS ?? Constants::MAGIC_LINK_DEFAULT_DURATION_S) * 1000);
 			$this->context->db->user->update($olvidUser);
 
 			// build the magic link url

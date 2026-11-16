@@ -81,8 +81,8 @@ export const useUsersStore = defineStore('users', () => {
 		upsert({ id: userId, useOlvid: false })
 	}
 
-	async function getMagicLink(userId) {
-		const res = await axios.get(userUrl(userId, '/magicLink'))
+	async function getMagicLink(userId, durationInS) {
+		const res = await axios.get(userUrl(userId, '/magicLink'), {params: {"duration": durationInS}})
 		return res.data.configurationUrl
 	}
 
