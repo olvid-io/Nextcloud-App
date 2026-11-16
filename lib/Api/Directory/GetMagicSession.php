@@ -69,6 +69,7 @@ class GetMagicSession extends AbstractDeviceApiHandler {
 			// delete expired token
 			try {
 				$olvidUser->setMagicToken(null);
+				$olvidUser->setMagicTokenExpiration(null);
 				$this->context->db->user->update($olvidUser);
 			} catch (\OCP\DB\Exception) {
 			}
