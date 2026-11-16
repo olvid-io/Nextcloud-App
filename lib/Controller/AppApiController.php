@@ -619,7 +619,7 @@ class AppApiController extends OCSController {
 			return new DataResponse(['error' => 'user not found'], Http::STATUS_NOT_FOUND);
 		}
 
- 		return $this->userGetMagicLink->handle($nextcloudUser, $duration);
+		return $this->userGetMagicLink->handle($nextcloudUser, $duration);
 	}
 
 	/**

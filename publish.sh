@@ -21,7 +21,7 @@ mkdir -p ./build/olvid
 # Built from: https://docs.nextcloud.com/server/stable/developer_manual/app_publishing_maintenance/release_process.html
 
 # Install dependencies (no dev packages in release)
-composer install --no-dev
+composer install --no-scripts --no-dev
 npm ci
 
 # Build frontend assets
