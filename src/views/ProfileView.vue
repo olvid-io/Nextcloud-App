@@ -40,18 +40,18 @@
 						<NcTextField v-model="form.company" :label="t('olvid', 'Company')" />
 					</div>
 
-					<p v-if="formError" class="profile-view__error">
-						{{ formError }}
-					</p>
 					<p v-if="magicLinkError" class="profile-view__error">
 						{{ magicLinkError }}
 					</p>
 
 					<div class="profile-view__actions">
 						<NcButton @click="step = 'install'">
+							<template #icon>
+								<IconArrowLeft :size="20" />
+							</template>
 							{{ t('olvid', 'Back') }}
 						</NcButton>
-						<NcButton variant="primary" :disabled="magicLinkLoading || (!form.firstname.trim() && !form.lastname.trim())" @click="openMagicLink">
+						<NcButton variant="primary" :disabled="magicLinkLoading || (!form.firstname.trim() && !form.lastname.trim())" @click="validateProfile">
 							{{ t('olvid', 'Validate') }}
 						</NcButton>
 					</div>
@@ -60,17 +60,25 @@
 
 			<!-- ══ Step: link ══════════════════════════════════════════════════ -->
 			<template v-else-if="step === 'link'">
-				<div class="profile-view__step">
-					<h2 style="margin: auto;">
-						{{ t('olvid', 'Scan with Olvid') }}
-					</h2>
-					<OlvidQrDisplay :configurationUrl="magicLink" />
+				<div class="profile-view__step profile-view__step--centered">
+					<NcLoadingIcon :size="44" />
 					<p class="profile-view__polling-hint">
-						{{ t('olvid', 'Waiting for you to complete enrollment in the app…') }}
+						{{ t('olvid', 'Waiting for you to complete enrollment in the app...') }}
 					</p>
-					<NcButton @click="step = 'identity'">
-						{{ t('olvid', '← Back') }}
-					</NcButton>
+					<div class="profile-view__actions">
+						<NcButton @click="step = 'profile'">
+							<template #icon>
+								<IconArrowLeft :size="20" />
+							</template>
+							{{ t('olvid', 'Back') }}
+						</NcButton>
+						<NcButton alignment="start-reverse" @click="openMagicLink">
+							<template #icon>
+								<IconOpenInNew :size="20" />
+							</template>
+							{{ t('olvid', 'Show magic link') }}
+						</NcButton>
+					</div>
 				</div>
 			</template>
 
@@ -83,7 +91,7 @@
 						aria-hidden="true">
 					<h2>{{ t('olvid', 'Identity linked!') }}</h2>
 					<p class="profile-view__desc">
-						{{ t('olvid', 'Your Olvid identity is now linked to your Nextcloud account. You will appear in the Olvid directory and can join group discussions.') }}
+						{{ t('olvid', 'Your Olvid profile is now linked to your Nextcloud account. You will appear in the Olvid directory and can join group discussions.') }}
 					</p>
 					<NcButton variant="primary" @click="enterRegistered">
 						{{ t('olvid', 'View my profile') }}
@@ -123,7 +131,7 @@
 
 					<div class="profile-view__actions">
 						<NcButton variant="primary" :disabled="saving" @click="saveProfile">
-							{{ saving ? t('olvid', 'Saving…') : t('olvid', 'Save') }}
+							{{ saving ? t('olvid', 'Saving...') : t('olvid', 'Save') }}
 						</NcButton>
 					</div>
 
@@ -193,8 +201,9 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import IconArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import IconOpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
-import OlvidQrDisplay from '../components/OlvidQrDisplay.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
 import { useGroupsStore } from '../stores/groups.js'
 import { useMeStore } from '../stores/me.js'
@@ -206,14 +215,14 @@ const router = useRouter()
 const appLogoUrl = generateFilePath('olvid', 'img', 'olvid.svg')
 
 const loading = ref(true)
-// step: 'install' | 'identity' | 'link' | 'enrolled' | 'registered'
+// step: 'install' | 'profile' | 'link' | 'enrolled' | 'registered'
 const step = ref('install')
 // Local draft of the Olvid profile fields (wizard + profile form)
 const form = reactive({ firstname: '', lastname: '', position: '', company: '' })
 
 // profile step
-const formError = ref(null)
 const magicLink = ref(null)
+let magicLinkFetchedAt = null
 const magicLinkLoading = ref(false)
 const magicLinkError = ref(null)
 
@@ -271,22 +280,49 @@ function fillForm(user) {
 }
 
 // ── enrollment flow ────────────────────────────────────────────────────
-async function generateMagicLink() {
-	if (!form.firstname.trim() && !form.lastname.trim()) {
-		formError.value = t('olvid', 'At least a first name or last name is required.')
-		return
-	}
-	formError.value = null
+// save profile and open magic link in a new tab
+async function validateProfile() {
 	magicLinkLoading.value = true
 	magicLinkError.value = null
+	const win = window.open('', '_blank')
 	try {
 		await me.save({ ...form })
-		magicLink.value = await me.getMagicLink()
+		await ensureMagicLink()
+		if (win) {
+			win.location = magicLink.value
+		} else {
+			window.open(magicLink.value, '_blank')
+		}
 		step.value = 'link'
 	} catch (e) {
+		win?.close()
 		magicLinkError.value = t('olvid', 'Could not generate magic link: {error}', { error: e.response?.data?.error ?? e.message })
 	} finally {
 		magicLinkLoading.value = false
+	}
+}
+
+// re-open current magic link or refresh it if it expires
+async function openMagicLink() {
+	const win = window.open('', '_blank')
+	try {
+		await ensureMagicLink()
+		if (win) {
+			win.location = magicLink.value
+		} else {
+			window.open(magicLink.value, '_blank')
+		}
+	} catch (e) {
+		win?.close()
+		showError(t('olvid', 'Could not generate magic link: {error}', { error: e.response?.data?.error ?? e.message }))
+	}
+}
+
+async function ensureMagicLink() {
+	// links expire after 5 min server-side, refresh slightly before
+	if (!magicLink.value || Date.now() - magicLinkFetchedAt > 270_000) {
+		magicLink.value = await me.getMagicLink()
+		magicLinkFetchedAt = Date.now()
 	}
 }
 
@@ -404,11 +440,6 @@ function openGroup(group) {
 		margin: 0;
 		color: var(--color-text-maxcontrast);
 		line-height: 1.5;
-	}
-
-	&__download-link {
-		align-self: flex-start;
-		text-decoration: none;
 	}
 
 	&__divider {
