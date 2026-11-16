@@ -105,14 +105,30 @@
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
 						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
+					</div>
 
-						<p class="profile-view__desc">
-							{{ t('olvid', 'Change here how you appear in Olvid application.') }}
-						</p>
+					<div class="profile-view__preview">
+						<span class="profile-view__preview-label">
+							{{ t('olvid', 'This is how other Olvid users see you:') }}
+						</span>
 
-						<h3 style="margin: 0; display: flex; justify-content: center;">
-							{{ olvidDisplayNameFromForm }}
-						</h3>
+						<div class="profile-view__preview-card">
+							<OlvidAvatar
+									:displayName="previewName || '?'"
+									:useOlvid="true"
+									:size="44"
+									:disableMenu="true"
+									:disableTooltip="true" />
+
+							<div class="profile-view__preview-text">
+								<strong :class="{ 'profile-view__preview-placeholder': !previewName }">
+									{{ previewName || t('olvid', 'Enter your first and last name') }}
+								</strong>
+								<span v-if="previewRole" class="profile-view__preview-role">
+									{{ previewRole }}
+								</span>
+							</div>
+						</div>
 					</div>
 
 					<div class="profile-view__form">
@@ -130,7 +146,7 @@
 					</p>
 
 					<div class="profile-view__actions">
-						<NcButton variant="primary" :disabled="saving" @click="saveProfile">
+						<NcButton variant="primary" :disabled="saving || !hasChanges" @click="saveProfile">
 							{{ saving ? t('olvid', 'Saving...') : t('olvid', 'Save') }}
 						</NcButton>
 					</div>
@@ -240,10 +256,24 @@ const unlinkModalOpen = ref(false)
 // registered step — groups (all the managed groups user is member of, from the me store)
 const groupsLoading = ref(false)
 
-const olvidDisplayNameFromForm = computed(() => {
-	const name = `${form.firstname} ${form.lastname}`.trim()
-	const role = [form.position, form.company].filter(Boolean).join(' @ ')
-	return role ? `${name} (${role})` : name
+// true when the draft differs from the saved profile in the store
+const hasChanges = computed(() => {
+	const user = me.user
+	if (!user) {
+		return false
+	}
+	return Object.keys(form).some((key) => form[key] !== (user[key] ?? ''))
+})
+
+const previewName = computed(() =>`${form.firstname} ${form.lastname}`.trim())
+
+const previewRole = computed(() => {
+	const position = form.position.trim()
+	const company = form.company.trim()
+	if (position && company) {
+		return t('olvid', '{position} @ {company}', { position, company })
+	}
+	return position || company
 })
 
 watch(step, (newStep) => {
@@ -488,6 +518,50 @@ function openGroup(group) {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+	}
+
+	&__preview {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__preview-label {
+		color: var(--color-text-maxcontrast);
+		font-size: 0.9em;
+	}
+
+	&__preview-card {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 14px;
+		max-width: 420px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--border-radius-large);
+		background: var(--color-background-hover);
+	}
+
+	&__preview-text {
+		display: flex;
+		flex-direction: column;
+		min-width: 0; // allow ellipsis
+
+		> * {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+	&__preview-role {
+		color: var(--color-text-maxcontrast);
+	}
+
+	&__preview-placeholder {
+		font-weight: normal;
+		font-style: italic;
+		color: var(--color-text-maxcontrast);
 	}
 
 	&__revoke, &__groups {
