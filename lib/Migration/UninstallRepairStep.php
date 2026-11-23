@@ -33,7 +33,7 @@ class UninstallRepairStep implements IRepairStep {
 		$olvidGroups = $this->context->db->group->getAll();
 		foreach ($olvidGroups as $olvidGroup) {
 			if ($olvidGroup->getPushTopic()) {
-				$this->context->olvidServer->revokePushTopic($olvidGroup->getPushTopic());
+				$this->context->olvidServer->revokePushTopicNoFail($olvidGroup->getPushTopic());
 				$olvidGroup->setPushTopic(null);
 				$this->context->db->group->update($olvidGroup);
 			}
@@ -42,7 +42,7 @@ class UninstallRepairStep implements IRepairStep {
 		// revoke global push topic
 		$output->info('Olvid: revoking global push topics');
 		if ($this->context->nextcloud->appManager->getGlobalPushTopic()) {
-			$this->context->olvidServer->revokePushTopic($this->context->nextcloud->appManager->getGlobalPushTopic());
+			$this->context->olvidServer->revokePushTopicNoFail($this->context->nextcloud->appManager->getGlobalPushTopic());
 			$this->context->nextcloud->appManager->unsetGlobalPushTopic();
 		}
 

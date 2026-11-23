@@ -99,8 +99,7 @@ class OlvidDatabaseSynchronizationTask {
 				// request a license key if necessary
 				if (!$olvidUser->getApiKey()) {
 					$this->logger->error('OlvidDatabaseSynchronizationTask: syncAndValidateOlvidUsers: found enabled user with no license key: ' . $userId);
-					$jsonUserDetails = $olvidUser->computeJsonUserDetails();
-					$olvidUser->setSignedDetails($this->context->signatory->sign($jsonUserDetails->jsonSerialize()));
+					$olvidUser->setApiKey($this->context->olvidServer->requestNewLicenseKeyNoFail());
 				}
 			}
 			// user DO NOT registered its identity

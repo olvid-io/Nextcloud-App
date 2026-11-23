@@ -23,7 +23,7 @@ class Constants {
 
 	public const MIN_BUILD_DESKTOP = 20000;
 
-	public const OLVID_DIRECTORY_API_VERSION = 1;
+	public const OLVID_DIRECTORY_API_VERSION = 0;
 
 	/*
 	 ** time and sizes

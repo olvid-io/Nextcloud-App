@@ -100,6 +100,18 @@ class OlvidContextServer {
 		return $serverResponse['apiKey'];
 	}
 
+	public function requestNewLicenseKeyNoFail(): string {
+		try {
+			return $this->requestNewLicenseKey();
+		} catch (InvalidConfigurationException) {
+			$this->logger->error('Olvid: requestLicenseKey: invalid server configuration');
+			return false;
+		} catch (OlvidServerException $e) {
+			$this->logger->error('Olvid: requestLicenseKey: unexpected server exception', ['exception' => $e]);
+			return false;
+		}
+	}
+
 	/**
 	 *
 	 * @return true
