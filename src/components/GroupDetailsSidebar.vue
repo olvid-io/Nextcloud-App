@@ -19,7 +19,7 @@
 						:size="192"
 						@change="handleAvatarChange" />
 					<p v-if="avatarUploading" class="group-sidebar__hint">
-						{{ t('olvid', 'Update in progress...') }}
+						{{ t('olvid', 'Update in progress…') }}
 					</p>
 					<p v-if="avatarError" class="group-sidebar__error">
 						{{ avatarError }}
@@ -74,7 +74,7 @@
 					<NcTextField
 						v-model="searchQuery"
 						:label="t('olvid', 'Search users to add')"
-						:placeholder="t('olvid', 'Type a name...')" />
+						:placeholder="t('olvid', 'Type a name…')" />
 					<ul v-if="searchResults.length" class="group-sidebar__results">
 						<NcListItem
 							v-for="user in searchResults"

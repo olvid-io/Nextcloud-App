@@ -1,6 +1,6 @@
 {
   "name": "olvid-nextcloud",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "license": "AGPL-3.0-or-later",
   "engines": {
     "node": "^22.0.0",
@@ -11,6 +11,7 @@
     "dev": "vite --mode development build",
     "watch": "vite --mode development build --watch",
     "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
     "l10n:auto": "npm run l10n:extract && npm run l10n:translate && npm run l10n:generate",
     "l10n:extract": "./translation/scripts/1_extract.sh",

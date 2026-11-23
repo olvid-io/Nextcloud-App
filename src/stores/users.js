@@ -82,7 +82,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	async function getMagicLink(userId, durationInS) {
-		const res = await axios.get(userUrl(userId, '/magicLink'), {params: {"duration": durationInS}})
+		const res = await axios.get(userUrl(userId, '/magicLink'), { params: { duration: durationInS } })
 		return res.data.configurationUrl
 	}
 

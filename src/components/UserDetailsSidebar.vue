@@ -60,16 +60,29 @@
 				</div>
 
 				<div class="user-sidebar__danger">
-					<NcButton v-if="user.useOlvid"
-						class="user-sidebar__button"
-						variant="error"
-						@click="showUnlinkConfirm = true">
-						{{ t('olvid', 'Revoke user identity') }}
-					</NcButton>
+					<div v-if="user.useOlvid" class="user-sidebar__danger-item">
+						<NcButton @click="showUnlinkConfirm = true">
+							<template #icon>
+								<IconLinkVariantOff :size="20" />
+							</template>
+							{{ t('olvid', 'Unlink Olvid profile…') }}
+						</NcButton>
+						<p class="user-sidebar__danger-desc">
+							{{ t('olvid', 'Removes the Olvid profile from the directory. The Nextcloud account is kept.') }}
+						</p>
+					</div>
 
-					<NcButton variant="error" class="user-sidebar__button" @click="showDeleteConfirm = true">
-						{{ t('olvid', 'Delete user') }}
-					</NcButton>
+					<div class="user-sidebar__danger-item">
+						<NcButton variant="error" @click="showDeleteConfirm = true">
+							<template #icon>
+								<IconDelete :size="20" />
+							</template>
+							{{ t('olvid', 'Delete Nextcloud account…') }}
+						</NcButton>
+						<p class="user-sidebar__danger-desc">
+							{{ t('olvid', 'Permanently deletes the account and all its data (files, calendars…).') }}
+						</p>
+					</div>
 				</div>
 			</div>
 		</NcAppSidebarTab>
@@ -86,7 +99,7 @@
 					<NcTextField
 						v-model="groupSearchQuery"
 						:label="t('olvid', 'Add to group')"
-						:placeholder="t('olvid', 'Search groups...')" />
+						:placeholder="t('olvid', 'Search groups…')" />
 					<ul v-if="groupSearchResults.length" class="user-sidebar__results">
 						<NcListItem
 							v-for="group in groupSearchResults"
@@ -178,6 +191,8 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import IconAccountGroup from 'vue-material-design-icons/AccountGroupOutline.vue'
 import IconCardAccountDetails from 'vue-material-design-icons/CardAccountDetails.vue'
+import IconDelete from 'vue-material-design-icons/Delete.vue'
+import IconLinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import DeleteUserModal from './DeleteUserModal.vue'
 import MagicLinkModal from './MagicLinkModal.vue'
 import OlvidAvatar from './OlvidAvatar.vue'
@@ -358,6 +373,27 @@ async function openMagicLink() {
 
 	&__danger, &__actions {
 		border-top: 1px solid var(--color-border);
+	}
+
+	&__danger {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px 5px;
+	}
+
+	&__danger-item {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+
+	&__danger-desc {
+		margin: 0;
+		color: var(--color-text-maxcontrast);
+		font-size: 0.9em;
+		line-height: 1.4;
 	}
 
 	&__members {

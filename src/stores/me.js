@@ -53,7 +53,7 @@ export const useMeStore = defineStore('me', () => {
 	}
 
 	async function getMagicLink(durationInS) {
-		const res = await axios.get(generateOcsUrl('/apps/olvid/app/me/getMagicLink'), {params: {duration: durationInS }})
+		const res = await axios.get(generateOcsUrl('/apps/olvid/app/me/getMagicLink'), { params: { duration: durationInS } })
 		return res.data.configurationUrl
 	}
 

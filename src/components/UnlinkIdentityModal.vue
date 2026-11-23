@@ -6,13 +6,36 @@
 		<p class="unlink-identity-modal__desc">
 			{{ descriptionText }}
 		</p>
-		<NcCheckboxRadioSwitch
-			v-model="revoke"
-			class="unlink-identity-modal__checkbox">
-			{{ checkboxLabel }}
-		</NcCheckboxRadioSwitch>
-		<p v-if="revoke" class="unlink-identity-modal__checkbox-desc">
-			{{ warningText }}
+		<fieldset class="unlink-identity-modal__choices">
+			<legend class="unlink-identity-modal__legend">
+				{{ legendText }}
+			</legend>
+			<NcCheckboxRadioSwitch
+				v-model="mode"
+				type="radio"
+				value="revoke"
+				name="unlink-mode">
+				{{ revokeLabel }}
+				<template #description>
+					{{ revokeDescription }}
+				</template>
+			</NcCheckboxRadioSwitch>
+			<NcCheckboxRadioSwitch
+				v-model="mode"
+				type="radio"
+				value="unlink"
+				name="unlink-mode">
+				{{ unlinkLabel }}
+				<template #description>
+					{{ unlinkDescription }}
+				</template>
+			</NcCheckboxRadioSwitch>
+		</fieldset>
+		<p v-if="revoke" class="unlink-identity-modal__warning">
+			{{ t('olvid', 'This cannot be undone.') }}
+		</p>
+		<p v-if="isSelf" class="unlink-identity-modal__next">
+			{{ t('olvid', 'Afterwards, you will be guided to link a new Olvid profile.') }}
 		</p>
 		<p v-if="error" class="unlink-identity-modal__error">
 			{{ error }}
@@ -21,8 +44,8 @@
 			<NcButton @click="$emit('close')">
 				{{ t('olvid', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="error" :disabled="unlinking" @click="unlink">
-				{{ unlinking ? t('olvid', 'Unlinking...') : (revoke ? t('olvid', 'Unlink and block') : t('olvid', 'Unlink')) }}
+			<NcButton :variant="revoke ? 'error' : 'primary'" :disabled="unlinking" @click="unlink">
+				{{ unlinking ? t('olvid', 'Unlinking…') : (revoke ? t('olvid', 'Block and unlink') : t('olvid', 'Unlink')) }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -53,25 +76,40 @@ const emit = defineEmits(['close', 'unlinked'])
 
 const me = useMeStore()
 const users = useUsersStore()
-const revoke = ref(true)
+// 'revoke': old identity is lost → block it everywhere (safe default)
+// 'unlink': old identity is still owned → only detach it from this directory
+const mode = ref('revoke')
+const revoke = computed(() => mode.value === 'revoke')
 const unlinking = ref(false)
 const error = ref(null)
 
 const dialogTitle = computed(() => props.isSelf
-	? t('olvid', 'I no longer have access to my Olvid profile')
-	: t('olvid', 'Unlink Olvid identity - {name}', { name: props.user.displayName }))
+	? t('olvid', 'Unlink my Olvid profile')
+	: t('olvid', 'Unlink Olvid profile of {name}', { name: props.user.displayName }))
 
 const descriptionText = computed(() => props.isSelf
-	? t('olvid', 'This will disconnect your Olvid profile from this directory and allow you to register a new one.')
-	: t('olvid', 'This will disconnect the Olvid profile linked to {name} from this directory and allow a new one to be registered.', { name: props.user.displayName }))
+	? t('olvid', 'Your current Olvid profile will be removed from this directory so that you can link a new one.')
+	: t('olvid', 'The Olvid profile linked to {name} will be removed from this directory so that a new one can be linked.', { name: props.user.displayName }))
 
-const checkboxLabel = computed(() => props.isSelf
-	? t('olvid', 'My Olvid profile was lost or replaced')
-	: t('olvid', 'The Olvid profile of {name} was lost or replaced', { name: props.user.displayName }))
+const legendText = computed(() => props.isSelf
+	? t('olvid', 'What happened to your current Olvid profile?')
+	: t('olvid', 'What happened to the current Olvid profile of {name}?', { name: props.user.displayName }))
 
-const warningText = computed(() => props.isSelf
-	? t('olvid', 'Warning: this action is not reversible. Your Olvid identity will be blocked for every other contact in this directory. They will no longer be able to reach you through this identity, and it can never be re-registered. You will need to create a new Olvid profile and re-enroll.')
-	: t('olvid', 'Warning: this action is not reversible. The Olvid identity of {name} will be blocked for every other contact in this directory. Other contacts will no longer be able to reach {name} through this identity, and it can never be re-registered. A new Olvid profile will need to be created and re-enrolled.', { name: props.user.displayName }))
+const revokeLabel = computed(() => props.isSelf
+	? t('olvid', 'I lost it (recommended)')
+	: t('olvid', 'It was lost (recommended)'))
+
+const revokeDescription = computed(() => props.isSelf
+	? t('olvid', 'Lost or stolen phone, app uninstalled, profile deleted… Your old profile is blocked for all your Nextcloud contacts, so nobody can use it to impersonate you. It can never be linked again.')
+	: t('olvid', 'Lost or stolen phone, app uninstalled, profile deleted… The old profile is blocked for all Nextcloud contacts, so nobody can use it to impersonate {name}. It can never be linked again.', { name: props.user.displayName }))
+
+const unlinkLabel = computed(() => props.isSelf
+	? t('olvid', 'I still have it')
+	: t('olvid', '{name} still has it', { name: props.user.displayName }))
+
+const unlinkDescription = computed(() => props.isSelf
+	? t('olvid', 'You simply want to use another profile. Your old profile is only removed from this directory; contacts who already know it can still reach you with it.')
+	: t('olvid', 'The old profile is only removed from this directory; contacts who already know it can still reach {name} with it.', { name: props.user.displayName }))
 
 async function unlink() {
 	unlinking.value = true
@@ -99,16 +137,29 @@ async function unlink() {
 		line-height: 1.5;
 	}
 
-	&__checkbox {
-		margin-top: 12px;
+	&__choices {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin: 16px 0 0;
+		padding: 0;
+		border: none;
 	}
 
-	&__checkbox-desc {
-		margin: 4px 0 0;
-		padding-inline-start: 28px;
+	&__legend {
+		margin-bottom: 4px;
+		font-weight: bold;
+	}
+
+	&__warning {
+		margin: 12px 0 0;
+		color: var(--color-error-text, var(--color-error));
+		font-weight: bold;
+	}
+
+	&__next {
+		margin: 12px 0 0;
 		color: var(--color-text-maxcontrast);
-		font-size: 0.875em;
-		line-height: 1.4;
 	}
 
 	&__error {

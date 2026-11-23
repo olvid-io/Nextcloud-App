@@ -4,7 +4,6 @@
 		:open="true"
 		size="small"
 		@update:open="$emit('close')">
-
 		<p>
 			{{ t('olvid', 'Send this link to {name} to allow them to connect an Olvid profile to it\'s Nextcloud account.', { name: user.displayName }) }}
 		</p>

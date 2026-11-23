@@ -69,7 +69,7 @@
 				variant="primary"
 				:disabled="saving || !form.uid"
 				@click="submit">
-				{{ saving ? t('olvid', 'Creating...') : t('olvid', 'Create') }}
+				{{ saving ? t('olvid', 'Creating…') : t('olvid', 'Create') }}
 			</NcButton>
 		</template>
 	</NcDialog>

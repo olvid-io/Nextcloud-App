@@ -63,7 +63,7 @@
 				<div class="profile-view__step profile-view__step--centered">
 					<NcLoadingIcon :size="44" />
 					<p class="profile-view__polling-hint">
-						{{ t('olvid', 'Waiting for you to complete enrollment in the app...') }}
+						{{ t('olvid', 'Waiting for you to complete enrollment in the app…') }}
 					</p>
 					<div class="profile-view__actions">
 						<NcButton @click="step = 'profile'">
@@ -114,11 +114,11 @@
 
 						<div class="profile-view__preview-card">
 							<OlvidAvatar
-									:displayName="previewName || '?'"
-									:useOlvid="true"
-									:size="44"
-									:disableMenu="true"
-									:disableTooltip="true" />
+								:displayName="previewName || '?'"
+								:useOlvid="true"
+								:size="44"
+								:disableMenu="true"
+								:disableTooltip="true" />
 
 							<div class="profile-view__preview-text">
 								<strong :class="{ 'profile-view__preview-placeholder': !previewName }">
@@ -147,57 +147,69 @@
 
 					<div class="profile-view__actions">
 						<NcButton variant="primary" :disabled="saving || !hasChanges" @click="saveProfile">
-							{{ saving ? t('olvid', 'Saving...') : t('olvid', 'Save') }}
+							{{ saving ? t('olvid', 'Saving…') : t('olvid', 'Save') }}
+						</NcButton>
+					</div>
+				</section>
+
+				<!-- Section: lost access (unlink / revoke identity) ──────────── -->
+				<section class="profile-view__section profile-view__recovery">
+					<h3>{{ t('olvid', 'Lost access to your Olvid profile?') }}</h3>
+					<p class="profile-view__desc">
+						{{ t('olvid', 'If you changed phone without transferring Olvid, uninstalled the app or deleted your profile, your Nextcloud account is still linked to a profile you can no longer use. Unlink it to link a new Olvid profile.') }}
+					</p>
+					<p class="profile-view__hint">
+						{{ t('olvid', 'Restored Olvid from a backup or transferred it to your new device? You have nothing to do, your profile is still linked.') }}
+					</p>
+					<div class="profile-view__actions">
+						<NcButton @click="unlinkModalOpen = true">
+							<template #icon>
+								<IconLinkVariantOff :size="20" />
+							</template>
+							{{ t('olvid', 'Unlink my Olvid profile…') }}
 						</NcButton>
 					</div>
 
-					<!-- Unlink/Revoke identity ───────────────────────────────────── -->
-					<div class="profile-view__revoke">
-						<NcButton variant="error" @click="unlinkModalOpen = true">
-							{{ t('olvid', 'I no longer have access to my Olvid profile') }}
-						</NcButton>
+					<UnlinkIdentityModal
+						v-if="unlinkModalOpen"
+						:user="me.user"
+						isSelf
+						@close="unlinkModalOpen = false"
+						@unlinked="onIdentityUnlinked" />
+				</section>
 
-						<UnlinkIdentityModal
-							v-if="unlinkModalOpen"
-							:user="me.user"
-							isSelf
-							@close="unlinkModalOpen = false"
-							@unlinked="onIdentityUnlinked" />
-					</div>
+				<!-- Section: groups ──────────────────────────────────────────── -->
+				<section class="profile-view__section">
+					<NcLoadingIcon v-if="groupsLoading" :size="32" />
 
-					<div class="profile-view__groups">
-						<!-- Section: groups ────────────────────────────────────────── -->
-						<NcLoadingIcon v-if="groupsLoading" :size="32" />
+					<NcEmptyContent
+						v-else-if="!me.groups.length"
+						:name="t('olvid', 'No groups')"
+						:description="t('olvid', 'You are not a member of any group.')" />
 
-						<NcEmptyContent
-							v-else-if="!me.groups.length"
-							:name="t('olvid', 'No groups')"
-							:description="t('olvid', 'You are not a member of any group.')" />
-
-						<div v-if="me.groups.length">
-							<h4>{{ t('olvid', 'Your Groups') }}</h4>
-							<p class="profile-view__desc">
-								{{ t('olvid', 'The Nextcloud groups you are member of.') }}
-							</p>
-							<ul class="profile-view__groups-list">
-								<NcListItem
-									v-for="group in me.groups"
-									:key="group.id"
-									:name="group.displayName"
-									@click="openGroup(group)">
-									<template #icon>
-										<OlvidAvatar
-											:displayName="group.displayName"
-											:isNoUser="true"
-											:useOlvid="group.enabled"
-											:url="groups.avatarUrl(group.id)" />
-									</template>
-									<template #subname>
-										{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
-									</template>
-								</NcListItem>
-							</ul>
-						</div>
+					<div v-if="me.groups.length">
+						<h4>{{ t('olvid', 'Your Groups') }}</h4>
+						<p class="profile-view__desc">
+							{{ t('olvid', 'The Nextcloud groups you are member of.') }}
+						</p>
+						<ul class="profile-view__groups-list">
+							<NcListItem
+								v-for="group in me.groups"
+								:key="group.id"
+								:name="group.displayName"
+								@click="openGroup(group)">
+								<template #icon>
+									<OlvidAvatar
+										:displayName="group.displayName"
+										:isNoUser="true"
+										:useOlvid="group.enabled"
+										:url="groups.avatarUrl(group.id)" />
+								</template>
+								<template #subname>
+									{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
+								</template>
+							</NcListItem>
+						</ul>
 					</div>
 				</section>
 			</template>
@@ -218,6 +230,7 @@ import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import IconArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import IconLinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import IconOpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
@@ -265,7 +278,7 @@ const hasChanges = computed(() => {
 	return Object.keys(form).some((key) => form[key] !== (user[key] ?? ''))
 })
 
-const previewName = computed(() =>`${form.firstname} ${form.lastname}`.trim())
+const previewName = computed(() => `${form.firstname} ${form.lastname}`.trim())
 
 const previewRole = computed(() => {
 	const position = form.position.trim()
@@ -430,7 +443,7 @@ function openGroup(group) {
 .profile-view {
 	display: flex;
 	flex-direction: column;
-	gap: 48px;
+	gap: 32px; // = section padding-bottom, so dividers are centered
 	max-width: 520px;
 	margin: 40px auto;
 	padding: 0 16px;
@@ -564,10 +577,24 @@ function openGroup(group) {
 		color: var(--color-text-maxcontrast);
 	}
 
-	&__revoke, &__groups {
-		margin-top: 8px;
-		padding-top: 16px;
-		border-top: 1px solid var(--color-border);
+	// Secondary help section: low emphasis, the destructive styling lives in the dialog
+	&__recovery {
+		gap: 8px;
+
+		h3 {
+			margin: 0;
+		}
+
+		.profile-view__actions {
+			margin-top: 8px;
+		}
+	}
+
+	&__hint {
+		margin: 0;
+		color: var(--color-text-maxcontrast);
+		font-size: 0.9em;
+		font-style: italic;
 	}
 
 	&__groups-list {
