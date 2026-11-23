@@ -40,7 +40,6 @@
 	<repair-steps>
 		<post-migration><step>OCA\Olvid\Migration\RepairStep</step></post-migration>
 		<install><step>OCA\Olvid\Migration\InstallRepairStep</step></install>
-		<uninstall><step>OCA\Olvid\Migration\UninstallRepairStep</step></uninstall>
 	</repair-steps>
 	<commands>
 		<command>OCA\Olvid\Command\SyncCommand</command>
