@@ -7,6 +7,9 @@ import { useUsersStore } from './users.js'
 function groupUrl(groupId) {
 	return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(groupId)}`)
 }
+function groupMembersUrl(groupId, userId) {
+	return generateOcsUrl(`/apps/olvid/app/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}`)
+}
 function groupAvatarUploadUrl(groupUid) {
 	return generateOcsUrl(`/apps/olvid/app/groups/avatar/${groupUid}`)
 }
@@ -138,12 +141,12 @@ export const useGroupsStore = defineStore('groups', () => {
 	}
 
 	async function addMember(groupId, userId) {
-		await axios.post(groupUrl(groupId, `/members/${encodeURIComponent(userId)}`))
+		await axios.post(groupMembersUrl(groupId, userId))
 		linkMember(groupId, userId)
 	}
 
 	async function removeMember(groupId, userId) {
-		await axios.delete(groupUrl(groupId, `/members/${encodeURIComponent(userId)}`))
+		await axios.delete(groupMembersUrl(groupId, userId))
 		const group = byId.value[groupId]
 		if (group?.memberIds) {
 			group.memberIds = group.memberIds.filter((id) => id !== userId)
