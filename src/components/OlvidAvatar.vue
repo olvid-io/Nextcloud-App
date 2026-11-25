@@ -63,11 +63,11 @@ const title = computed(() => {
 	}
 	// user
 	if (!props.useOlvid) {
-		return t('olvid', 'Not enrolled with Olvid')
+		return t('olvid', 'No Olvid profile linked')
 	}
 	return props.isInactive
-		? t('olvid', 'Enrolled with Olvid, but inactive')
-		: t('olvid', 'Enrolled with Olvid')
+		? t('olvid', 'Olvid profile linked, but inactive')
+		: t('olvid', 'Olvid profile linked')
 })
 </script>
 

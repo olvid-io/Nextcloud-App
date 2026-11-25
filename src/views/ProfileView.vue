@@ -31,13 +31,13 @@
 				<div class="profile-view__step">
 					<h2>{{ t('olvid', 'Your Olvid profile') }}</h2>
 					<p class="profile-view__desc">
-						{{ t('olvid', 'Please enter a name which will be displayed to your Olvid contacts.') }}
+						{{ t('olvid', 'Enter at least your first or last name. It will be shown to your Olvid contacts.') }}
 					</p>
 					<div class="profile-view__form">
 						<NcTextField v-model="form.firstname" :label="t('olvid', 'First name')" />
 						<NcTextField v-model="form.lastname" :label="t('olvid', 'Last name')" />
-						<NcTextField v-model="form.position" :label="t('olvid', 'Position')" />
-						<NcTextField v-model="form.company" :label="t('olvid', 'Company')" />
+						<NcTextField v-model="form.position" :label="t('olvid', 'Position (optional)')" />
+						<NcTextField v-model="form.company" :label="t('olvid', 'Company (optional)')" />
 					</div>
 
 					<p v-if="magicLinkError" class="profile-view__error">
@@ -63,7 +63,7 @@
 				<div class="profile-view__step profile-view__step--centered">
 					<NcLoadingIcon :size="44" />
 					<p class="profile-view__polling-hint">
-						{{ t('olvid', 'Waiting for you to complete enrollment in the app…') }}
+						{{ t('olvid', 'Waiting for you to link your Olvid profile in the app…') }}
 					</p>
 					<div class="profile-view__actions">
 						<NcButton @click="step = 'profile'">
@@ -89,7 +89,7 @@
 						class="profile-view__success-icon"
 						alt=""
 						aria-hidden="true">
-					<h2>{{ t('olvid', 'Identity linked!') }}</h2>
+					<h2>{{ t('olvid', 'Olvid profile linked!') }}</h2>
 					<p class="profile-view__desc">
 						{{ t('olvid', 'Your Olvid profile is now linked to your Nextcloud account. You will appear in the Olvid directory and can join group discussions.') }}
 					</p>
@@ -104,7 +104,11 @@
 				<!-- Section: olvid profile ──────────────────────────────── -->
 				<section class="profile-view__section">
 					<div class="profile-view__section-header">
-						<h2>{{ t('olvid', 'Olvid Profile') }}</h2>
+						<img :src="appLogoUrl"
+							class="profile-view__intro-logo"
+							alt=""
+							aria-hidden="true">
+						<h2>{{ t('olvid', 'Olvid profile') }}</h2>
 					</div>
 
 					<div class="profile-view__preview">
@@ -134,8 +138,8 @@
 					<div class="profile-view__form">
 						<NcTextField v-model="form.firstname" :label="t('olvid', 'First name')" />
 						<NcTextField v-model="form.lastname" :label="t('olvid', 'Last name')" />
-						<NcTextField v-model="form.position" :label="t('olvid', 'Position')" />
-						<NcTextField v-model="form.company" :label="t('olvid', 'Company')" />
+						<NcTextField v-model="form.position" :label="t('olvid', 'Position (optional)')" />
+						<NcTextField v-model="form.company" :label="t('olvid', 'Company (optional)')" />
 					</div>
 
 					<p v-if="saveError" class="profile-view__error">
@@ -147,10 +151,23 @@
 
 					<div class="profile-view__actions">
 						<NcButton variant="primary" :disabled="saving || !hasChanges" @click="saveProfile">
-							{{ saving ? t('olvid', 'Saving…') : t('olvid', 'Save') }}
+							{{ saving ? t('olvid', 'Saving…') : t('olvid', 'Save changes') }}
 						</NcButton>
 					</div>
 				</section>
+
+				<!-- Intro: reminds what Olvid is and what linking the profile does -->
+				<div class="profile-view__intro">
+					<div class="profile-view__intro-text">
+						<p>{{ t('olvid', 'Olvid is a secure, privacy-friendly messaging app. Your Olvid profile is linked to your Nextcloud account, so:') }}</p>
+						<ul>
+							<li>{{ t('olvid', 'other users of this Nextcloud can find you in the Olvid directory and add you as a contact;') }}</li>
+							<li>{{ t('olvid', 'you are automatically added to the Olvid discussions of your groups, and removed from them when you leave a group;') }}</li>
+							<li>{{ t('olvid', 'the name, position and company below are what your Olvid contacts see. Changes you save here are applied to your Olvid profile automatically.') }}</li>
+						</ul>
+						<p>{{ t('olvid', 'To chat, open the Olvid app on your phone or computer.') }}</p>
+					</div>
+				</div>
 
 				<!-- Section: lost access (unlink / revoke identity) ──────────── -->
 				<section class="profile-view__section profile-view__recovery">
@@ -177,41 +194,6 @@
 						@close="unlinkModalOpen = false"
 						@unlinked="onIdentityUnlinked" />
 				</section>
-
-				<!-- Section: groups ──────────────────────────────────────────── -->
-				<section class="profile-view__section">
-					<NcLoadingIcon v-if="groupsLoading" :size="32" />
-
-					<NcEmptyContent
-						v-else-if="!me.groups.length"
-						:name="t('olvid', 'No groups')"
-						:description="t('olvid', 'You are not a member of any group.')" />
-
-					<div v-if="me.groups.length">
-						<h4>{{ t('olvid', 'Your Groups') }}</h4>
-						<p class="profile-view__desc">
-							{{ t('olvid', 'The Nextcloud groups you are member of.') }}
-						</p>
-						<ul class="profile-view__groups-list">
-							<NcListItem
-								v-for="group in me.groups"
-								:key="group.id"
-								:name="group.displayName"
-								@click="openGroup(group)">
-								<template #icon>
-									<OlvidAvatar
-										:displayName="group.displayName"
-										:isNoUser="true"
-										:useOlvid="group.enabled"
-										:url="groups.avatarUrl(group.id)" />
-								</template>
-								<template #subname>
-									{{ group.enabled ? t('olvid', 'Olvid discussion enabled') : t('olvid', 'Olvid discussion disabled') }}
-								</template>
-							</NcListItem>
-						</ul>
-					</div>
-				</section>
 			</template>
 		</div>
 	</NcAppContent>
@@ -222,11 +204,8 @@ import { showError } from '@nextcloud/dialogs'
 import { t } from '@nextcloud/l10n'
 import { generateFilePath } from '@nextcloud/router'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcButton from '@nextcloud/vue/components/NcButton'
-import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
-import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import IconArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
@@ -234,12 +213,9 @@ import IconLinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import IconOpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import OlvidAvatar from '../components/OlvidAvatar.vue'
 import UnlinkIdentityModal from '../components/UnlinkIdentityModal.vue'
-import { useGroupsStore } from '../stores/groups.js'
 import { useMeStore } from '../stores/me.js'
 
 const me = useMeStore()
-const groups = useGroupsStore()
-const router = useRouter()
 
 const appLogoUrl = generateFilePath('olvid', 'img', 'olvid.svg')
 
@@ -265,9 +241,6 @@ const saveSuccess = ref(false)
 
 // registered step — unlink/revoke identity
 const unlinkModalOpen = ref(false)
-
-// registered step — groups (all the managed groups user is member of, from the me store)
-const groupsLoading = ref(false)
 
 // true when the draft differs from the saved profile in the store
 const hasChanges = computed(() => {
@@ -303,7 +276,6 @@ onMounted(async () => {
 		fillForm(user)
 		if (user.useOlvid) {
 			step.value = 'registered'
-			await fetchGroups()
 		}
 	} catch (e) {
 		console.error('Could not fetch Olvid status', e)
@@ -392,9 +364,8 @@ function stopPolling() {
 	}
 }
 
-async function enterRegistered() {
+function enterRegistered() {
 	step.value = 'registered'
-	await fetchGroups()
 }
 
 // ── registered — profile save ──────────────────────────────────────────
@@ -419,24 +390,6 @@ function onIdentityUnlinked() {
 	step.value = 'install'
 }
 
-// ── registered — groups ────────────────────────────────────────────────
-async function fetchGroups() {
-	groupsLoading.value = true
-	try {
-		await me.fetchGroups()
-	} catch (e) {
-		console.error('Could not load groups', e)
-		showError(t('olvid', 'Could not load groups'))
-	} finally {
-		groupsLoading.value = false
-	}
-}
-
-function openGroup(group) {
-	if (me.isAdmin) {
-		router.push({ name: 'group-detail', params: { groupId: group.id } })
-	}
-}
 </script>
 
 <style scoped lang="scss">
@@ -515,7 +468,7 @@ function openGroup(group) {
 			border-bottom: none;
 		}
 
-		h2 {
+		h2, h3 {
 			margin: 0;
 		}
 	}
@@ -581,12 +534,36 @@ function openGroup(group) {
 	&__recovery {
 		gap: 8px;
 
-		h3 {
+		.profile-view__actions {
+			margin-top: 8px;
+		}
+	}
+
+	// compact intro on the registered page: small logo + muted text
+	&__intro {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+	}
+
+	&__intro-logo {
+		width: 32px;
+		height: 32px;
+		flex-shrink: 0;
+	}
+
+	&__intro-text {
+		color: var(--color-text-maxcontrast);
+		line-height: 1.5;
+
+		p {
 			margin: 0;
 		}
 
-		.profile-view__actions {
-			margin-top: 8px;
+		ul {
+			margin: 4px 0;
+			padding-inline-start: 1.2em;
+			list-style: disc;
 		}
 	}
 
@@ -595,12 +572,6 @@ function openGroup(group) {
 		color: var(--color-text-maxcontrast);
 		font-size: 0.9em;
 		font-style: italic;
-	}
-
-	&__groups-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
 	}
 
 	// ── Feedback messages ──────────────────────────────────────────────────

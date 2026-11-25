@@ -122,7 +122,7 @@ async function unlink() {
 		}
 		emit('unlinked', { revoke: revoke.value })
 	} catch (e) {
-		error.value = t('olvid', 'Could not unlink identity: {error}', { error: e.response?.data?.error ?? e.message })
+		error.value = t('olvid', 'Could not unlink Olvid profile: {error}', { error: e.response?.data?.error ?? e.message })
 	} finally {
 		unlinking.value = false
 	}

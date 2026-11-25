@@ -1,13 +1,25 @@
 <template>
 	<NcAppContent>
 		<div class="groups-view__header">
-			<span class="groups-view__title" />
-			<NcButton variant="primary" @click="showCreateModal = true">
-				<template #icon>
-					<IconPlus :size="20" />
-				</template>
-				{{ t('olvid', 'Create Group') }}
-			</NcButton>
+			<div class="groups-view__heading">
+				<h2 class="groups-view__title">
+					{{ t('olvid', 'Groups') }}
+				</h2>
+				<NcButton variant="primary" @click="showCreateModal = true">
+					<template #icon>
+						<IconPlus :size="20" />
+					</template>
+					{{ t('olvid', 'Create group') }}
+				</NcButton>
+			</div>
+			<div class="groups-view__intro">
+				<p class="groups-view__desc">
+					{{ t('olvid', 'Turn on the Olvid discussion of a group to create a secure group discussion in Olvid with its members. Groups with the discussion turned off are not visible in Olvid.') }}
+				</p>
+				<p class="groups-view__desc">
+					{{ t('olvid', 'The discussion follows the group automatically: members added to or removed from the group in Nextcloud are also added to or removed from the discussion. Members who have not linked their Olvid profile yet join the discussion as soon as they do. Open a group to change the name, description and photo of its discussion.') }}
+				</p>
+			</div>
 		</div>
 
 		<div class="groups-view">
@@ -36,7 +48,7 @@
 					</template>
 
 					<template #subname>
-						{{ n('olvid', '{n} member', '{n} members', group.memberIds.length, { n: group.memberIds.length }) }}
+						{{ membersSummary(group) }}
 					</template>
 
 					<template #indicator>
@@ -47,19 +59,20 @@
 							:aria-label="t('olvid', 'Create an Olvid discussion for this group')"
 							@update:modelValue="enableOlvidDiscussionForGroup(group, $event)"
 							@click.stop>
-							{{ t('olvid', 'Olvid Discussion') }}
+							{{ t('olvid', 'Olvid discussion') }}
 						</NcCheckboxRadioSwitch>
 					</template>
 
 					<template #extra-actions>
 						<NcButton
 							size="small"
-							variant="primary"
+							variant="tertiary"
+							:aria-label="t('olvid', 'Details')"
+							:title="t('olvid', 'Details')"
 							@click.stop="openGroup(group)">
 							<template #icon>
 								<IconPencil :size="20" />
 							</template>
-							{{ t('olvid', 'Details') }}
 						</NcButton>
 					</template>
 				</NcListItem>
@@ -75,7 +88,7 @@
 
 <script setup>
 import { showError } from '@nextcloud/dialogs'
-import { t } from '@nextcloud/l10n'
+import { n, t } from '@nextcloud/l10n'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
@@ -103,6 +116,15 @@ onMounted(async () => {
 	}
 })
 
+function membersSummary(group) {
+	const total = group.memberIds?.length ?? 0
+	if (!total) {
+		return t('olvid', 'No members')
+	}
+	const olvidCount = groups.membersOf(group.id).filter((user) => user.useOlvid).length
+	return n('olvid', '{olvidCount} of {n} member uses Olvid', '{olvidCount} of {n} members use Olvid', total, { olvidCount, n: total })
+}
+
 function openGroup(group) {
 	router.push({ name: 'group-detail', params: { groupId: group.id } })
 }
@@ -121,16 +143,37 @@ async function enableOlvidDiscussionForGroup(group, enabled) {
 .groups-view {
 	&__header {
 		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		// leave room for the navigation toggle button on the top-left corner
+		padding: 8px 16px 16px calc(var(--default-clickable-area) + 16px);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	&__heading {
+		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 16px 16px 8px;
-		border-bottom: 1px solid var(--color-border);
+		gap: 16px;
 	}
 
 	&__title {
 		margin: 0;
-		font-size: 1.1rem;
-		font-weight: 600;
+		font-size: 1.2rem;
+		font-weight: bold;
+		line-height: var(--default-clickable-area);
+	}
+
+	&__intro {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__desc {
+		margin: 0;
+		color: var(--color-text-maxcontrast);
+		line-height: 1.5;
 	}
 
 	&__list {

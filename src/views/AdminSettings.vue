@@ -1,7 +1,7 @@
 <template>
 	<NcSettingsSection
-		:name="t('olvid', 'Directory License')"
-		:description="t('olvid', 'An Olvid Directory license is mandatory to use Nextcloud application.\nWrite to us an email to get one: contact@olvid.io.')">
+		:name="t('olvid', 'Directory license')"
+		:description="t('olvid', 'An Olvid directory license is required to use this application.\nSend us an email to get one: contact@olvid.io.')">
 		<NcNoteCard v-if="checking" type="info">
 			<div class="admin-settings__checking">
 				<NcLoadingIcon :size="20" />
@@ -15,14 +15,14 @@
 		<form class="admin-settings__form" @submit.prevent="save">
 			<NcPasswordField
 				v-model="directoryKey"
-				:label="t('olvid', 'Directory License Key')"
+				:label="t('olvid', 'Directory license key')"
 				:placeholder="directoryKey ? t('olvid', '00000000-0000-0000-0000-000000000000') : ''"
 				:disabled="saving" />
 
 			<NcTextField
 				v-model="serverUrl"
 				type="url"
-				:label="t('olvid', 'Olvid Server url')"
+				:label="t('olvid', 'Olvid server URL')"
 				placeholder="https://server.example.io"
 				:helperText="t('olvid', 'Edit only if you know what you are doing.')"
 				:disabled="saving" />

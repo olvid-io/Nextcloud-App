@@ -1,11 +1,11 @@
 <template>
 	<NcDialog
-		:name="t('olvid', 'Magic Link - {name}', { name: user.displayName })"
+		:name="t('olvid', 'Magic link - {name}', { name: user.displayName })"
 		:open="true"
 		size="small"
 		@update:open="$emit('close')">
 		<p>
-			{{ t('olvid', 'Send this link to {name} to allow them to connect an Olvid profile to it\'s Nextcloud account.', { name: user.displayName }) }}
+			{{ t('olvid', 'Send this link to {name} so they can link their Olvid profile to their Nextcloud account.', { name: user.displayName }) }}
 		</p>
 
 		<div class="magic-link-modal">

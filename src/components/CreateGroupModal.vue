@@ -1,12 +1,12 @@
 <template>
 	<NcDialog
-		:name="t('olvid', 'Create Group')"
+		:name="t('olvid', 'Create group')"
 		:open="true"
 		@update:open="$emit('close')">
 		<div class="create-group-modal">
 			<NcTextField
 				v-model="form.id"
-				:label="t('olvid', 'Group Name')"
+				:label="t('olvid', 'Group name')"
 				:placeholder="t('olvid', 'e.g. members')"
 				:required="true" />
 

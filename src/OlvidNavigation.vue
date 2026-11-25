@@ -1,6 +1,6 @@
 <template>
 	<NcAppNavigation>
-		<NcAppNavigationCaption :name="t('olvid', 'Olvid Console')" />
+		<NcAppNavigationCaption :name="t('olvid', 'Olvid console')" />
 
 		<NcAppNavigationItem
 			:name="t('olvid', 'Profile')"
@@ -45,7 +45,7 @@
 			<ul class="app-navigation-entry__settings">
 				<NcAppNavigationItem
 					v-if="isAdmin"
-					:name="t('olvid', 'Olvid Settings')"
+					:name="t('olvid', 'Olvid settings')"
 					data-cy-olvid-navigation-settings-button
 					@click="settingsOpened = !settingsOpened">
 					<template #icon>

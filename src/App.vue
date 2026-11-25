@@ -2,7 +2,8 @@
 	<NcContent appName="olvid">
 		<InvalidConfigurationAlertModal v-if="me.configurationValid === false" :isAdmin="me.isAdmin" />
 
-		<OlvidNavigation />
+		<!-- non-admins only have the profile page: no navigation -->
+		<OlvidNavigation v-if="me.isAdmin" />
 		<router-view />
 
 		<!-- Sidebars are driven by the route: they only receive an id and read the stores -->

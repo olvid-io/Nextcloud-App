@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('olvid', 'Create User')"
+		:name="t('olvid', 'Create user')"
 		:open="true"
 		@update:open="$emit('close')">
 		<div class="create-user-modal">

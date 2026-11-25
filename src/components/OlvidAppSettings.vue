@@ -1,7 +1,7 @@
 <template>
 	<NcAppSettingsDialog
 		v-model:open="open"
-		:name="t('olvid', 'Olvid Settings')"
+		:name="t('olvid', 'Olvid settings')"
 		showNavigation>
 		<NcAppSettingsSection v-if="isAdmin" id="admin-settings" :name="t('olvid', 'Admin settings')">
 			<NcButton

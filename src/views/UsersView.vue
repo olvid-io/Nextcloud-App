@@ -1,13 +1,28 @@
 <template>
 	<NcAppContent>
 		<div class="users-view__header">
-			<span class="users-view__title" />
-			<NcButton variant="primary" @click="showCreateModal = true">
-				<template #icon>
-					<IconPlus :size="20" />
-				</template>
-				{{ t('olvid', 'Create User') }}
-			</NcButton>
+			<div class="users-view__heading">
+				<h2 class="users-view__title">
+					{{ t('olvid', 'Users') }}
+				</h2>
+				<NcButton variant="primary" @click="showCreateModal = true">
+					<template #icon>
+						<IconPlus :size="20" />
+					</template>
+					{{ t('olvid', 'Create user') }}
+				</NcButton>
+			</div>
+			<div class="users-view__intro">
+				<p class="users-view__desc">
+					{{ t('olvid', 'Every Nextcloud user is listed here, whether they use Olvid or not. The badge on each avatar shows who has linked their profile. Users who have linked their Olvid profile appear in the Olvid directory: other users can find them and add them as contacts in Olvid.') }}
+				</p>
+				<p class="users-view__desc">
+					{{ t('olvid', 'To help a user link their Olvid profile, send them their magic link. It explains how to install Olvid and link their profile in a few steps.') }}
+				</p>
+				<p class="users-view__desc">
+					{{ t('olvid', 'Open a user to edit how they appear in Olvid, manage their groups or unlink their Olvid profile.') }}
+				</p>
+			</div>
 		</div>
 
 		<div class="users-view">
@@ -44,16 +59,17 @@
 							variant="secondary"
 							:disabled="loadingMagicLink === user.id"
 							@click.stop="openMagicLink(user)">
-							{{ t('olvid', 'Magic Link') }}
+							{{ t('olvid', 'Magic link') }}
 						</NcButton>
 						<NcButton
 							size="small"
-							variant="primary"
+							variant="tertiary"
+							:aria-label="t('olvid', 'Details')"
+							:title="t('olvid', 'Details')"
 							@click.stop="openUser(user)">
 							<template #icon>
 								<IconPencil :size="20" />
 							</template>
-							{{ t('olvid', 'Details') }}
 						</NcButton>
 					</template>
 				</NcListItem>
@@ -130,16 +146,37 @@ async function openMagicLink(user) {
 .users-view {
 	&__header {
 		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		// leave room for the navigation toggle button on the top-left corner
+		padding: 8px 16px 16px calc(var(--default-clickable-area) + 16px);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	&__heading {
+		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 16px 16px 8px;
-		border-bottom: 1px solid var(--color-border);
+		gap: 16px;
 	}
 
 	&__title {
 		margin: 0;
-		font-size: 1.1rem;
-		font-weight: 600;
+		font-size: 1.2rem;
+		font-weight: bold;
+		line-height: var(--default-clickable-area);
+	}
+
+	&__intro {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__desc {
+		margin: 0;
+		color: var(--color-text-maxcontrast);
+		line-height: 1.5;
 	}
 
 	&__list {

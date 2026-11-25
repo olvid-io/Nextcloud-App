@@ -5,13 +5,13 @@
 		:subname="user.id !== user.displayName ? user.id : ''"
 		@close="close">
 		<!-- Profile tab -->
-		<NcAppSidebarTab id="profile" :name="t('olvid', 'Olvid Profile')" :order="0">
+		<NcAppSidebarTab id="profile" :name="t('olvid', 'Olvid profile')" :order="0">
 			<template #icon>
 				<IconCardAccountDetails :size="20" />
 			</template>
 
 			<div class="user-sidebar__fields">
-				<div style="display: flex; justify-content: center;">
+				<div class="user-sidebar__avatar">
 					<OlvidAvatar :user="user.id"
 						:displayName="user.displayName"
 						:useOlvid="user.useOlvid"
@@ -19,13 +19,13 @@
 						:size="192" />
 				</div>
 
-				<h3 style="margin: 0; display: flex; justify-content: center;">
+				<h3 class="user-sidebar__olvid-name">
 					{{ olvidDisplayNameFromForm }}
 				</h3>
 
 				<hr class="user-sidebar__separator">
 
-				<div>{{ t('olvid', 'Olvid Profile') }}</div>
+				<div>{{ t('olvid', 'Olvid profile') }}</div>
 				<NcTextField
 					v-model="form.firstname"
 					:label="t('olvid', 'First name')" />
@@ -34,10 +34,10 @@
 					:label="t('olvid', 'Last name')" />
 				<NcTextField
 					v-model="form.position"
-					:label="t('olvid', 'Position')" />
+					:label="t('olvid', 'Position (optional)')" />
 				<NcTextField
 					v-model="form.company"
-					:label="t('olvid', 'Company')" />
+					:label="t('olvid', 'Company (optional)')" />
 
 				<p v-if="saveError" class="user-sidebar__error">
 					{{ saveError }}
@@ -55,7 +55,7 @@
 						class="user-sidebar__button"
 						:disabled="loadingMagicLink === user.id"
 						@click.stop="openMagicLink">
-						{{ t('olvid', 'Magic Link') }}
+						{{ t('olvid', 'Magic link') }}
 					</NcButton>
 				</div>
 
@@ -149,7 +149,7 @@
 						</template>
 					</NcListItem>
 					<li v-if="!userGroups.length" class="user-sidebar__empty">
-						{{ user.displayName }} {{ t('olvid', 'is not in any group.') }}
+						{{ t('olvid', '{name} is not in any group.', { name: user.displayName }) }}
 					</li>
 				</ul>
 			</div>
@@ -329,7 +329,7 @@ function onUserDeleted() {
 async function openMagicLink() {
 	loadingMagicLink.value = props.userId
 	try {
-		magicLinkUrl.value = await users.getMagicLink(props.userId)
+		magicLinkUrl.value = await users.getMagicLink(props.userId, 3600 * 24)
 		magicLinkTarget.value = user.value
 	} catch (e) {
 		console.error('Could not generate magic link', e)
@@ -373,6 +373,16 @@ async function openMagicLink() {
 
 	&__danger, &__actions {
 		border-top: 1px solid var(--color-border);
+	}
+
+	&__avatar {
+		display: flex;
+		justify-content: center;
+	}
+
+	&__olvid-name {
+		margin: 0;
+		text-align: center;
 	}
 
 	&__danger {

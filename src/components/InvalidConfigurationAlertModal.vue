@@ -3,14 +3,14 @@
 		:name="t('olvid', 'Invalid application configuration')"
 		:noClose="true"
 		:buttons="buttons">
-		<div style="color: var('--color-error'); font-weight: bold;">
-			<div v-if="isAdmin">
-				{{ t('olvid', 'You must configure a License in Olvid section of Administration settings before starting using the app.') }}
-			</div>
-			<div v-else>
-				{{ t('olvid', 'Application configuration is not valid. Contact your Nextcloud administrator to fix it.') }}
-			</div>
-		</div>
+		<p class="invalid-configuration__message">
+			<template v-if="isAdmin">
+				{{ t('olvid', 'Before using the app, configure your license in the Olvid section of the administration settings.') }}
+			</template>
+			<template v-else>
+				{{ t('olvid', 'The Olvid app is not configured yet. Please contact your Nextcloud administrator.') }}
+			</template>
+		</p>
 	</NcDialog>
 </template>
 
@@ -45,3 +45,11 @@ const buttons = computed(() => props.isAdmin
 			{ callback: openHomePage, label: t('olvid', 'Home'), variant: 'primary' },
 		])
 </script>
+
+<style scoped lang="scss">
+.invalid-configuration__message {
+	margin: 0;
+	color: var(--color-error-text, var(--color-error));
+	font-weight: bold;
+}
+</style>

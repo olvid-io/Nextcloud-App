@@ -36,7 +36,7 @@
 					:aria-label="t('olvid', 'Create an Olvid discussion for this group')"
 					@update:modelValue="enableOlvidDiscussion"
 					@click.stop>
-					{{ t('olvid', 'Olvid Discussion') }}
+					{{ t('olvid', 'Olvid discussion') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField
 					v-model="form.discussionName"

@@ -33,13 +33,6 @@
 			</NcCheckboxRadioSwitch>
 		</fieldset>
 
-		<NcTextField
-			v-model="confirmation"
-			class="delete-user-modal__confirm"
-			:label="t('olvid', 'Type {userId} to confirm', { userId: user.id })"
-			autocomplete="off"
-			@keydown.enter="canDelete && deleteUser()" />
-
 		<p v-if="error" class="delete-user-modal__error">
 			{{ error }}
 		</p>
@@ -48,7 +41,7 @@
 			<NcButton @click="$emit('close')">
 				{{ t('olvid', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="error" :disabled="!canDelete" @click="deleteUser">
+			<NcButton variant="error" :disabled="deleting" @click="deleteUser">
 				{{ deleting ? t('olvid', 'Deleting…') : t('olvid', 'Delete account') }}
 			</NcButton>
 		</template>
@@ -57,11 +50,10 @@
 
 <script setup>
 import { t } from '@nextcloud/l10n'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { useUsersStore } from '../stores/users.js'
 
 const props = defineProps({
@@ -76,11 +68,8 @@ const emit = defineEmits(['close', 'deleted'])
 const users = useUsersStore()
 // same choice and default as UnlinkIdentityModal: block the Olvid profile unless told otherwise
 const mode = ref('revoke')
-const confirmation = ref('')
 const deleting = ref(false)
 const error = ref(null)
-
-const canDelete = computed(() => !deleting.value && confirmation.value.trim() === props.user.id)
 
 async function deleteUser() {
 	deleting.value = true
@@ -115,10 +104,6 @@ async function deleteUser() {
 	&__legend {
 		margin-bottom: 4px;
 		font-weight: bold;
-	}
-
-	&__confirm {
-		margin-top: 16px;
 	}
 
 	&__error {
